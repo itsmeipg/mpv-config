@@ -3,15 +3,16 @@
 ![Screenshot2](https://github.com/user-attachments/assets/b033436a-763e-47fe-a9c3-ce9cf7731772)
 
 # Scripts
-
+- [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
+- [uosc](https://github.com/tomasklaen/uosc) The on-screen-controller that creates the entire UI.
 - [auto-deinterlace_let_a_only](https://github.com/szym0ne/mpv_auto-deinterlace) Forces deinterlace on interlaced video.
-- [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
 - [auto-save-state](https://github.com/AN3223/dotfiles/blob/master/.config/mpv/scripts/auto-save-state.lua) Saves time position every 5 seconds.
+- [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
 - [evafast](https://github.com/po5/evafast) Hold/cick left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (buggy).
 - [memo](https://github.com/po5/memo) Saves history. Modified title and page button text.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio).
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
-- [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents.
+- [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
 
 I made these ones myself (any code with a lot of comments means I used AI and don't understand it much).
 Don't worry though I understand 98 percent of the script and bug tested a lot.
