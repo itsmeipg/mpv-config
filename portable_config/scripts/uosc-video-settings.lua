@@ -11,7 +11,7 @@ local options = {
     show_custom_if_no_default_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
-    hide_aspect_profile_if_matches_default = true
+    hide_aspect_profile_if_matches_default = false
 }
 
 local script_name = mp.get_script_name()
@@ -27,7 +27,7 @@ end
 
 local aspect_state
 local aspect_profiles = {}
-local current_aspect
+local original_aspect
 local default_color = {
     brightness = mp.get_property_number("brightness"),
     contrast = mp.get_property_number("contrast"),
@@ -123,15 +123,15 @@ function create_menu_data()
     local aspect_items = {{
         title = "Default",
         icon = aspect_state == "default" and "radio_button_checked" or "radio_button_unchecked",
-        value = command("set-aspect default")
+        value = command("set-aspect -1")
     }}
 
     for _, profile in ipairs(aspect_profiles) do
         local w, h = profile.ratio:match("(%d+%.?%d*):(%d+%.?%d*)")
         local profile_ratio = w and h and tonumber(w) / tonumber(h)
 
-        if not (options.hide_aspect_profile_if_matches_default and current_aspect and profile_ratio and
-            math.abs(current_aspect - profile_ratio) < 0.001) then
+        if not (options.hide_aspect_profile_if_matches_default and original_aspect and profile_ratio and
+            math.abs(original_aspect - profile_ratio) < 0.001) then
             table.insert(aspect_items, profile)
         end
     end
@@ -286,11 +286,7 @@ end
 
 -- Message handlers
 mp.register_script_message("set-aspect", function(ratio)
-    if ratio == "default" then
-        mp.set_property("video-aspect-override", "-1")
-    else
-        mp.set_property("video-aspect-override", ratio)
-    end
+    mp.set_property("video-aspect-override", ratio)
 end)
 
 mp.register_script_message("adjust-color", function(property, value)
@@ -381,9 +377,9 @@ function update_aspect_state()
     local height = mp.get_property_number("height")
 
     if width and height and height ~= 0 then
-        current_aspect = width / height
+        original_aspect = width / height
     else
-        current_aspect = nil
+        original_aspect = nil
     end
 
     if ratio == -1 then
@@ -409,6 +405,7 @@ function update_aspect_state()
     update_menu()
 end
 
+mp.observe_property("video-aspect-override", "native", update_aspect_state)
 mp.observe_property("video-params", "native", update_aspect_state)
 
 mp.observe_property("brightness", "number", update_menu)
