@@ -10,7 +10,8 @@ local options = {
     include_default_deband_profile = true,
     show_custom_if_no_default_profile = true,
 
-    aspect_profiles = "16:9,4:3,2.35:1"
+    aspect_profiles = "16:9,4:3,2.35:1",
+    hide_aspect_profile_if_matches_default = true
 }
 
 local script_name = mp.get_script_name()
@@ -24,9 +25,10 @@ function command(str)
     return string.format("script-message-to %s %s", script_name, str)
 end
 
-local aspect
+local aspect_state
 local aspect_profiles = {}
-local color = {
+local current_aspect
+local default_color = {
     brightness = mp.get_property_number("brightness"),
     contrast = mp.get_property_number("contrast"),
     saturation = mp.get_property_number("saturation"),
@@ -120,15 +122,21 @@ function create_menu_data()
     -- Aspect Ratio
     local aspect_items = {{
         title = "Default",
-        icon = aspect == "default" and "radio_button_checked" or "radio_button_unchecked",
+        icon = aspect_state == "default" and "radio_button_checked" or "radio_button_unchecked",
         value = command("set-aspect default")
     }}
 
     for _, profile in ipairs(aspect_profiles) do
-        table.insert(aspect_items, profile)
+        local w, h = profile.ratio:match("(%d+%.?%d*):(%d+%.?%d*)")
+        local profile_ratio = w and h and tonumber(w) / tonumber(h)
+
+        if not (options.hide_aspect_profile_if_matches_default and current_aspect and profile_ratio and
+            math.abs(current_aspect - profile_ratio) < 0.001) then
+            table.insert(aspect_items, profile)
+        end
     end
 
-    if aspect == "custom" then
+    if aspect_state == "custom" then
         table.insert(aspect_items, {
             title = "Custom",
             icon = "radio_button_checked",
@@ -142,98 +150,48 @@ function create_menu_data()
     })
 
     -- Color
+    local color_items = {}
+
     local function get_color_hint(property)
         local value = mp.get_property_number(property)
-        if value ~= 0 then
-            return value > 0 and "+" .. tostring(value) or tostring(value)
-        else
-            return nil
-        end
+        return value ~= 0 and (value > 0 and "+" .. tostring(value) or tostring(value)) or nil
     end
 
-    table.insert(items, {
-        title = "Color",
-        items = {{
-            title = "Brightness",
-            hint = get_color_hint("brightness"),
-            items = {{
-                title = "Increase",
-                value = command("adjust-color brightness 0.25")
-            }, {
-                title = "Decrease",
-                value = command("adjust-color brightness -0.25")
-            }, {
-                title = "Reset",
-                value = command("adjust-color brightness reset"),
-                italic = true,
-                muted = true
-            }}
+    local function create_adjustment_items(prop)
+        return {{
+            title = "Increase",
+            value = command("adjust-color " .. prop .. " 0.25")
         }, {
-            title = "Contrast",
-            hint = get_color_hint("contrast"),
-            items = {{
-                title = "Increase",
-                value = command("adjust-color contrast 0.25")
-            }, {
-                title = "Decrease",
-                value = command("adjust-color contrast -0.25")
-            }, {
-                title = "Reset",
-                value = command("adjust-color contrast reset"),
-                italic = true,
-                muted = true
-            }}
+            title = "Decrease",
+            value = command("adjust-color " .. prop .. " -0.25")
         }, {
-            title = "Saturation",
-            hint = get_color_hint("saturation"),
-            items = {{
-                title = "Increase",
-                value = command("adjust-color saturation 0.25")
-            }, {
-                title = "Decrease",
-                value = command("adjust-color saturation -0.25")
-            }, {
-                title = "Reset",
-                value = command("adjust-color saturation reset"),
-                italic = true,
-                muted = true
-            }}
-        }, {
-            title = "Gamma",
-            hint = get_color_hint("gamma"),
-            items = {{
-                title = "Increase",
-                value = command("adjust-color gamma 0.25")
-            }, {
-                title = "Decrease",
-                value = command("adjust-color gamma -0.25")
-            }, {
-                title = "Reset",
-                value = command("adjust-color gamma reset"),
-                italic = true,
-                muted = true
-            }}
-        }, {
-            title = "Hue",
-            hint = get_color_hint("hue"),
-            items = {{
-                title = "Increase",
-                value = command("adjust-color hue 0.25")
-            }, {
-                title = "Decrease",
-                value = command("adjust-color hue -0.25")
-            }, {
-                title = "Reset",
-                value = command("adjust-color hue reset"),
-                italic = true,
-                muted = true
-            }}
-        }, {
-            title = "Reset all",
-            value = command("reset-color"),
+            title = "Reset",
+            value = command("adjust-color " .. prop .. " reset"),
             italic = true,
             muted = true
         }}
+    end
+
+    local color_properties = {"brightness", "contrast", "saturation", "gamma", "hue"}
+
+    for _, prop in ipairs(color_properties) do
+        table.insert(color_items, {
+            title = prop:gsub("^%l", string.upper),
+            hint = get_color_hint(prop),
+            items = create_adjustment_items(prop)
+        })
+    end
+
+    table.insert(color_items, {
+        title = "Reset all",
+        value = command("reset-color"),
+        italic = true,
+        muted = true
+    })
+
+    table.insert(items, {
+        title = "Color",
+        items = color_items
     })
 
     -- Deband
@@ -285,24 +243,24 @@ function create_menu_data()
     })
 
     -- List shaders
-    local displayed_shaders = {}
+    local shader_items = {}
 
     -- Active shaders
     local current_shaders, is_active = mp.get_property_native("glsl-shaders", {}), {}
 
     for _, shader_path in ipairs(current_shaders) do
         is_active[shader_path] = true
-        table.insert(displayed_shaders, shader_path)
+        table.insert(shader_items, shader_path)
     end
 
     -- Inactive shaders
     for _, shader_path in ipairs(shader_files) do
         if not is_active[shader_path] then
-            table.insert(displayed_shaders, shader_path)
+            table.insert(shader_items, shader_path)
         end
     end
 
-    for i, shader_path in ipairs(displayed_shaders) do
+    for i, shader_path in ipairs(shader_items) do
         local _, shader = mp.utils.split_path(shader_path)
         table.insert(items, {
             title = shader:match("(.+)%..+$") or shader,
@@ -337,7 +295,7 @@ end)
 
 mp.register_script_message("adjust-color", function(property, value)
     if value == "reset" then
-        mp.set_property(property, color[property])
+        mp.set_property(property, default_color[property])
     else
         local current = mp.get_property_number(property)
         local num_value = tonumber(value)
@@ -348,11 +306,11 @@ mp.register_script_message("adjust-color", function(property, value)
 end)
 
 mp.register_script_message("reset-color", function()
-    mp.set_property("brightness", color.brightness)
-    mp.set_property("contrast", color.contrast)
-    mp.set_property("saturation", color.saturation)
-    mp.set_property("gamma", color.gamma)
-    mp.set_property("hue", color.hue)
+    mp.set_property("brightness", default_color.brightness)
+    mp.set_property("contrast", default_color.contrast)
+    mp.set_property("saturation", default_color.saturation)
+    mp.set_property("gamma", default_color.gamma)
+    mp.set_property("hue", default_color.hue)
 end)
 
 mp.register_script_message("adjust-deband", function(value)
@@ -419,17 +377,25 @@ end)
 -- Property observers
 function update_aspect_state()
     local ratio = mp.get_property_number("video-aspect-override")
+    local width = mp.get_property_number("width")
+    local height = mp.get_property_number("height")
+
+    if width and height and height ~= 0 then
+        current_aspect = width / height
+    else
+        current_aspect = nil
+    end
 
     if ratio == -1 then
-        aspect = "default"
+        aspect_state = "default"
     else
-        aspect = "custom"
+        aspect_state = "custom"
         for _, profile in ipairs(aspect_profiles) do
             local w, h = profile.ratio:match("(%d+%.?%d*):(%d+%.?%d*)")
             if w and h then
                 local ratio_value = tonumber(w) / tonumber(h)
                 if math.abs(ratio - ratio_value) < 0.001 then
-                    aspect = profile.ratio
+                    aspect_state = profile.ratio
                     break
                 end
             end
@@ -437,13 +403,13 @@ function update_aspect_state()
     end
 
     for _, profile in ipairs(aspect_profiles) do
-        profile.icon = (aspect == profile.ratio) and "radio_button_checked" or "radio_button_unchecked"
+        profile.icon = (aspect_state == profile.ratio) and "radio_button_checked" or "radio_button_unchecked"
     end
 
     update_menu()
 end
 
-mp.observe_property("video-aspect-override", "native", update_aspect_state)
+mp.observe_property("video-params", "native", update_aspect_state)
 
 mp.observe_property("brightness", "number", update_menu)
 mp.observe_property("contrast", "number", update_menu)
