@@ -4,19 +4,20 @@
 
 Scripts -
 
-autoload - Adds files in current directory to playlist.
-auto-save-state - Saves time position every 5 seconds.
-evafast - Hold right/left arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-elements.
-memo - Saves history. Modified title and page button text.
-quality-menu - Shows web quality versions (video/audio)
-thumbfast - Shows thumbnails
+- [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
+- [auto-save-state] Saves time position every 5 seconds.
+- [evafast](https://github.com/po5/evafast) Hold right/left arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-elements.
+- [memo](https://github.com/po5/memo) Saves history. Modified title and page button text.
+- [quality-menu] Shows web quality versions (video/audio)
+- [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails
+- [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents
 
 I made these ones myself (any code with a lot of comments means I used AI and don't understand it much).
 Don't worry though I understand 98 percent of the script and bug tested a lot.
 
-uosc-screenshot - Menu to take screenshot with/without subs
-uosc-subtitles - Menu for subtitle settings
-uosc-video-settings - Menu for video settings
+- [uosc-screenshot] Menu to take screenshot with/without subs
+- [uosc-subtitles] Menu for subtitle settings
+- [uosc-video-settings] Menu for video settings
 
 # uosc-video-settings.lua
 
