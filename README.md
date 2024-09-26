@@ -14,13 +14,12 @@
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
 
-
-I made these ones myself (any code with a lot of comments means I used AI and don't understand it much).
-Don't worry though I understand 98 percent of the script and bug tested a lot.
-
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
 - [uosc-video-settings] Menu for video settings.
+
+I made these ones myself (any code with a lot of comments means I used AI and don't understand it much).
+Don't worry though I understand 98 percent of the script and bug tested a lot.
 
 # uosc-video-settings.lua
 
