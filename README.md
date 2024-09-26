@@ -2,6 +2,13 @@
 ![Screenshot1](https://github.com/user-attachments/assets/73da6817-f0ff-4529-a746-275c8065496a)
 ![Screenshot2](https://github.com/user-attachments/assets/b033436a-763e-47fe-a9c3-ce9cf7731772)
 
+# Theme
+
+This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
+OSD text is removed as much as possible. With the new uosc update, I have removed OSD text completely using osd-level=0 because adding a video to playlist from menu triggers OSD text.
+
+Minimal but fancy is the goal.
+
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
 - [uosc](https://github.com/tomasklaen/uosc) The on-screen-controller that creates the entire UI.
