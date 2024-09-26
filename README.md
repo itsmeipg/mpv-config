@@ -8,7 +8,7 @@ Scripts -
 - [auto-save-state] Saves time position every 5 seconds.
 - [evafast](https://github.com/po5/evafast) Hold right/left arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-elements.
 - [memo](https://github.com/po5/memo) Saves history. Modified title and page button text.
-- [quality-menu] Shows web quality versions (video/audio)
+- [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio)
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails
 - [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents
 
