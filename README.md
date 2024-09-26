@@ -4,9 +4,10 @@
 
 # Scripts
 
+- [auto-deinterlace_let_a_only](https://github.com/szym0ne/mpv_auto-deinterlace) Forces deinterlace on interlaced video.
 - [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
-- [auto-save-state] Saves time position every 5 seconds.
-- [evafast](https://github.com/po5/evafast) Hold right/left arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-elements.
+- [auto-save-state](https://github.com/AN3223/dotfiles/blob/master/.config/mpv/scripts/auto-save-state.lua) Saves time position every 5 seconds.
+- [evafast](https://github.com/po5/evafast) Hold/cick left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (buggy).
 - [memo](https://github.com/po5/memo) Saves history. Modified title and page button text.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio).
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
