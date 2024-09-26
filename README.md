@@ -34,7 +34,7 @@ Bug: Won't notice unless you look for it. Sometimes menu does not update (especi
 # Shaders
 
 - [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/mikigal/Anime4K-GUI/tree/master/resources/shaders) Usually makes the anime look better, but in some anime, artifacts are noticeable. I don't have a 4K monitor, but less artifacts downscaling to 1440p than on 1080p. Individual shader modes sourced from Anime4K-GUI so less clutter in shaders folder.
-- [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Config has all three separate shaders and put it into a profile.
+- [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Config has all three separate shaders and put into a profile.
 - [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) No idea what this does but it's cool. Haven't really used it.
 - [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b) Makes upscaling look a little better.
 - [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10) Makes downscaling look a little better.
