@@ -29,3 +29,9 @@ Buttons can be added for aspect ratio, deband, and shader profiles by using uosc
 If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
 Bug: Won't notice unless you look for it. Sometimes menu does not update (especially with updating the sub delay/anything that can be increased decreased or toggled) until mouse stops hovering over button that updated menu (then it updates correctly). Might be an issue with how I coded menu updates or uosc itself.
+
+# Goals
+
+- Post on Reddit about my config so people actually use my config and I can get suggestions
+- If aspect ratio profile matches default aspect ratio, make an option to hide aspect ratio profile (maybe add hint on default profile button that shows default aspect ratio)
+- Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat
