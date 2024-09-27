@@ -68,11 +68,14 @@ Here are a few audio filters I kind of tested but didn't settle on.
 
 # Goals
 
-- Post on Reddit about my config so people actually use my config and I can get feedback.
-- Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat.
-- Add options to set the increase/decrease steps for each color setting.
+- ~~Post on Reddit about my config so people actually use my config and I can get feedback.~~
+- ~~Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat.~~
+- ~~Add options to set the increase/decrease steps for each color setting~~
+- Maybe add radio buttons to show which shader profile is being used.
+- Maybe add .conf for uosc-screenshot.conf
+- Maybe adjust playlist opacity of the thing on the top left
 
-#Feedback
+# Feedback
 
 - If there is a way to disable OSD messages from uosc without modifying the script, let me know.
 - If you would like toggles for audio filters like the shader toggles, let me know.
