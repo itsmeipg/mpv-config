@@ -83,15 +83,18 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - "pan=stereo|FL < 1.0*FL + 0.707*FC + 0.707*BL|FR < 1.0*FR + 0.707*FC + 0.707*BR"
 - "[loudnorm=i=-14:lra=7:tp=-2]"
 
-# Goals/Feedback
+# Goals
 
 - Post on Reddit about my config so people actually use my config and I can get feedback.
 - Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat.
 - Add options to set the increase/decrease steps for each color setting.
 
+#Feedback
+
 - If there is a way to disable OSD messages from uosc without modifying the script, let me know.
 - If you would like toggles for audio filters like the shader toggles, let me know.
 - Let me know if sofalizer should be added to audio filters first (before dynaudorm filter) or if it does not really matter.
+- Let me know about shaders profiles you use and other cool shaders
 
 # Things that bother me
 
