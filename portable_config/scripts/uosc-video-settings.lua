@@ -37,10 +37,12 @@ local default_color = {
 }
 local deband_state
 local deband_profiles = {}
-local default_iterations = mp.get_property_number("deband-iterations")
-local default_threshold = mp.get_property_number("deband-threshold")
-local default_range = mp.get_property_number("deband-range")
-local default_grain = mp.get_property_number("deband-grain")
+local default_deband = {
+    iterations = mp.get_property_number("deband-iterations"),
+    threshold = mp.get_property_number("deband-threshold"),
+    range = mp.get_property_number("deband-range"),
+    grain = mp.get_property_number("deband-grain")
+}
 local interpolation
 local default_shaders = mp.get_property_native("glsl-shaders", {})
 local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
@@ -314,10 +316,10 @@ mp.register_script_message("adjust-deband", function(value)
         mp.set_property("deband", "no")
     elseif value == "default" then
         mp.set_property("deband", "yes")
-        mp.set_property("deband-iterations", default_iterations)
-        mp.set_property("deband-threshold", default_threshold)
-        mp.set_property("deband-range", default_range)
-        mp.set_property("deband-grain", default_grain)
+        mp.set_property("deband-iterations", default_deband.iterations)
+        mp.set_property("deband-threshold", default_deband.threshold)
+        mp.set_property("deband-range", default_deband.range)
+        mp.set_property("deband-grain", default_deband.grain)
     elseif value:find(",") then
         local iterations, threshold, range, grain = value:match("([^,]+),([^,]+),([^,]+),([^,]+)")
         if iterations and threshold and range and grain then
@@ -421,8 +423,8 @@ function update_deband_state()
     local range = mp.get_property_number("deband-range")
     local grain = mp.get_property_number("deband-grain")
     local is_default =
-        deband_enabled and iterations == default_iterations and threshold == default_threshold and range ==
-            default_range and grain == default_grain
+        deband_enabled and iterations == default_deband.iterations and threshold == default_deband.threshold and range ==
+            default_deband.range and grain == default_deband.grain
 
     if not deband_enabled then
         deband_state = "off"
