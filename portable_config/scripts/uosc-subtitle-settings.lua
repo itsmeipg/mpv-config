@@ -49,11 +49,11 @@ function create_menu_data()
             title = "Primary",
             hint = get_value_hint("sub-pos"),
             items = {{
-                title = "Move Up",
+                title = "Move up",
                 hint = string.format("-%d", options.pos_increment),
                 value = command("adjust-pos primary dec")
             }, {
-                title = "Move Down",
+                title = "Move down",
                 hint = string.format("+%d", options.pos_increment),
                 value = command("adjust-pos primary inc")
             }, {
@@ -66,11 +66,11 @@ function create_menu_data()
             title = "Secondary",
             hint = get_value_hint("secondary-sub-pos"),
             items = {{
-                title = "Move Up",
+                title = "Move up",
                 hint = string.format("-%d", options.pos_increment),
                 value = command("adjust-pos secondary dec")
             }, {
-                title = "Move Down",
+                title = "Move down",
                 hint = string.format("+%d", options.pos_increment),
                 value = command("adjust-pos secondary inc")
             }, {
