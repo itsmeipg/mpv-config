@@ -472,7 +472,6 @@ mp.observe_property("deband-grain", "number", update_deband_state)
 
 mp.observe_property("interpolation", "bool", function(name, value)
     interpolation = value
-
     update_menu()
 end)
 
