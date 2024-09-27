@@ -4,7 +4,7 @@ local options = {
 
 mp.utils = require "mp.utils"
 mp.options = require "mp.options"
-mp.options.read_options(options, "uosc-video-settings", function()
+mp.options.read_options(options, "auto-save-state", function()
 end)
 
 mp.set_property("save-position-on-quit", "yes")
