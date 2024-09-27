@@ -8,7 +8,7 @@ local script_name = mp.get_script_name()
 
 mp.utils = require "mp.utils"
 mp.options = require "mp.options"
-mp.options.read_options(options, "uosc-video-settings", function()
+mp.options.read_options(options, "uosc-subtitle-settings", function()
 end)
 
 function command(str)
