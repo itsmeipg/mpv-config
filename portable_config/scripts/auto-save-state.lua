@@ -1,9 +1,11 @@
--- Runs write-watch-later-config periodically
-local options = require 'mp.options'
-local o = {
+local options = {
     save_interval = 5
 }
-options.read_options(o)
+
+mp.utils = require "mp.utils"
+mp.options = require "mp.options"
+mp.options.read_options(options, "uosc-video-settings", function()
+end)
 
 mp.set_property("save-position-on-quit", "yes")
 
@@ -34,7 +36,7 @@ local function pause_timer_while_paused(_, pause)
     end
 end
 
-timer = mp.add_periodic_timer(o.save_interval, save)
+timer = mp.add_periodic_timer(options.save_interval, save)
 
 mp.observe_property("pause", "bool", pause_timer_while_paused)
 mp.observe_property("pause", "bool", save_if_pause)
