@@ -401,8 +401,10 @@ function update_aspect_state()
 
     if current_aspect == -1 then
         aspect_state = "default"
+        update_menu()
     else
         aspect_state = "custom"
+
         for _, profile in ipairs(aspect_profiles) do
             local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
             if w and h then
@@ -413,13 +415,13 @@ function update_aspect_state()
                 end
             end
         end
-    end
 
-    for _, profile in ipairs(aspect_profiles) do
-        profile.icon = (aspect_state == profile.aspect) and "radio_button_checked" or "radio_button_unchecked"
-    end
+        for _, profile in ipairs(aspect_profiles) do
+            profile.icon = (aspect_state == profile.aspect) and "radio_button_checked" or "radio_button_unchecked"
+        end
 
-    update_menu()
+        update_menu()
+    end
 end
 
 mp.observe_property("video-aspect-override", "native", update_aspect_state)
