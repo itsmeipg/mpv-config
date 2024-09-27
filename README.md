@@ -53,7 +53,7 @@ Bug: Won't notice unless you look for it. Sometimes menu does not update (especi
 - [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction) Chroma upscaler (TBH I don't see a difference).
 - [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637) Chroma upscaler (I also don't see a difference).
 
-# Possible audio filters
+# Audio filters
 The script uses "[dynaudnorm=f=250:g=31:p=0.5:m=5:r=0.9:b=1]"
 I heard that the way dynaudorm works is that it compresses audio, so change it if you don't like that.
 
