@@ -45,12 +45,12 @@ If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders)
 - [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable. I don't have a 4K monitor, but less artifacts downscaling to 1440p than on 1080p. Individual shader modes sourced from [Anime4K-GUI](https://github.com/mikigal/Anime4K-GUI/tree/master/resources/shaders) so less clutter in shaders folder.
 - [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Config has all three separate shaders and put into a profile.
 - [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) No idea what this does but it's cool. Haven't really used it.
+- [FSRCNNX_x2(8-0-4-1/16-0-4-1)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1) 2x upscaler.
 - [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b) Makes upscaling look a little better.
 - [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10) Makes downscaling look a little better.
 - [adaptive-sharpen(Low-Medium-High)](https://gist.github.com/igv/8a77e4eb8276753b54bb94c1c50c317e) Three identical shaders but with different curve_height values (0.3/0.5/0.7).
 - [ravu-lite-ar-r4](https://github.com/bjin/mpv-prescalers/blob/master/ravu-lite-ar-r4.hook) Upscaler? Haven't really used it.
 - [ravu-zoom-ar-r3](https://github.com/bjin/mpv-prescalers/blob/master/ravu-zoom-ar-r3.hook) Upscaler (but for variable resolutions)? Haven't really used it.
-
 - [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction) Chroma upscaler (TBH I don't see a difference).
 - [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637) Chroma upscaler (I also don't see a difference).
 
