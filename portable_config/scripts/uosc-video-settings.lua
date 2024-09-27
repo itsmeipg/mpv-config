@@ -168,7 +168,7 @@ function create_menu_data()
 
     local function get_color_hint(property)
         local value = mp.get_property_number(property)
-        return value ~= 0 and (value > 0 and "+" .. tostring(value) or tostring(value)) or nil
+        return value ~= 0 and (value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)) or nil
     end
 
     local function create_adjustment_items(prop)
