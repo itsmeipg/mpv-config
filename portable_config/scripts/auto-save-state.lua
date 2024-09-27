@@ -9,10 +9,14 @@ end)
 
 mp.set_property("save-position-on-quit", "yes")
 
+local function save()
+    mp.command("write-watch-later-config")
+end
+
 local function save_if_pause(_, pause)
     if pause then
         timer:stop()
-        mp.command("write-watch-later-config")
+        save()
     else
         timer:resume()
     end
