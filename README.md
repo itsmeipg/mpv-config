@@ -57,3 +57,4 @@ Bug: Won't notice unless you look for it. Sometimes menu does not update (especi
 - Post on Reddit about my config so people actually use my config and I can get feedback
 - If aspect ratio profile matches default aspect ratio, make an option to hide aspect ratio profile (maybe add hint on default profile button that shows default aspect ratio)
 - Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat
+- Clean mpv.conf
