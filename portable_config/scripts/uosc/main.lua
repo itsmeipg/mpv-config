@@ -952,7 +952,6 @@ bind_command('playlist', create_self_updating_menu_opener({
 		if event.id == 'ctrl+c' and event.selected_item then
 			local payload = mp.get_property_native('playlist/' .. (event.selected_item.value - 1) .. '/filename')
 			set_clipboard(payload)
-			mp.commandv('show-text', t('Copied to clipboard') .. ': ' .. payload, 3000)
 		end
 	end,
 	on_move = function(event)
@@ -1098,7 +1097,6 @@ bind_command('paste-to-playlist', function()
 		local payload = get_clipboard()
 		if payload then
 			mp.commandv('loadfile', payload, 'append')
-			mp.commandv('show-text', t('Added to playlist') .. ': ' .. payload, 3000)
 		end
 	end
 end)
