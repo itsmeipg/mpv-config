@@ -175,11 +175,11 @@ function create_menu_data()
         local increment = options[prop .. "_increment"]
         return {{
             title = "Increase",
-            hint = "+" .. increment,
+            hint = "+" .. string.format("%.2f", increment),
             value = command("adjust-color " .. prop .. " " .. increment)
         }, {
             title = "Decrease",
-            hint = "-" .. increment,
+            hint = "-" .. string.format("%.2f", increment),
             value = command("adjust-color " .. prop .. " -" .. increment)
         }, {
             title = "Reset",
