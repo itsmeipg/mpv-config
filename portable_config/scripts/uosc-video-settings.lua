@@ -428,9 +428,8 @@ function update_deband_state()
     local threshold = mp.get_property_number("deband-threshold")
     local range = mp.get_property_number("deband-range")
     local grain = mp.get_property_number("deband-grain")
-    local is_default =
-        deband_enabled and iterations == default_deband.iterations and threshold == default_deband.threshold and range ==
-            default_deband.range and grain == default_deband.grain
+    local is_default = deband_enabled and iterations == default_deband.iterations and threshold ==
+                           default_deband.threshold and range == default_deband.range and grain == default_deband.grain
 
     if not deband_enabled then
         deband_state = "off"
