@@ -1,4 +1,5 @@
 local options = {
+    pos_increment = 1,
     size_increment = 0.05,
     delay_increment = 0.05
 }
@@ -14,6 +15,8 @@ function command(str)
     return string.format("script-message-to %s %s", script_name, str)
 end
 
+local sub_pos = mp.get_property_number("sub-pos")
+local secondary_sub_pos = mp.get_property_number("secondary-sub-pos")
 local size = mp.get_property_number("sub-scale")
 local delay = mp.get_property_number("sub-delay")
 local ass_override
@@ -23,13 +26,15 @@ local fix_timing
 function create_menu_data()
     local function get_value_hint(property)
         local value = mp.get_property_number(property)
-        if property == "sub-scale" then
+        if property == "sub-pos" or property == "secondary-sub-pos" then
+            return string.format("%d", value)
+        elseif property == "sub-scale" then
             if math.abs(value - 1) > 0.00001 then
                 return string.format("%.2f", value)
             else
                 return nil
             end
-        else
+        elseif property == "sub-delay" then
             if math.abs(value) > 0.00001 then
                 return value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)
             else
@@ -39,6 +44,43 @@ function create_menu_data()
     end
 
     local items = {{
+        title = "Position",
+        items = {{
+            title = "Primary Subtitles",
+            hint = get_value_hint("sub-pos"),
+            items = {{
+                title = "Move Up",
+                hint = string.format("-%d", options.pos_increment),
+                value = command("adjust-pos primary dec")
+            }, {
+                title = "Move Down",
+                hint = string.format("+%d", options.pos_increment),
+                value = command("adjust-pos primary inc")
+            }, {
+                title = "Reset",
+                value = command("adjust-pos primary reset"),
+                italic = true,
+                muted = true
+            }}
+        }, {
+            title = "Secondary Subtitles",
+            hint = get_value_hint("secondary-sub-pos"),
+            items = {{
+                title = "Move Up",
+                hint = string.format("-%d", options.pos_increment),
+                value = command("adjust-pos secondary dec")
+            }, {
+                title = "Move Down",
+                hint = string.format("+%d", options.pos_increment),
+                value = command("adjust-pos secondary inc")
+            }, {
+                title = "Reset",
+                value = command("adjust-pos secondary reset"),
+                italic = true,
+                muted = true
+            }}
+        }}
+    }, {
         title = "Size",
         hint = get_value_hint("sub-scale"),
         items = {{
@@ -128,6 +170,20 @@ function update_menu()
     mp.commandv("script-message-to", "uosc", "update-menu", json)
 end
 
+mp.register_script_message("adjust-pos", function(type, arg)
+    local property = type == "primary" and "sub-pos" or "secondary-sub-pos"
+    local current = mp.get_property_number(property)
+    if arg == "inc" then
+        local new_value = math.min(100, current + options.pos_increment)
+        mp.set_property_number(property, new_value)
+    elseif arg == "dec" then
+        local new_value = math.max(0, current - options.pos_increment)
+        mp.set_property_number(property, new_value)
+    else
+        mp.set_property_number(property, type == "primary" and sub_pos or secondary_sub_pos)
+    end
+end)
+
 mp.register_script_message("adjust-size", function(arg)
     local current = mp.get_property_number("sub-scale")
     if arg == "inc" then
@@ -187,21 +243,24 @@ mp.register_script_message("toggle-fix-timing", function(arg)
 end)
 
 -- Add property observers
+mp.observe_property("sub-pos", "number", function(name, value)
+    update_menu()
+end)
+mp.observe_property("secondary-sub-pos", "number", function(name, value)
+    update_menu()
+end)
 mp.observe_property("sub-scale", "number", update_menu)
 mp.observe_property("sub-delay", "number", update_menu)
 mp.observe_property("sub-ass-override", "string", function(name, value)
     ass_override = value
-
     update_menu()
 end)
 mp.observe_property("blend-subtitles", "string", function(name, value)
     blend = value
-
     update_menu()
 end)
 mp.observe_property("sub-fix-timing", "bool", function(name, value)
     fix_timing = value
-
     update_menu()
 end)
 
