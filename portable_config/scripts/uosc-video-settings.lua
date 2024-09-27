@@ -48,12 +48,13 @@ local default_shaders = mp.get_property_native("glsl-shaders", {})
 -- Parse aspect profiles
 local aspect_profiles = {}
 
-for ratio in options.aspect_profiles:gmatch("([^,]+)") do
+for profile in options.aspect_profiles:gmatch("([^,]+)") do
+    local aspect = profile
     table.insert(aspect_profiles, {
-        title = ratio:match("^%s*(.-)%s*$"),
-        ratio = ratio:match("^%s*(.-)%s*$"),
+        title = aspect:match("^%s*(.-)%s*$"),
+        aspect = aspect:match("^%s*(.-)%s*$"),
         icon = "radio_button_unchecked",
-        value = command("set-aspect " .. ratio:match("^%s*(.-)%s*$"))
+        value = command("set-aspect " .. aspect:match("^%s*(.-)%s*$"))
     })
 end
 
@@ -134,7 +135,7 @@ function create_menu_data()
     }}
 
     for _, profile in ipairs(aspect_profiles) do
-        local w, h = profile.ratio:match("(%d+%.?%d*):(%d+%.?%d*)")
+        local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
         local profile_ratio = w and h and tonumber(w) / tonumber(h)
 
         if not (options.hide_aspect_profile_if_matches_default and original_aspect and profile_ratio and
@@ -292,8 +293,8 @@ function update_menu()
 end
 
 -- Message handlers
-mp.register_script_message("set-aspect", function(ratio)
-    mp.set_property("video-aspect-override", ratio)
+mp.register_script_message("set-aspect", function(aspect)
+    mp.set_property("video-aspect-override", aspect)
 end)
 
 mp.register_script_message("adjust-color", function(property, value)
@@ -379,7 +380,7 @@ end)
 
 -- Property observers
 function update_aspect_state()
-    local ratio = mp.get_property_number("video-aspect-override")
+    local current_aspect = mp.get_property_number("video-aspect-override")
     local width = mp.get_property_number("width")
     local height = mp.get_property_number("height")
 
@@ -389,16 +390,16 @@ function update_aspect_state()
         original_aspect = nil
     end
 
-    if ratio == -1 then
+    if current_aspect == -1 then
         aspect_state = "default"
     else
         aspect_state = "custom"
         for _, profile in ipairs(aspect_profiles) do
-            local w, h = profile.ratio:match("(%d+%.?%d*):(%d+%.?%d*)")
+            local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
             if w and h then
                 local ratio_value = tonumber(w) / tonumber(h)
-                if math.abs(ratio - ratio_value) < 0.001 then
-                    aspect_state = profile.ratio
+                if math.abs(current_aspect - ratio_value) < 0.001 then
+                    aspect_state = profile.aspect
                     break
                 end
             end
@@ -406,7 +407,7 @@ function update_aspect_state()
     end
 
     for _, profile in ipairs(aspect_profiles) do
-        profile.icon = (aspect_state == profile.ratio) and "radio_button_checked" or "radio_button_unchecked"
+        profile.icon = (aspect_state == profile.aspect) and "radio_button_checked" or "radio_button_unchecked"
     end
 
     update_menu()
