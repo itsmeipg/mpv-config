@@ -80,7 +80,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - If there is a way to disable OSD messages from uosc without modifying the script, let me know.
 - If you would like toggles for audio filters like the shader toggles, let me know.
 - Let me know if sofalizer should be added to audio filters first (before dynaudorm filter) or if it does not really matter.
-- Let me know about shaders profiles you use and other cool shaders.
+- Let me know about shader profiles you use and other cool shaders.
 
 # Inspiration
 - https://github.com/Zabooby/mpv-config
