@@ -31,6 +31,7 @@ Don't worry though I understand 98 percent of the script and bug tested a lot.
 
 This script could use a little more optimization. I don't know if I coded the menu updates properly, but it works pretty well.
 The script syncs with external changes. For example, toggling a shader or anything listed in the menu (deband, aspect ratio, etc) using a keybind shows live changes in the menu.
+Anything that's a reset/default button goes back to what mpv started with (like shaders) or the defaults of the video (like aspect ratio).
 
 Buttons can be added for aspect ratio, deband, and shader profiles by using uosc-video-settings.conf.
 
