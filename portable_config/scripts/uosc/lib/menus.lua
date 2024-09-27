@@ -539,7 +539,6 @@ function open_file_navigation_menu(directory_path, handle_activate, opts)
 		elseif event.type == 'key' then
 			if event.id == 'ctrl+c' and event.selected_item then
 				set_clipboard(event.selected_item.value)
-				mp.commandv('show-text', t('Copied to clipboard') .. ': ' .. event.selected_item.value, 3000)
 			end
 		elseif event.type == 'close' then
 			close()
@@ -811,7 +810,6 @@ function open_open_file_menu()
 				mp.commandv(command, event.value, 'append')
 				local serialized = serialize_path(event.value)
 				local filename = serialized and serialized.basename or event.value
-				mp.commandv('show-text', t('Added to playlist') .. ': ' .. filename, 3000)
 			elseif itable_has({nil, 'ctrl', 'alt', 'alt+ctrl'}, event.modifiers) and itable_has({nil, 'force_open'}, event.action) then
 				mp.commandv(command, event.value)
 				if not event.alt then menu:close() end
@@ -863,7 +861,6 @@ function create_track_loader_menu_opener(opts)
 			load_track(opts.prop, event.value)
 			local serialized = serialize_path(event.value)
 			local filename = serialized and serialized.basename or event.value
-			mp.commandv('show-text', opts.loaded_message .. ': ' .. filename, 3000)
 			if not event.alt then menu:close() end
 		end
 
