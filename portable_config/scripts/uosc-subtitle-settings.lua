@@ -1,6 +1,11 @@
+local options = {}
+
 local script_name = mp.get_script_name()
 
 mp.utils = require "mp.utils"
+mp.options = require "mp.options"
+mp.options.read_options(options, "uosc-video-settings", function()
+end)
 
 function command(str)
     return string.format("script-message-to %s %s", script_name, str)
@@ -8,27 +13,28 @@ end
 
 local size = mp.get_property_number("sub-scale")
 local delay = mp.get_property_number("sub-delay")
+local ass_override
 local blend
 local fix_timing
 
-function get_value_hint(property)
-    local value = mp.get_property_number(property)
-    if property == "sub-scale" then
-        if math.abs(value - 1) > 0.00001 then
-            return string.format("%.2f", value)
+function create_menu_data()
+    local function get_value_hint(property)
+        local value = mp.get_property_number(property)
+        if property == "sub-scale" then
+            if math.abs(value - 1) > 0.00001 then
+                return string.format("%.2f", value)
+            else
+                return nil
+            end
         else
-            return nil
-        end
-    else
-        if math.abs(value) > 0.00001 then
-            return value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)
-        else
-            return nil
+            if math.abs(value) > 0.00001 then
+                return value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)
+            else
+                return nil
+            end
         end
     end
-end
 
-function create_menu_data()
     local items = {{
         title = "Size",
         hint = get_value_hint("sub-scale"),
@@ -60,6 +66,29 @@ function create_menu_data()
             muted = true
         }}
     }, {
+        title = "ASS override",
+        items = {{
+            title = "Off",
+            icon = ass_override == "no" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("adjust-ass-override off")
+        }, {
+            title = "On",
+            icon = ass_override == "yes" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("adjust-ass-override on")
+        }, {
+            title = "Scale",
+            icon = ass_override == "scale" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("adjust-ass-override scale")
+        }, {
+            title = "Force",
+            icon = ass_override == "force" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("adjust-ass-override force")
+        }, {
+            title = "Strip",
+            icon = ass_override == "strip" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("adjust-ass-override strip")
+        }}
+    }, {
         title = "Blend",
         items = {{
             title = "Off",
@@ -76,7 +105,7 @@ function create_menu_data()
         }}
     }, {
         title = "Fix timing",
-        value = command("toggle-sub-fix-timing"),
+        value = command("toggle-fix-timing"),
         icon = fix_timing == true and "check_box" or "check_box_outline_blank"
     }}
     return {
@@ -116,6 +145,20 @@ mp.register_script_message("adjust-delay", function(arg)
     end
 end)
 
+mp.register_script_message("adjust-ass-override", function(value)
+    if value == "off" then
+        mp.set_property("sub-ass-override", "no")
+    elseif value == "on" then
+        mp.set_property("sub-ass-override", "yes")
+    elseif value == "scale" then
+        mp.set_property("sub-ass-override", "scale")
+    elseif value == "force" then
+        mp.set_property("sub-ass-override", "force")
+    elseif value == "strip" then
+        mp.set_property("sub-ass-override", "strip")
+    end
+end)
+
 mp.register_script_message("adjust-blend", function(value)
     if value == "off" then
         mp.set_property("blend-subtitles", "no")
@@ -126,7 +169,7 @@ mp.register_script_message("adjust-blend", function(value)
     end
 end)
 
-mp.register_script_message("toggle-sub-fix-timing", function(arg)
+mp.register_script_message("toggle-fix-timing", function(arg)
     local current_timing = mp.get_property_bool("sub-fix-timing")
 
     if current_timing then
@@ -136,16 +179,11 @@ mp.register_script_message("toggle-sub-fix-timing", function(arg)
     end
 end)
 
-mp.add_forced_key_binding(nil, "open-menu", function()
-    local json = mp.utils.format_json(create_menu_data())
-    mp.commandv("script-message-to", "uosc", "open-menu", json)
-end)
-
 -- Add property observers
 mp.observe_property("sub-scale", "number", update_menu)
 mp.observe_property("sub-delay", "number", update_menu)
-mp.observe_property("sub-fix-timing", "bool", function(name, value)
-    fix_timing = value
+mp.observe_property("sub-ass-override", "string", function(name, value)
+    ass_override = value
 
     update_menu()
 end)
@@ -153,4 +191,15 @@ mp.observe_property("blend-subtitles", "string", function(name, value)
     blend = value
 
     update_menu()
+end)
+mp.observe_property("sub-fix-timing", "bool", function(name, value)
+    fix_timing = value
+
+    update_menu()
+end)
+
+-- Main execution/binding
+mp.add_forced_key_binding(nil, "open-menu", function()
+    local json = mp.utils.format_json(create_menu_data())
+    mp.commandv("script-message-to", "uosc", "open-menu", json)
 end)
