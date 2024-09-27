@@ -11,7 +11,13 @@ local options = {
     show_custom_if_no_default_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
-    hide_aspect_profile_if_matches_default = false
+    hide_aspect_profile_if_matches_default = false,
+
+    brightness_increment = 0.25,
+    contrast_increment = 0.25,
+    saturation_increment = 0.25,
+    gamma_increment = 0.25,
+    hue_increment = 0.25
 }
 
 local script_name = mp.get_script_name()
@@ -166,12 +172,15 @@ function create_menu_data()
     end
 
     local function create_adjustment_items(prop)
+        local increment = options[prop .. "_increment"]
         return {{
             title = "Increase",
-            value = command("adjust-color " .. prop .. " 0.25")
+            hint = "+" .. increment,
+            value = command("adjust-color " .. prop .. " " .. increment)
         }, {
             title = "Decrease",
-            value = command("adjust-color " .. prop .. " -0.25")
+            hint = "-" .. increment,
+            value = command("adjust-color " .. prop .. " -" .. increment)
         }, {
             title = "Reset",
             value = command("adjust-color " .. prop .. " reset"),
