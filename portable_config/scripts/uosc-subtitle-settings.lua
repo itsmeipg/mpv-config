@@ -26,20 +26,15 @@ local fix_timing
 function create_menu_data()
     local function get_value_hint(property)
         local value = mp.get_property_number(property)
-        if property == "sub-pos" or property == "secondary-sub-pos" then
-            return string.format("%d", value)
+        if property == "sub-pos" then
+            return value ~= sub_pos and string.format("%d", value) or nil
+        elseif property == "secondary-sub-pos" then
+            return value ~= secondary_sub_pos and string.format("%d", value) or nil
         elseif property == "sub-scale" then
-            if math.abs(value - 1) > 0.00001 then
-                return string.format("%.2f", value)
-            else
-                return nil
-            end
+            return math.abs(value - 1) > 0.00001 and string.format("%.2f", value) or nil
         elseif property == "sub-delay" then
-            if math.abs(value) > 0.00001 then
-                return value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)
-            else
-                return nil
-            end
+            return math.abs(value) > 0.00001 and
+                       (value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)) or nil
         end
     end
 
