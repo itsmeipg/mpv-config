@@ -46,7 +46,7 @@ function create_menu_data()
     local items = {{
         title = "Position",
         items = {{
-            title = "Primary Subtitles",
+            title = "Primary",
             hint = get_value_hint("sub-pos"),
             items = {{
                 title = "Move Up",
@@ -63,7 +63,7 @@ function create_menu_data()
                 muted = true
             }}
         }, {
-            title = "Secondary Subtitles",
+            title = "Secondary",
             hint = get_value_hint("secondary-sub-pos"),
             items = {{
                 title = "Move Up",
