@@ -405,8 +405,6 @@ function update_aspect_state()
         profile.icon = (aspect_state == profile.aspect) and "radio_button_checked" or "radio_button_unchecked"
     end
 
-
-    print("aspect updated!!!!!!!")
     update_menu()
 end
 
