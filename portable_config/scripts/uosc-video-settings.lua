@@ -8,7 +8,7 @@ local options = {
 
     deband_profiles = "",
     include_default_deband_profile = true,
-    show_custom_if_no_default_profile = true,
+    show_custom_if_no_default_profile = false,
 
     aspect_profiles = "16:9,4:3,2.35:1",
     hide_aspect_profile_if_matches_default = false,
