@@ -1,6 +1,6 @@
 local options = {
     pos_increment = 1,
-    size_increment = 0.05,
+    scale_increment = 0.05,
     delay_increment = 0.05
 }
 
@@ -15,10 +15,10 @@ function command(str)
     return string.format("script-message-to %s %s", script_name, str)
 end
 
-local sub_pos = mp.get_property_number("sub-pos")
-local secondary_sub_pos = mp.get_property_number("secondary-sub-pos")
-local size = mp.get_property_number("sub-scale")
-local delay = mp.get_property_number("sub-delay")
+local default_sub_pos = mp.get_property_number("sub-pos")
+local default_sec_sub_pos = mp.get_property_number("secondary-sub-pos")
+local default_scale = mp.get_property_number("sub-scale")
+local default_delay = mp.get_property_number("sub-delay")
 local ass_override
 local blend
 local fix_timing
@@ -27,14 +27,13 @@ function create_menu_data()
     local function get_value_hint(property)
         local value = mp.get_property_number(property)
         if property == "sub-pos" then
-            return value ~= sub_pos and string.format("%d", value) or nil
+            return value ~= default_sub_pos and string.format("%d", value) or nil
         elseif property == "secondary-sub-pos" then
-            return value ~= secondary_sub_pos and string.format("%d", value) or nil
+            return value ~= default_sec_sub_pos and string.format("%d", value) or nil
         elseif property == "sub-scale" then
-            return math.abs(value - 1) > 0.00001 and string.format("%.2f", value) or nil
+            return value ~= default_scale and string.format("%.2f", value) or nil
         elseif property == "sub-delay" then
-            return math.abs(value) > 0.00001 and
-                       (value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)) or nil
+            return value ~= default_delay and string.format("%.2f", value) or nil
         end
     end
 
@@ -76,19 +75,19 @@ function create_menu_data()
             }}
         }}
     }, {
-        title = "Size",
+        title = "Scale",
         hint = get_value_hint("sub-scale"),
         items = {{
             title = "Increase",
-            hint = string.format("+%.2f", options.size_increment),
-            value = command("adjust-size inc")
+            hint = string.format("+%.2f", options.scale_increment),
+            value = command("adjust-scale inc")
         }, {
             title = "Decrease",
-            hint = string.format("-%.2f", options.size_increment),
-            value = command("adjust-size dec")
+            hint = string.format("-%.2f", options.scale_increment),
+            value = command("adjust-scale dec")
         }, {
             title = "Reset",
-            value = command("adjust-size reset"),
+            value = command("adjust-scale reset"),
             italic = true,
             muted = true
         }}
@@ -175,20 +174,20 @@ mp.register_script_message("adjust-pos", function(type, arg)
         local new_value = math.max(0, current - options.pos_increment)
         mp.set_property_number(property, new_value)
     else
-        mp.set_property_number(property, type == "primary" and sub_pos or secondary_sub_pos)
+        mp.set_property_number(property, type == "primary" and default_sub_pos or default_sec_sub_pos)
     end
 end)
 
-mp.register_script_message("adjust-size", function(arg)
+mp.register_script_message("adjust-scale", function(arg)
     local current = mp.get_property_number("sub-scale")
     if arg == "inc" then
-        local new_value = math.min(100, current + options.size_increment)
+        local new_value = math.min(100, current + options.scale_increment)
         mp.set_property_number("sub-scale", new_value)
     elseif arg == "dec" then
-        local new_value = math.max(0, current - options.size_increment)
+        local new_value = math.max(0, current - options.scale_increment)
         mp.set_property_number("sub-scale", new_value)
     else
-        mp.set_property_number("sub-scale", size)
+        mp.set_property_number("sub-scale", default_scale)
     end
 end)
 
@@ -199,7 +198,7 @@ mp.register_script_message("adjust-delay", function(arg)
     elseif arg == "dec" then
         mp.set_property_number("sub-delay", current - options.delay_increment)
     else
-        mp.set_property_number("sub-delay", delay)
+        mp.set_property_number("sub-delay", default_delay)
     end
 end)
 
