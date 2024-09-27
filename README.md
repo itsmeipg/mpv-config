@@ -63,7 +63,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - "dynaudnorm=g=5:f=250:r=0.9:p=0.5"
 - "[loudnorm=I=-16:TP=-3:LRA=4]"
 - "pan=\"stereo|FL=0.707*FC+0.3*FL+0.1*BL+0.1*LFE|FR=0.707*FC+0.3*FR+0.1*BR+0.1*LFE\""
-- "pan=stereo|FL < 1.0*FL + 0.707*FC + 0.707*BL|FR < 1.0*FR + 0.707*FC + 0.707*BR"
+- "pan="stereo|FL < 1.0*FL + 0.707*FC + 0.707*BL|FR < 1.0*FR + 0.707*FC + 0.707*BR""
 - "[loudnorm=i=-14:lra=7:tp=-2]"
 
 # Goals
