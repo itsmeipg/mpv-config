@@ -23,9 +23,12 @@ Minimal but fancy is the goal.
 
 I made these uosc menu scripts myself (any code with a lot of comments means I used AI and don't understand it much).
 Don't worry though I understand 98 percent of the script and bug tested a lot.
+
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
 - [uosc-video-settings] Menu for video settings.
+
+Bug: Won't notice unless you look for it. Sometimes menu does not update (especially with updating the sub delay/anything that can be increased/decreased or toggled) until mouse stops hovering over button that updated menu (then it updates correctly). Might be an issue with how I coded menu updates or uosc itself.
 
 # uosc-video-settings.lua
 
@@ -36,8 +39,6 @@ Anything that's a reset/default button goes back to what mpv started with (like 
 Buttons can be added for aspect ratio, deband, and shader profiles by using uosc-video-settings.conf.
 
 If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
-
-Bug: Won't notice unless you look for it. Sometimes menu does not update (especially with updating the sub delay/anything that can be increased/decreased or toggled) until mouse stops hovering over button that updated menu (then it updates correctly). Might be an issue with how I coded menu updates or uosc itself.
 
 # Shaders
 
@@ -99,5 +100,5 @@ Here are a few audio filters I kind of tested but didn't settle on.
 # Things that bother me
 
 - sub-margin-y can't be set to 49.5.
-- The bug I mentioned in uosc-video-settings.conf.
+- The bug I mentioned about menu updates.
 - No option in uosc to disable OSD text.
