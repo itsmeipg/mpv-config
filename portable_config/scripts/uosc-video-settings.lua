@@ -26,7 +26,6 @@ function command(str)
 end
 
 local aspect_state
-local aspect_profiles = {}
 local original_aspect
 local default_color = {
     brightness = mp.get_property_number("brightness"),
@@ -36,7 +35,6 @@ local default_color = {
     hue = mp.get_property_number("hue")
 }
 local deband_state
-local deband_profiles = {}
 local default_deband = {
     iterations = mp.get_property_number("deband-iterations"),
     threshold = mp.get_property_number("deband-threshold"),
@@ -44,9 +42,11 @@ local default_deband = {
     grain = mp.get_property_number("deband-grain")
 }
 local interpolation
-local default_shaders = mp.get_property_native("glsl-shaders", {})
 local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
-local shader_profiles = {}
+local default_shaders = mp.get_property_native("glsl-shaders", {})
+
+-- Parse aspect profiles
+local aspect_profiles = {}
 
 for ratio in options.aspect_profiles:gmatch("([^,]+)") do
     table.insert(aspect_profiles, {
@@ -57,21 +57,9 @@ for ratio in options.aspect_profiles:gmatch("([^,]+)") do
     })
 end
 
-if options.include_none_shader_profile then
-    table.insert(shader_profiles, {
-        title = "None",
-        value = command("adjust-shaders")
-    })
-end
-
-if options.include_default_shader_profile and #default_shaders > 0 then
-    table.insert(shader_profiles, {
-        title = "Default",
-        value = command("default-shaders")
-    })
-end
-
 -- Parse deband profiles
+local deband_profiles = {}
+
 for profile in options.deband_profiles:gmatch("([^;]+)") do
     local name, settings = profile:match("(.+):(.+)")
     if name and settings then
@@ -88,6 +76,23 @@ for profile in options.deband_profiles:gmatch("([^;]+)") do
             })
         end
     end
+end
+
+-- Include default/none if specified and parse shader profiles
+local shader_profiles = {}
+
+if options.include_none_shader_profile then
+    table.insert(shader_profiles, {
+        title = "None",
+        value = command("adjust-shaders")
+    })
+end
+
+if options.include_default_shader_profile and #default_shaders > 0 then
+    table.insert(shader_profiles, {
+        title = "Default",
+        value = command("default-shaders")
+    })
 end
 
 for profile in options.shader_profiles:gmatch("([^;]+)") do
