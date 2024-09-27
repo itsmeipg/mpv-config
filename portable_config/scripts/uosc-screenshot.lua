@@ -50,7 +50,7 @@ mp.register_script_message("screenshot", function()
     end
 end)
 
--- Main execution/binding
+-- Execution/binding
 mp.add_forced_key_binding(nil, "open-menu", function()
     options.include_subs = false
 
