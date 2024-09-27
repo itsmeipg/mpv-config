@@ -1,4 +1,7 @@
-local options = {}
+local options = {
+    size_increment = 0.05,
+    delay_increment = 0.05
+}
 
 local script_name = mp.get_script_name()
 
@@ -39,10 +42,12 @@ function create_menu_data()
         title = "Size",
         hint = get_value_hint("sub-scale"),
         items = {{
-            title = "Increase (+0.05)",
+            title = "Increase",
+            hint = string.format("+%.2f", options.size_increment),
             value = command("adjust-size inc")
         }, {
-            title = "Decrease (-0.05)",
+            title = "Decrease",
+            hint = string.format("-%.2f", options.size_increment),
             value = command("adjust-size dec")
         }, {
             title = "Reset",
@@ -54,10 +59,12 @@ function create_menu_data()
         title = "Delay",
         hint = get_value_hint("sub-delay"),
         items = {{
-            title = "Increase (+0.05)",
+            title = "Increase",
+            hint = string.format("+%.2f", options.delay_increment),
             value = command("adjust-delay inc")
         }, {
-            title = "Decrease (-0.05)",
+            title = "Decrease",
+            hint = string.format("-%.2f", options.delay_increment),
             value = command("adjust-delay dec")
         }, {
             title = "Reset",
@@ -124,10 +131,10 @@ end
 mp.register_script_message("adjust-size", function(arg)
     local current = mp.get_property_number("sub-scale")
     if arg == "inc" then
-        local new_value = math.min(100, current + 0.05)
+        local new_value = math.min(100, current + options.size_increment)
         mp.set_property_number("sub-scale", new_value)
     elseif arg == "dec" then
-        local new_value = math.max(0, current - 0.05)
+        local new_value = math.max(0, current - options.size_increment)
         mp.set_property_number("sub-scale", new_value)
     else
         mp.set_property_number("sub-scale", size)
@@ -137,9 +144,9 @@ end)
 mp.register_script_message("adjust-delay", function(arg)
     local current = mp.get_property_number("sub-delay")
     if arg == "inc" then
-        mp.set_property_number("sub-delay", current + 0.05)
+        mp.set_property_number("sub-delay", current + options.delay_increment)
     elseif arg == "dec" then
-        mp.set_property_number("sub-delay", current - 0.05)
+        mp.set_property_number("sub-delay", current - options.delay_increment)
     else
         mp.set_property_number("sub-delay", delay)
     end
