@@ -11,7 +11,6 @@ local options = {
     show_custom_if_no_default_profile = false,
 
     aspect_profiles = "16:9,4:3,2.35:1",
-    hide_aspect_profile_if_matches_default = false,
 
     brightness_increment = 0.25,
     contrast_increment = 0.25,
@@ -32,7 +31,6 @@ function command(str)
 end
 
 local aspect_state
-local original_aspect
 local default_color = {
     brightness = mp.get_property_number("brightness"),
     contrast = mp.get_property_number("contrast"),
@@ -141,13 +139,7 @@ function create_menu_data()
     }}
 
     for _, profile in ipairs(aspect_profiles) do
-        local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
-        local profile_ratio = w and h and tonumber(w) / tonumber(h)
-
-        if not (options.hide_aspect_profile_if_matches_default and original_aspect and profile_ratio and
-            math.abs(original_aspect - profile_ratio) < 0.001) then
-            table.insert(aspect_items, profile)
-        end
+        table.insert(aspect_items, profile)
     end
 
     if aspect_state == "custom" then
@@ -393,12 +385,6 @@ function update_aspect_state()
     local width = mp.get_property_number("width")
     local height = mp.get_property_number("height")
 
-    if width and height and height ~= 0 then
-        original_aspect = width / height
-    else
-        original_aspect = nil
-    end
-
     if current_aspect == -1 then
         aspect_state = "default"
     else
@@ -419,11 +405,12 @@ function update_aspect_state()
         profile.icon = (aspect_state == profile.aspect) and "radio_button_checked" or "radio_button_unchecked"
     end
 
+
+    print("aspect updated!!!!!!!")
     update_menu()
 end
 
-mp.observe_property("video-aspect-override", "native", update_aspect_state) -- Updates aspect state for when the video is 16:9 and 16:9 profile is chosen
-mp.observe_property("video-params", "native", update_aspect_state) -- Updates aspect if file changes to different aspect without command (Like loading another file)
+mp.observe_property("video-aspect-override", "native", update_aspect_state)
 
 mp.observe_property("brightness", "number", update_menu)
 mp.observe_property("contrast", "number", update_menu)
