@@ -264,7 +264,7 @@ mp.observe_property("sub-fix-timing", "bool", function(name, value)
     update_menu()
 end)
 
--- Main execution/binding
+-- Execution/binding
 mp.add_forced_key_binding(nil, "open-menu", function()
     local json = mp.utils.format_json(create_menu_data())
     mp.commandv("script-message-to", "uosc", "open-menu", json)
