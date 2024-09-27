@@ -5,7 +5,7 @@
 # Theme
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
-OSD text is removed as much as possible. With the new uosc update, I have removed OSD text completely using osd-level=0 because adding a video to playlist from menu triggers OSD text.
+OSD text is removed as much as possible.
 
 Minimal but fancy is the goal.
 
@@ -52,9 +52,42 @@ Bug: Won't notice unless you look for it. Sometimes menu does not update (especi
 - [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction) Chroma upscaler (TBH I don't see a difference).
 - [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637) Chroma upscaler (I also don't see a difference).
 
-# Goals
+# Inspiration
+https://github.com/Zabooby/mpv-config
+https://github.com/hl2guide/better-mpv-config/tree/master
+https://kokomins.wordpress.com/2019/10/14/mpv-config-guide/#general-mpv-options
+https://iamscum.wordpress.com/guides/videoplayback-guide/mpv-conf/
+https://github.com/mrxdst/webtorrent-mpv-hook#install
+https://www.reddit.com/r/mpv/comments/u429ob/thoughts_on_interpolation_methods/
+https://www.reddit.com/r/mpv/comments/xy7w06/my_mpv_setup_compared_to_some_other_configurations/
+https://github.com/noelsimbolon/mpv-config/blob/windows/mpv.conf
+https://gist.github.com/mdizo/fad84e1f1ca8632a57dc0474e825105c
+https://www.reddit.com/r/mpv/comments/pqyb4i/comment/hdf2xj8/
+https://www.reddit.com/r/mpv/comments/184f4bk/comment/kbk50gy/
+https://www.reddit.com/r/mpv/comments/184f4bk/beginners_advanced_question_mpvconf_profiles/
+https://github.com/xzpyth/mpv-config-FSRCNNX?tab=readme-ov-file
+https://github.com/dyphire/mpv-config/issues/99
+https://www.reddit.com/r/mpv/comments/1d4he0k/auto_volume_leveller/
+https://www.reddit.com/r/mpv/comments/1au7ty2/dynaudnorm_or_loudnorm_audio_filters_for_everyday/
+
+# Possible audio filters
+The script uses "[dynaudnorm=f=250:g=31:p=0.5:m=5:r=0.9:b=1]"
+I heard that the way dynaudorm works is that it compresses audio, so change it if you don't like that.
+
+Here are a few audio filters I kind of tested but didn't settle on.
+
+- "dynaudnorm=g=5:f=250:r=0.9:p=0.5"
+- "[loudnorm=I=-16:TP=-3:LRA=4]"
+- "pan=\"stereo|FL=0.707*FC+0.3*FL+0.1*BL+0.1*LFE|FR=0.707*FC+0.3*FR+0.1*BR+0.1*LFE\""
+- "pan=stereo|FL < 1.0*FL + 0.707*FC + 0.707*BL|FR < 1.0*FR + 0.707*FC + 0.707*BR"
+- "[loudnorm=i=-14:lra=7:tp=-2]"
+
+# Goals/Feedback
 
 - Post on Reddit about my config so people actually use my config and I can get feedback
 - If aspect ratio profile matches default aspect ratio, make an option to hide aspect ratio profile (maybe add hint on default profile button that shows default aspect ratio)
 - Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat
-- Clean mpv.conf
+
+- If there is a way to disable OSD messages from uosc without modifying the sript, let me know.
+- If you would like toggles for audio filters like the shader toggles, let me know.
+- Let me know if sofalizer should be added to audio filters first (before dynaudorm filter) or if it does not really matter.
