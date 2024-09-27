@@ -422,8 +422,8 @@ function update_aspect_state()
     update_menu()
 end
 
-mp.observe_property("video-aspect-override", "native", update_aspect_state)
-mp.observe_property("video-params", "native", update_aspect_state)
+mp.observe_property("video-aspect-override", "native", update_aspect_state) -- Updates aspect state for when the video is 16:9 and 16:9 profile is chosen
+mp.observe_property("video-params", "native", update_aspect_state) -- Updates aspect if file changes to different aspect without command (Like loading another file)
 
 mp.observe_property("brightness", "number", update_menu)
 mp.observe_property("contrast", "number", update_menu)
