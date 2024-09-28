@@ -6,7 +6,6 @@
 # In progress
 
 - Option to change name of default profile.
-- Differentiate profile called "Default" from script default. 
 - 
 - Aspect default profile should be highlighted to what aspect-override was defined in mpv.conf instead of -1.
 - 
