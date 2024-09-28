@@ -5,18 +5,20 @@
 
 # In progress
 
-- Differentiate profile called "Default" from script default. 
-- Don't set profile state to default if show default option is off.
 - Option to change name of default profile.
+- Differentiate profile called "Default" from script default. 
+- 
+- Aspect default profile should be highlighted to what aspect-override was defined in mpv.conf instead of -1.
+- 
 - Option to add external shaders outside of shader directory to list of inactive shaders.
+- 
 - Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles.
-- Test if audio-normalize-downmix has an effect on sofalizer.
+
 - Fix custom buttons
 - Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults
-
-- Replace radio icons with active item state for profiles and implement fix for rendering active button in preview.
-
+- 
 - Increase proximity to bring up timline/buttons/title a little more
+- Test if audio-normalize-downmix has an effect on sofalizer.
 
 # Theme
 
