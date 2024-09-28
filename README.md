@@ -14,6 +14,7 @@
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Fix custom buttons
 - Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults
+- Add badge to chapters button
 
 # Theme
 
