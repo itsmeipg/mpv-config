@@ -3,6 +3,14 @@
 ![Screenshot2](https://github.com/user-attachments/assets/1c6c8446-d010-4824-a788-7f0f7ff465b8)
 ![Screenshot3](https://github.com/user-attachments/assets/a445d1bd-188c-44ad-945a-ce0888c3c0f8)
 
+# In progress
+
+- Differentiate profile called "Default" from script default. 
+- Don't set profile state to default if show default option is off.
+- Option to change name of default profile.
+- Add option to add external shaders outside of shader directory to list of inactive shaders.
+- Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles
+- Replace radio icons with active item state for profiles and implement fix for rendering active button in preview.
 
 # Theme
 
