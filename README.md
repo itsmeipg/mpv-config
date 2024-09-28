@@ -18,7 +18,6 @@
 - 
 - Increase proximity to bring up timline/buttons/title a little more
 - Test if audio-normalize-downmix has an effect on sofalizer.
-- Use hash? (I'm not an advanced coder) to refer to profile instead of string to differentiate between two profiles with the same name.
 
 # Theme
 
@@ -56,9 +55,9 @@ Anything that's a reset/default button goes back to what mpv started with (like 
 
 Buttons can be added for aspect ratio, deband, and shader profiles by using uosc-video-settings.conf.
 
-If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
+- Advanced functionality below
 
-If profile matches default, profile will take priority and be highlighted.
+If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
 # Shaders
 
