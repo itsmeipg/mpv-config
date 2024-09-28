@@ -55,8 +55,6 @@ Anything that's a reset/default button goes back to what mpv started with (like 
 
 Buttons can be added for aspect ratio, deband, and shader profiles by using uosc-video-settings.conf.
 
-- Advanced functionality below
-
 If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
 # Shaders
