@@ -46,6 +46,7 @@ local default_deband = {
     grain = mp.get_property_number("deband-grain")
 }
 local interpolation
+local shader_state = ""
 local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
 local default_shaders = mp.get_property_native("glsl-shaders", {})
 
@@ -86,20 +87,7 @@ end
 -- Include default/none if specified and parse shader profiles
 local shader_profiles = {}
 
-if options.include_none_shader_profile then
-    table.insert(shader_profiles, {
-        title = "None",
-        value = command("adjust-shaders")
-    })
-end
-
-if options.include_default_shader_profile and #default_shaders > 0 then
-    table.insert(shader_profiles, {
-        title = "Default",
-        value = command("default-shaders")
-    })
-end
-
+-- Parse shader profiles
 for profile in options.shader_profiles:gmatch("([^;]+)") do
     local name, shaders = profile:match("(.+):(.+)")
     if name and shaders then
@@ -118,6 +106,7 @@ for profile in options.shader_profiles:gmatch("([^;]+)") do
 
         table.insert(shader_profiles, {
             title = name,
+            icon = "radio_button_unchecked",
             value = command("adjust-shaders " .. ("%q"):format(table.concat(shader_list, ",")))
         })
     end
@@ -246,9 +235,38 @@ function create_menu_data()
 
     -- Shaders
     -- Shader profiles
+    local shader_profile_items = {}
+
+    -- Add "None" option if specified
+    if options.include_none_shader_profile then
+        table.insert(shader_profile_items, {
+            title = "None",
+            icon = shader_state == "none" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("adjust-shaders")
+        })
+    end
+
+    -- Add "Default" option if specified
+    if options.include_default_shader_profile and #default_shaders > 0 then
+        table.insert(shader_profile_items, {
+            title = "Default",
+            icon = shader_state == "default" and "radio_button_checked" or "radio_button_unchecked",
+            value = command("default-shaders")
+        })
+    end
+
+    -- Add other shader profiles
+    for _, profile in ipairs(shader_profiles) do
+        table.insert(shader_profile_items, {
+            title = profile.title,
+            icon = profile.icon,
+            value = profile.value
+        })
+    end
+
     table.insert(items, {
         title = "Shader profiles",
-        items = shader_profiles
+        items = shader_profile_items
     })
 
     -- List shaders
@@ -350,13 +368,12 @@ mp.register_script_message("toggle-interpolation", function()
 end)
 
 mp.register_script_message("adjust-shaders", function(shader_list)
-    -- Process the shader_list string
     local profile_shaders = {}
 
     if shader_list ~= nil and shader_list ~= "" then
         for shader in shader_list:gmatch("([^,]+)") do
-            local trimmed_shader = shader:match("^%s*(.-)%s*$") -- Trim whitespace
-            if trimmed_shader ~= "" then -- Ensure it's not empty
+            local trimmed_shader = shader:match("^%s*(.-)%s*$")
+            if trimmed_shader ~= "" then
                 table.insert(profile_shaders, trimmed_shader)
             end
         end
@@ -460,7 +477,59 @@ mp.observe_property("interpolation", "bool", function(name, value)
     update_menu()
 end)
 
-mp.observe_property("glsl-shaders", "native", update_menu)
+function update_shader_state()
+    local current_shaders = mp.get_property_native("glsl-shaders", {})
+
+    -- Function to compare two tables of shaders
+    local function compare_shaders(shaders1, shaders2)
+        if #shaders1 ~= #shaders2 then
+            return false
+        end
+        for i, shader in ipairs(shaders1) do
+            if shader ~= shaders2[i] then
+                return false
+            end
+        end
+        return true
+    end
+
+    if #current_shaders == 0 then
+        shader_state = "none"
+    elseif compare_shaders(current_shaders, default_shaders) then
+        shader_state = "default"
+    else
+        shader_state = "custom"
+    end
+
+    -- Check if current shaders match any profile
+    for _, profile in ipairs(shader_profiles) do
+        local profile_shaders = {}
+        if profile.value:find("adjust%-shaders%s+(.+)") then
+            local shader_list = profile.value:match("adjust%-shaders%s+(.+)")
+            for shader in shader_list:gsub('"', ''):gmatch("([^,]+)") do
+                local trimmed_shader = shader:match("^%s*(.-)%s*$")
+                if options.expand_profile_shader_path then
+                    trimmed_shader = mp.utils.join_path(options.shader_path, trimmed_shader)
+                end
+                table.insert(profile_shaders, trimmed_shader)
+            end
+        end
+
+        if compare_shaders(current_shaders, profile_shaders) then
+            shader_state = profile.title
+            break
+        end
+    end
+
+    -- Update icons
+    for _, profile in ipairs(shader_profiles) do
+        profile.icon = (shader_state == profile.title) and "radio_button_checked" or "radio_button_unchecked"
+    end
+
+    update_menu()
+end
+
+mp.observe_property("glsl-shaders", "native", update_shader_state)
 
 -- Execution/binding
 mp.add_key_binding(nil, "open-menu", function()
