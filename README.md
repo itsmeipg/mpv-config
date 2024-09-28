@@ -15,6 +15,7 @@
 - Fix custom buttons
 - Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults
 - Add badge to chapters button
+- Might remove playlist button on bottom right since it exists in the top left anyway
 
 # Theme
 
