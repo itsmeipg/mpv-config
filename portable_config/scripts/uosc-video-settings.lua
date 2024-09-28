@@ -525,7 +525,9 @@ function update_shader_state()
         end
 
         if compare_shaders(current_shaders, profile_shaders) then
-            profile_match = true
+            if not profile_match then
+                profile_match = true
+            end
             profile.active = true
         else
             profile.active = false
