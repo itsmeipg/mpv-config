@@ -56,6 +56,8 @@ Buttons can be added for aspect ratio, deband, and shader profiles by using uosc
 
 If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
+If profile matches default, profile will take priority and be highlighted.
+
 # Shaders
 
 - [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable. I don't have a 4K monitor, but less artifacts downscaling to 1440p than on 1080p. Individual shader modes sourced from [Anime4K-GUI](https://github.com/mikigal/Anime4K-GUI/tree/master/resources/shaders) so less clutter in shaders folder.
