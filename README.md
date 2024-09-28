@@ -11,6 +11,7 @@
 - Option to add external shaders outside of shader directory to list of inactive shaders.
 - Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles.
 - Replace radio icons with active item state for profiles and implement fix for rendering active button in preview.
+- Test if audio-normalize-downmix has an effect on sofalizer.
 
 # Theme
 
