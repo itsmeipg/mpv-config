@@ -19,6 +19,7 @@
 - 
 - Increase proximity to bring up timline/buttons/title a little more
 - Test if audio-normalize-downmix has an effect on sofalizer.
+- Use hash? (I'm not an advanced coder) to refer to profile instead of string to differentiate between two profiles with the same name.
 
 # Theme
 
