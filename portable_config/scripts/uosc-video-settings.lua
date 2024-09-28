@@ -46,7 +46,7 @@ local default_deband = {
     grain = mp.get_property_number("deband-grain")
 }
 local interpolation
-local shader_state = ""
+local shader_state
 local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
 local default_shaders = mp.get_property_native("glsl-shaders", {})
 
