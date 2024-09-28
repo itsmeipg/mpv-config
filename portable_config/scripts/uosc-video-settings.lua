@@ -454,6 +454,24 @@ function update_deband_state()
     local is_default = deband_enabled and iterations == default_deband.iterations and threshold ==
                            default_deband.threshold and range == default_deband.range and grain == default_deband.grain
 
+    local profile_match = false
+
+    for _, profile in ipairs(deband_profiles) do
+        local is_active = deband_enabled and profile.iterations == iterations and profile.threshold == threshold and
+                              profile.range == range and profile.grain == grain
+
+        if is_active then
+            if not profile_match then
+                profile_match = true
+            end
+            profile.active = true
+        else
+            profile.active = false
+        end
+    end
+
+    deband_state = "profile"
+
     if not deband_enabled then
         deband_state = "off"
     elseif is_default and options.include_default_deband_profile then
@@ -462,17 +480,6 @@ function update_deband_state()
         deband_state = "no custom"
     else
         deband_state = "custom"
-    end
-
-    for _, profile in ipairs(deband_profiles) do
-        local is_active = deband_enabled and profile.iterations == iterations and profile.threshold == threshold and
-                              profile.range == range and profile.grain == grain
-
-        profile.active = is_active and true or false
-
-        if is_active then
-            deband_state = profile.title
-        end
     end
 
     update_menu()
@@ -490,9 +497,9 @@ mp.observe_property("interpolation", "bool", function(name, value)
 end)
 
 function update_shader_state()
+    -- Function to compare two tables of shaders
     local current_shaders = mp.get_property_native("glsl-shaders", {})
 
-    -- Function to compare two tables of shaders
     local function compare_shaders(shaders1, shaders2)
         if #shaders1 ~= #shaders2 then
             return false
