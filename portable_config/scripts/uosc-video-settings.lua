@@ -58,7 +58,7 @@ for profile in options.aspect_profiles:gmatch("([^,]+)") do
     table.insert(aspect_profiles, {
         title = aspect:match("^%s*(.-)%s*$"),
         aspect = aspect:match("^%s*(.-)%s*$"),
-        icon = "radio_button_unchecked",
+        active = false,
         value = command("set-aspect " .. aspect:match("^%s*(.-)%s*$"))
     })
 end
@@ -77,7 +77,7 @@ for profile in options.deband_profiles:gmatch("([^;]+)") do
                 threshold = tonumber(threshold),
                 range = tonumber(range),
                 grain = tonumber(grain),
-                icon = "radio_button_unchecked",
+                active = false,
                 value = command("adjust-deband " .. iterations .. "," .. threshold .. "," .. range .. "," .. grain)
             })
         end
@@ -106,7 +106,7 @@ for profile in options.shader_profiles:gmatch("([^;]+)") do
 
         table.insert(shader_profiles, {
             title = name,
-            icon = "radio_button_unchecked",
+            active = false,
             value = command("adjust-shaders " .. ("%q"):format(table.concat(shader_list, ",")))
         })
     end
@@ -123,7 +123,7 @@ function create_menu_data()
     -- Aspect Ratio
     local aspect_items = {{
         title = "Default",
-        icon = aspect_state == "default" and "radio_button_checked" or "radio_button_unchecked",
+        active = aspect_state == "default" and true or false,
         value = command("set-aspect -1")
     }}
 
@@ -134,8 +134,8 @@ function create_menu_data()
     if aspect_state == "custom" then
         table.insert(aspect_items, {
             title = "Custom",
-            icon = "radio_button_checked",
-            value = command("set-aspect")
+            active = true,
+            selectable = false
         })
     end
 
@@ -195,11 +195,11 @@ function create_menu_data()
     -- Deband
     local deband_items = {{
         title = "Off",
-        icon = deband_state == "off" and "radio_button_checked" or "radio_button_unchecked",
+        active = deband_state == "off" and true or false,
         value = command("adjust-deband off")
     }, options.include_default_deband_profile and {
         title = "Default",
-        icon = deband_state == "default" and "radio_button_checked" or "radio_button_unchecked",
+        active = deband_state == "default" and true or false,
         value = command("adjust-deband default")
     } or nil}
 
@@ -211,8 +211,8 @@ function create_menu_data()
     if deband_state == "custom" then
         table.insert(deband_items, {
             title = "Custom",
-            icon = "radio_button_checked",
-            value = command("adjust-deband")
+            active = true,
+            selectable = false
         })
     end
 
@@ -241,7 +241,7 @@ function create_menu_data()
     if options.include_none_shader_profile then
         table.insert(shader_profile_items, {
             title = "None",
-            icon = shader_state == "none" and "radio_button_checked" or "radio_button_unchecked",
+            active = shader_state == "none" and true or false,
             value = command("adjust-shaders")
         })
     end
@@ -250,17 +250,26 @@ function create_menu_data()
     if options.include_default_shader_profile and #default_shaders > 0 then
         table.insert(shader_profile_items, {
             title = "Default",
-            icon = shader_state == "default" and "radio_button_checked" or "radio_button_unchecked",
+            active = shader_state == "default" and true or false,
             value = command("default-shaders")
         })
     end
 
     -- Add other shader profiles
+    -- If profile matches default, profile will take priority and be highlighted.
     for _, profile in ipairs(shader_profiles) do
         table.insert(shader_profile_items, {
             title = profile.title,
-            icon = profile.icon,
+            active = profile.active,
             value = profile.value
+        })
+    end
+
+    if shader_state == "custom" then
+        table.insert(shader_profile_items, {
+            title = "Custom",
+            active = true,
+            selectable = false
         })
     end
 
@@ -312,6 +321,9 @@ function update_menu()
 end
 
 -- Message handlers
+mp.register_script_message("do-nothing", function()
+end)
+
 mp.register_script_message("set-aspect", function(aspect)
     mp.set_property("video-aspect-override", aspect)
 end)
@@ -377,11 +389,11 @@ mp.register_script_message("adjust-shaders", function(shader_list)
                 table.insert(profile_shaders, trimmed_shader)
             end
         end
-    end
 
-    if options.expand_profile_shader_path then
-        for i, shader in ipairs(profile_shaders) do
-            profile_shaders[i] = mp.utils.join_path(options.shader_path, shader)
+        if options.expand_profile_shader_path then
+            for i, shader in ipairs(profile_shaders) do
+                profile_shaders[i] = mp.utils.join_path(options.shader_path, shader)
+            end
         end
     end
 
@@ -419,7 +431,7 @@ function update_aspect_state()
     end
 
     for _, profile in ipairs(aspect_profiles) do
-        profile.icon = (aspect_state == profile.aspect) and "radio_button_checked" or "radio_button_unchecked"
+        profile.active = (aspect_state == profile.aspect) and true or false
     end
 
     update_menu()
@@ -447,7 +459,7 @@ function update_deband_state()
     elseif is_default and options.include_default_deband_profile then
         deband_state = "default"
     elseif not options.show_custom_if_no_default_profile then
-        deband_state = "no custom default"
+        deband_state = "no custom"
     else
         deband_state = "custom"
     end
@@ -456,7 +468,7 @@ function update_deband_state()
         local is_active = deband_enabled and profile.iterations == iterations and profile.threshold == threshold and
                               profile.range == range and profile.grain == grain
 
-        profile.icon = is_active and "radio_button_checked" or "radio_button_unchecked"
+        profile.active = is_active and true or false
 
         if is_active then
             deband_state = profile.title
@@ -493,37 +505,41 @@ function update_shader_state()
         return true
     end
 
-    if #current_shaders == 0 then
-        shader_state = "none"
-    elseif compare_shaders(current_shaders, default_shaders) then
-        shader_state = "default"
-    else
-        shader_state = "custom"
-    end
+    -- Check if current shaders match any profile, then update profile
+    local profile_match = false
 
-    -- Check if current shaders match any profile
     for _, profile in ipairs(shader_profiles) do
         local profile_shaders = {}
+
         if profile.value:find("adjust%-shaders%s+(.+)") then
             local shader_list = profile.value:match("adjust%-shaders%s+(.+)")
             for shader in shader_list:gsub('"', ''):gmatch("([^,]+)") do
                 local trimmed_shader = shader:match("^%s*(.-)%s*$")
+
                 if options.expand_profile_shader_path then
                     trimmed_shader = mp.utils.join_path(options.shader_path, trimmed_shader)
                 end
+
                 table.insert(profile_shaders, trimmed_shader)
             end
         end
 
         if compare_shaders(current_shaders, profile_shaders) then
-            shader_state = profile.title
-            break
+            profile_match = true
+            profile.active = true
+        else
+            profile.active = false
         end
     end
 
-    -- Update icons
-    for _, profile in ipairs(shader_profiles) do
-        profile.icon = (shader_state == profile.title) and "radio_button_checked" or "radio_button_unchecked"
+    shader_state = "profile"
+
+    if #current_shaders == 0 then
+        shader_state = "none"
+    elseif compare_shaders(current_shaders, default_shaders) then
+        shader_state = "default"
+    elseif not profile_match then
+        shader_state = "custom"
     end
 
     update_menu()
