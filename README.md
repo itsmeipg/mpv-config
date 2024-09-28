@@ -73,7 +73,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - ~~Add options to set the increase/decrease steps for each color setting.~~
 - ~~Hide primary and secondary sub-pos values if default.~~
 - ~~Optimize video aspect updates.~~
-- Add radio buttons to show which shader profile is being used.
+- ~~Add radio buttons to show which shader profile is being used.~~
 - Maybe add .conf for uosc-screenshot.lua.
 - Maybe adjust playlist opacity of the thing on the top left.
 
