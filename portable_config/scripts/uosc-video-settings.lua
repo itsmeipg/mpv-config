@@ -411,28 +411,35 @@ end)
 
 -- Property observers
 function update_aspect_state()
-    local current_aspect = mp.get_property_number("video-aspect-override")
+    local current_aspect_value = mp.get_property_number("video-aspect-override")
     local width = mp.get_property_number("width")
     local height = mp.get_property_number("height")
 
-    if current_aspect == -1 then
-        aspect_state = "off"
-    else
-        aspect_state = "custom"
-        for _, profile in ipairs(aspect_profiles) do
-            local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
-            if w and h then
-                local ratio_value = tonumber(w) / tonumber(h)
-                if math.abs(current_aspect - ratio_value) < 0.001 then
-                    aspect_state = profile.aspect
-                    break
+    local profile_match = false
+
+    for _, profile in ipairs(aspect_profiles) do
+        local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
+        if w and h then
+            local profile_aspect_value = tonumber(w) / tonumber(h)
+            local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
+
+            if is_active then
+                if not profile_match then
+                    profile_match = true
                 end
+                profile.active = true
+            else
+                profile.active = false
             end
         end
     end
 
-    for _, profile in ipairs(aspect_profiles) do
-        profile.active = (aspect_state == profile.aspect) and true or false
+    aspect_state = "profile"
+
+    if current_aspect_value == -1 then
+        aspect_state = "off"
+    elseif options.show_custom_deband_profile and not profile_match then
+        aspect_state = "custom"
     end
 
     update_menu()
