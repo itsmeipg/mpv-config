@@ -120,10 +120,10 @@ end
 function create_menu_data()
     local items = {}
 
-    -- Aspect Ratio
+    -- Aspect override
     local aspect_items = {{
-        title = "Default",
-        active = aspect_state == "default" and true or false,
+        title = "Off",
+        active = aspect_state == "off" and true or false,
         value = command("set-aspect -1")
     }}
 
@@ -140,7 +140,7 @@ function create_menu_data()
     end
 
     table.insert(items, {
-        title = "Aspect ratio",
+        title = "Aspect override",
         items = aspect_items
     })
 
@@ -415,7 +415,7 @@ function update_aspect_state()
     local height = mp.get_property_number("height")
 
     if current_aspect == -1 then
-        aspect_state = "default"
+        aspect_state = "off"
     else
         aspect_state = "custom"
         for _, profile in ipairs(aspect_profiles) do
@@ -497,7 +497,6 @@ mp.observe_property("interpolation", "bool", function(name, value)
 end)
 
 function update_shader_state()
-    -- Function to compare two tables of shaders
     local current_shaders = mp.get_property_native("glsl-shaders", {})
 
     local function compare_shaders(shaders1, shaders2)
