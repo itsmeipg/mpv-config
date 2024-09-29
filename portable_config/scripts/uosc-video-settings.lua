@@ -407,8 +407,8 @@ mp.register_script_message("toggle-shader", function(shader_path)
 end)
 
 -- Property observers
-function update_aspect_state()
-    local current_aspect_value = mp.get_property_number("video-aspect-override")
+function update_aspect(value)
+    local current_aspect_value = value
     local width = mp.get_property_number("width")
     local height = mp.get_property_number("height")
 
@@ -431,18 +431,27 @@ function update_aspect_state()
         end
     end
 
-    aspect_state = "profile"
+    local new_aspect_state
 
-    if current_aspect_value == -1 then
-        aspect_state = "off"
-    elseif options.show_custom_aspect_profile and not profile_match then
-        aspect_state = "custom"
+    if profile_match then
+        new_aspect_state = "profile"
+    elseif current_aspect_value == -1 then
+        new_aspect_state = "off"
+    elseif options.show_custom_aspect_profile then
+        new_aspect_state = "custom"
     end
 
-    update_menu()
+    local aspect_state_change = new_aspect_state ~= aspect_state
+
+    if aspect_state_change then
+        aspect_state = new_aspect_state
+    end
 end
 
-mp.observe_property("video-aspect-override", "native", update_aspect_state)
+mp.observe_property("video-aspect-override", "number", function(name, value)
+    update_aspect(value)
+    update_menu()
+end)
 
 mp.observe_property("brightness", "number", update_menu)
 mp.observe_property("contrast", "number", update_menu)
@@ -450,7 +459,7 @@ mp.observe_property("saturation", "number", update_menu)
 mp.observe_property("gamma", "number", update_menu)
 mp.observe_property("hue", "number", update_menu)
 
-function update_deband_state()
+function update_deband()
     local deband_enabled = mp.get_property_bool("deband")
     local iterations = mp.get_property_number("deband-iterations")
     local threshold = mp.get_property_number("deband-threshold")
@@ -495,23 +504,22 @@ function update_deband_state()
     end
 
     if deband_state_change or profile_change then
-        print("Updating menu")
         update_menu()
     end
 end
 
-mp.observe_property("deband", "bool", update_deband_state)
-mp.observe_property("deband-iterations", "number", update_deband_state)
-mp.observe_property("deband-threshold", "number", update_deband_state)
-mp.observe_property("deband-range", "number", update_deband_state)
-mp.observe_property("deband-grain", "number", update_deband_state)
+mp.observe_property("deband", "bool", update_deband)
+mp.observe_property("deband-iterations", "number", update_deband)
+mp.observe_property("deband-threshold", "number", update_deband)
+mp.observe_property("deband-range", "number", update_deband)
+mp.observe_property("deband-grain", "number", update_deband)
 
 mp.observe_property("interpolation", "bool", function(name, value)
     interpolation = value
     update_menu()
 end)
 
-function update_shader_profiles(value)
+function update_shaders(value)
     local current_shaders = value
 
     local function compare_shaders(shaders1, shaders2)
@@ -575,7 +583,7 @@ function update_shader_profiles(value)
 end
 
 mp.observe_property("glsl-shaders", "native", function(name, value)
-    update_shader_profiles(value)
+    update_shaders(value)
     update_menu()
 end)
 -- Execution/binding
