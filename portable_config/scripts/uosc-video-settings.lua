@@ -5,6 +5,7 @@ local options = {
     expand_profile_shader_path = true,
     include_none_shader_profile = true,
     include_default_shader_profile = true,
+    show_custom_shader_profile = false,
 
     deband_profiles = "",
     include_default_deband_profile = true,
@@ -546,7 +547,7 @@ function update_shader_state()
         shader_state = "none"
     elseif compare_shaders(current_shaders, default_shaders) then
         shader_state = "default"
-    elseif not profile_match then
+    elseif options.show_custom_shader_profile and not profile_match then
         shader_state = "custom"
     end
 
