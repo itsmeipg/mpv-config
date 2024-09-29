@@ -5,13 +5,14 @@ local options = {
     expand_profile_shader_path = true,
     include_none_shader_profile = true,
     include_default_shader_profile = true,
-    show_custom_shader_profile = false,
+    show_custom_shader_profile = true,
 
     deband_profiles = "",
     include_default_deband_profile = true,
-    show_custom_deband_profile = false,
+    show_custom_deband_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
+    show_custom_aspect_profile = true,
 
     brightness_increment = 0.25,
     contrast_increment = 0.25,
@@ -438,7 +439,7 @@ function update_aspect_state()
 
     if current_aspect_value == -1 then
         aspect_state = "off"
-    elseif options.show_custom_deband_profile and not profile_match then
+    elseif options.show_custom_aspect_profile and not profile_match then
         aspect_state = "custom"
     end
 
