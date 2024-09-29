@@ -5,9 +5,9 @@
 
 # In progress
 
-- Put shader profiles + separator + shader list into a submenu called shaders.
-- Create toggle for deband and remove off profile.
-- Put shader profiles and  list of active shaders
+- Combine shader profiles + separator + shader list into a submenu called shaders.
+- Replace deband off profile into a toggle for deband on/off (like interpolation), then combine profiles with list of iterations-threshold-range-grain in non-selectable buttons.
+- Put shader profiles and list of active shaders into submenu called Shaders.
 - Clean up menu creation function.
 - Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
 - Work on uosc-subtitle-settings.lua. Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. Replace radio buttons with active state. Clean up code logic.
