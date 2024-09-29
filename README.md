@@ -5,6 +5,7 @@
 
 # In progress
 
+- Add titles to aspect profiles
 - Combine shader profiles + separator + shader list into a submenu called shaders.
 - Replace deband off profile into a toggle for deband on/off (like interpolation), then combine profiles with list of iterations-threshold-range-grain in non-selectable buttons.
 - Put shader profiles and list of active shaders into submenu called Shaders.
