@@ -5,10 +5,13 @@ local options = {
     expand_profile_shader_path = true,
     include_none_shader_profile = true,
     include_default_shader_profile = true,
+    none_shader_profile_name = "None",
+    default_shader_profile_name = "Default",
     show_custom_shader_profile = true,
 
     deband_profiles = "",
     include_default_deband_profile = true,
+    default_deband_profile_name = "Default",
     show_custom_deband_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
@@ -200,7 +203,7 @@ function create_menu_data()
         active = deband_state == "off" and true or false,
         value = command("adjust-deband off")
     }, options.include_default_deband_profile and {
-        title = "Default",
+        title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
         active = deband_state == "default" and true or false,
         value = command("adjust-deband default")
     } or nil}
@@ -242,7 +245,7 @@ function create_menu_data()
     -- Add "None" option if specified
     if options.include_none_shader_profile then
         table.insert(shader_profile_items, {
-            title = "None",
+            title = options.none_shader_profile_name:match("^%s*(.-)%s*$"),
             active = shader_state == "none" and true or false,
             value = command("adjust-shaders")
         })
@@ -251,7 +254,7 @@ function create_menu_data()
     -- Add "Default" option if specified
     if options.include_default_shader_profile and #default_shaders > 0 then
         table.insert(shader_profile_items, {
-            title = "Default",
+            title = options.default_shader_profile_name:match("^%s*(.-)%s*$"),
             active = shader_state == "default" and true or false,
             value = command("default-shaders")
         })
