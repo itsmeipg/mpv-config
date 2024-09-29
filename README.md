@@ -5,17 +5,13 @@
 
 # In progress
 
-- Option to change name of default profile.
-- 
-- Option to add external shaders outside of shader directory to list of inactive shaders.
-- 
-- Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles.
-
-- Fix custom buttons.
-- Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults.
-- 
-- Increase proximity to bring up timline/buttons/title a little more.
-- Test if audio-normalize-downmix has an effect on sofalizer.
+- Fix custom buttons. (Will continue tomorrow. Almost done)
+- Option to change name of default profile. (Easy)
+- Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles. (Easy)
+- Option to add external shaders outside of shader directory to list of inactive shaders. (Medium)
+- Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. (Medium. Only an issue in uosc-subtitle-settings.conf)
+- Increase proximity to bring up timeline/buttons/title a little more. (Easy)
+- Test if audio-normalize-downmix has an effect on sofalizer. (Medium)
 
 # Theme
 
