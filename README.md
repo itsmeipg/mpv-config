@@ -7,8 +7,6 @@
 
 - Option to change name of default profile.
 - 
-- Aspect default profile should be highlighted to what aspect-override was defined in mpv.conf instead of -1.
-- 
 - Option to add external shaders outside of shader directory to list of inactive shaders.
 - 
 - Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles.
