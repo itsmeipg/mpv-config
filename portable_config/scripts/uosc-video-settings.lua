@@ -420,13 +420,12 @@ function update_aspect(value)
             local profile_aspect_value = tonumber(w) / tonumber(h)
             local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
 
-            if is_active then
-                if not profile_match then
-                    profile_match = true
-                end
-                profile.active = true
-            else
-                profile.active = false
+            if is_active and not profile_match then
+                profile_match = true
+            end
+    
+            if profile.active ~= is_active then
+                profile.active = is_active
             end
         end
     end
