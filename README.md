@@ -5,7 +5,6 @@
 
 # In progress
 
-- Add titles to aspect profiles.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if video current video is interlaced.
 - Use new action buttons to increase/decrease color properties.
 - Deband custom button appears even if deband is off. Clicking it turns deband on.
