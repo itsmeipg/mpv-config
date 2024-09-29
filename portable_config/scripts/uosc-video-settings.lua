@@ -460,35 +460,47 @@ function update_deband_state()
                            default_deband.threshold and range == default_deband.range and grain == default_deband.grain
 
     local profile_match = false
+    local profile_change = false
 
     for _, profile in ipairs(deband_profiles) do
         local is_active = deband_enabled and profile.iterations == iterations and profile.threshold == threshold and
                               profile.range == range and profile.grain == grain
 
-        if is_active then
-            if not profile_match then
-                profile_match = true
-            end
-            profile.active = true
-        else
-            profile.active = false
+        if is_active and not profile_match then
+            profile_match = true
+        end
+
+        if profile.active ~= is_active then
+            profile.active = is_active
+            profile_change = true
         end
     end
 
-    deband_state = "profile"
+    local new_deband_state
 
-    if not deband_enabled then
-        deband_state = "off"
+    if profile_match then
+        new_deband_state = "profile"
+    elseif not deband_enabled then
+        new_deband_state = "off"
     elseif options.include_default_deband_profile and is_default then
-        deband_state = "default"
-    elseif options.show_custom_deband_profile and not profile_match then
-        deband_state = "custom"
+        new_deband_state = "default"
+    elseif options.show_custom_deband_profile then
+        new_deband_state = "custom"
     end
 
-    update_menu()
+    local deband_state_change = new_deband_state ~= deband_state
+
+    if deband_state_change then
+        deband_state = new_deband_state
+    end
+
+    if deband_state_change or profile_change then
+        print("Updating menu")
+        update_menu()
+    end
 end
 
-mp.observe_property("deband", "string", update_deband_state)
+mp.observe_property("deband", "bool", update_deband_state)
 mp.observe_property("deband-iterations", "number", update_deband_state)
 mp.observe_property("deband-threshold", "number", update_deband_state)
 mp.observe_property("deband-range", "number", update_deband_state)
@@ -516,6 +528,7 @@ function update_shader_state()
 
     -- Check if current shaders match any profile, then update profile
     local profile_match = false
+    local profile_change = false
 
     for _, profile in ipairs(shader_profiles) do
         local profile_shaders = {}
@@ -533,27 +546,40 @@ function update_shader_state()
             end
         end
 
-        if compare_shaders(current_shaders, profile_shaders) then
-            if not profile_match then
-                profile_match = true
-            end
-            profile.active = true
-        else
-            profile.active = false
+        local is_active = compare_shaders(current_shaders, profile_shaders)
+
+        if is_active and not profile_match then
+            profile_match = true
+        end
+
+        if profile.active ~= is_active then
+            profile.active = is_active
+            profile_change = true
         end
     end
 
-    shader_state = "profile"
+    local new_shader_state
 
-    if options.include_none_shader_profile and #current_shaders == 0 then
-        shader_state = "none"
+    if profile_match then
+        new_shader_state = "profile"
+    elseif options.include_none_shader_profile and #current_shaders == 0 then
+        new_shader_state = "none"
     elseif options.include_default_shader_profile and compare_shaders(current_shaders, default_shaders) then
-        shader_state = "default"
-    elseif options.show_custom_shader_profile and not profile_match then
-        shader_state = "custom"
+        new_shader_state = "default"
+    elseif options.show_custom_shader_profile then
+        new_shader_state = "custom"
     end
 
-    update_menu()
+    local shader_state_change = new_shader_state ~= shader_state
+    
+    if shader_state_change then
+        shader_state = new_shader_state
+    end
+
+    if shader_state_change or profile_change then
+        print("Updating menu")
+        update_menu()
+    end
 end
 
 mp.observe_property("glsl-shaders", "native", update_shader_state)
