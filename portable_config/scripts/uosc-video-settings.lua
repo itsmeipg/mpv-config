@@ -323,9 +323,6 @@ function update_menu()
 end
 
 -- Message handlers
-mp.register_script_message("do-nothing", function()
-end)
-
 mp.register_script_message("set-aspect", function(aspect)
     mp.set_property("video-aspect-override", aspect)
 end)
