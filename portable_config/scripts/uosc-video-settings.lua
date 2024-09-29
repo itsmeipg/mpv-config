@@ -258,7 +258,6 @@ function create_menu_data()
     end
 
     -- Add other shader profiles
-    -- If profile matches default, profile will take priority and be highlighted.
     for _, profile in ipairs(shader_profiles) do
         table.insert(shader_profile_items, {
             title = profile.title,
@@ -546,7 +545,7 @@ function update_shader_state()
 
     shader_state = "profile"
 
-    if #current_shaders == 0 then
+    if options.include_none_shader_profile and #current_shaders == 0 then
         shader_state = "none"
     elseif options.include_default_shader_profile and compare_shaders(current_shaders, default_shaders) then
         shader_state = "default"
