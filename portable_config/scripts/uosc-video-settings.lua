@@ -475,9 +475,9 @@ function update_deband_state()
 
     if not deband_enabled then
         deband_state = "off"
-    elseif is_default and options.include_default_deband_profile then
+    elseif options.include_default_deband_profile and is_default then
         deband_state = "default"
-    elseif options.show_custom_deband_profile then
+    elseif options.show_custom_deband_profile and not profile_match then
         deband_state = "custom"
     end
 
