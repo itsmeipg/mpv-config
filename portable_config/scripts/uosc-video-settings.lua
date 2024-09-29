@@ -550,7 +550,7 @@ function update_shader_state()
 
     if #current_shaders == 0 then
         shader_state = "none"
-    elseif compare_shaders(current_shaders, default_shaders) then
+    elseif options.include_default_shader_profile and compare_shaders(current_shaders, default_shaders) then
         shader_state = "default"
     elseif options.show_custom_shader_profile and not profile_match then
         shader_state = "custom"
