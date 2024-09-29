@@ -5,11 +5,10 @@
 
 # In progress
 
-- Clean up menu creation function. (Medium)
+- Clean up menu creation function.
 - Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
-- Option to change name of default profile. (Easy)
-- Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. (Medium. Only an issue in uosc-subtitle-settings.conf)
-- Test if audio-normalize-downmix has an effect on sofalizer. (Medium)
+- Work on uosc-subtitle-settings.lua. Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. Replace radio buttons with active state. Clean up code logic.
+- Test if audio-normalize-downmix has an effect on sofalizer.
 
 # Theme
 
