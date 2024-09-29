@@ -11,10 +11,10 @@
 - 
 - Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles.
 
-- Fix custom buttons
-- Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults
+- Fix custom buttons.
+- Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults.
 - 
-- Increase proximity to bring up timline/buttons/title a little more
+- Increase proximity to bring up timline/buttons/title a little more.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 
 # Theme
