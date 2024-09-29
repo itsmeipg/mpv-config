@@ -5,14 +5,11 @@
 
 # In progress
 
-- Test custom buttons. (Will continue tomorrow. Almost done)
+- Show custom deband button if deband is off.
 - Clean up menu creation function. (Medium)
 - Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
 - Option to change name of default profile. (Easy)
-- Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles. (Easy)
-- Option to add external shaders outside of shader directory to list of inactive shaders. (Medium)
 - Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. (Medium. Only an issue in uosc-subtitle-settings.conf)
-- Increase proximity to bring up timeline/buttons/title a little more. (Easy)
 - Test if audio-normalize-downmix has an effect on sofalizer. (Medium)
 
 # Theme
