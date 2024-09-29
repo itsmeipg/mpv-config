@@ -580,6 +580,8 @@ function update_shader_state()
         print("Updating menu")
         update_menu()
     end
+
+    update_menu()
 end
 
 mp.observe_property("glsl-shaders", "native", update_shader_state)
