@@ -5,7 +5,6 @@
 
 # In progress
 
-- Show custom deband button if deband is off.
 - Clean up menu creation function. (Medium)
 - Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
 - Option to change name of default profile. (Easy)
