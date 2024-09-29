@@ -511,8 +511,8 @@ mp.observe_property("interpolation", "bool", function(name, value)
     update_menu()
 end)
 
-function update_shader_state()
-    local current_shaders = mp.get_property_native("glsl-shaders", {})
+function update_shader_profiles(value)
+    local current_shaders = value
 
     local function compare_shaders(shaders1, shaders2)
         if #shaders1 ~= #shaders2 then
@@ -526,9 +526,7 @@ function update_shader_state()
         return true
     end
 
-    -- Check if current shaders match any profile, then update profile
     local profile_match = false
-    local profile_change = false
 
     for _, profile in ipairs(shader_profiles) do
         local profile_shaders = {}
@@ -554,7 +552,6 @@ function update_shader_state()
 
         if profile.active ~= is_active then
             profile.active = is_active
-            profile_change = true
         end
     end
 
@@ -575,17 +572,12 @@ function update_shader_state()
     if shader_state_change then
         shader_state = new_shader_state
     end
-
-    if shader_state_change or profile_change then
-        print("Updating menu")
-        update_menu()
-    end
-
-    update_menu()
 end
 
-mp.observe_property("glsl-shaders", "native", update_shader_state)
-
+mp.observe_property("glsl-shaders", "native", function(name, value)
+    update_shader_profiles(value)
+    update_menu()
+end)
 -- Execution/binding
 mp.add_key_binding(nil, "open-menu", function()
     local json = mp.utils.format_json(create_menu_data())
