@@ -9,7 +9,7 @@ local options = {
 
     deband_profiles = "",
     include_default_deband_profile = true,
-    show_custom_if_no_default_profile = false,
+    show_custom_deband_profile = false,
 
     aspect_profiles = "16:9,4:3,2.35:1",
 
@@ -477,9 +477,7 @@ function update_deband_state()
         deband_state = "off"
     elseif is_default and options.include_default_deband_profile then
         deband_state = "default"
-    elseif not options.show_custom_if_no_default_profile then
-        deband_state = "no custom"
-    else
+    elseif options.show_custom_deband_profile then
         deband_state = "custom"
     end
 
