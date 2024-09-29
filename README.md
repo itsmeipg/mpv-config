@@ -5,7 +5,7 @@
 
 # In progress
 
-- Fix custom buttons. (Will continue tomorrow. Almost done)
+- Test custom buttons. (Will continue tomorrow. Almost done)
 - Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
 - Option to change name of default profile. (Easy)
 - Option to add "Clear" button (with italic/muted enabled) at bottom of shader profiles. (Easy)
