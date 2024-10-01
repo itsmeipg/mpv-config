@@ -1,14 +1,10 @@
 # mpv-config
-![Screenshot1](https://github.com/user-attachments/assets/73da6817-f0ff-4529-a746-275c8065496a)
-![Screenshot2](https://github.com/user-attachments/assets/1c6c8446-d010-4824-a788-7f0f7ff465b8)
-![Screenshot3](https://github.com/user-attachments/assets/a445d1bd-188c-44ad-945a-ce0888c3c0f8)
 
 # In progress
 
+- Add adjustable deband settings in deband section.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if video current video is interlaced.
 - Use new action buttons to increase/decrease color properties.
-- Deband custom button appears even if deband is off. Clicking it turns deband on.
-- Clean up menu creation function.
 - Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
 - Work on uosc-subtitle-settings.lua. Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
