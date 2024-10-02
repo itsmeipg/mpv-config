@@ -1,7 +1,7 @@
 # mpv-config
 
 # In progress
-
+- Basically major update coming soon that updates literally everything.
 - Add adjustable deband settings in deband section.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if video current video is interlaced.
 - Use new action buttons to increase/decrease color properties.
