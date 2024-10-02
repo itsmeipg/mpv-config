@@ -2,6 +2,9 @@
 
 # In progress
 - Basically major update coming soon that updates literally everything.
+- Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
+- Change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
+- Add color profiles.
 - Add adjustable deband settings in deband section.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if video current video is interlaced.
 - Use new action buttons to increase/decrease color properties.
