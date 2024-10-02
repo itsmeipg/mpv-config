@@ -1,7 +1,9 @@
 # mpv-config
 
 # In progress
+
 - Basically major update coming soon that updates literally everything.
+- Add option to put profiles into submenu. Add option to change profile submenu name.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
 - Change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
 - Add color profiles.
