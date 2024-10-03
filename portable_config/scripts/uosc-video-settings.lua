@@ -37,8 +37,6 @@ end
 
 -- State Variables
 local state = {
-    aspect = nil,
-    deband = nil,
     interpolation = nil,
     shader = nil,
     default_color = {
@@ -59,7 +57,8 @@ local state = {
 }
 
 local menu = {
-    deband = nil
+    deband = nil,
+    aspect = nil
 }
 
 for i, shader in ipairs(state.shader_files) do
@@ -126,25 +125,22 @@ end
 
 -- Menu Creation Functions
 local function create_aspect_menu()
-    local aspect_items = {{
-        title = "Off",
-        active = state.aspect == "off",
-        value = command("set-aspect -1")
-    }}
+    local aspect_items = {}
 
+    -- Add the "Off" button right after declaring the variable
+    table.insert(aspect_items, {
+        title = "Off",
+        active = false,
+        value = command("set-aspect -1"),
+        id = "off"
+    })
+
+    -- Initialize the aspect variable
     for _, profile in ipairs(profiles.aspect) do
         table.insert(aspect_items, profile)
     end
 
-    if state.aspect == "custom" then
-        table.insert(aspect_items, {
-            title = "Custom",
-            active = true,
-            selectable = false
-        })
-    end
-
-    return {
+    menu.aspect = {
         title = "Aspect override",
         items = aspect_items
     }
@@ -207,7 +203,7 @@ local function create_deband_menu()
             title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
             active = false,
             value = command("adjust-deband default"),
-            id = "default" 
+            id = "default"
         })
     end
 
@@ -294,7 +290,7 @@ local function create_menu_data()
     return {
         type = "video_settings",
         title = "Video settings",
-        items = {create_shader_menu(), menu.deband, create_color_menu(), create_aspect_menu(), {
+        items = {create_shader_menu(), menu.deband, create_color_menu(), menu.aspect, {
             title = "Interpolation",
             value = command("toggle-interpolation"),
             icon = state.interpolation and "check_box" or "check_box_outline_blank"
@@ -312,31 +308,56 @@ end
 -- State Update Functions
 local function update_aspect(value)
     local current_aspect_value = value
-    local profile_match = false
 
-    for _, profile in ipairs(profiles.aspect) do
-        local w, h = profile.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
-        if w and h then
-            local profile_aspect_value = tonumber(w) / tonumber(h)
-            local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
+    local item_match = false
+    local custom_exists = false
 
-            if is_active and not profile_match then
-                profile_match = true
+    for _, item in ipairs(menu.aspect.items) do
+        if item.id == "off" then
+            if not item_match then
+                item_match = true
             end
+            item.active = current_aspect_value == -1
+        elseif item.id == "custom" then
+            custom_exists = true
+        else
+            local w, h = item.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
+            if w and h then
+                local profile_aspect_value = tonumber(w) / tonumber(h)
+                local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
 
-            profile.active = is_active
+                if is_active and not item_match then
+                    item_match = true
+                end
+
+                if item.active ~= is_active then
+                    item.active = is_active
+                end
+            end
         end
     end
 
-    if profile_match then
-        state.aspect = "profile"
-    elseif current_aspect_value == -1 then
-        state.aspect = "off"
-    elseif options.show_custom_aspect_profile then
-        state.aspect = "custom"
+    -- Handle the custom item
+    if not item_match then
+        if not custom_exists then
+            table.insert(menu.aspect.items, {
+                title = "Custom",
+                active = true,
+                selectable = false,
+                id = "custom"
+            })
+        end
+    else
+        -- Remove Custom item if it exists
+        if custom_exists then
+            for i = #menu.aspect.items, 1, -1 do
+                if menu.aspect.items[i].id == "custom" then
+                    table.remove(menu.aspect.items, i)
+                    break
+                end
+            end
+        end
     end
-
-    update_menu()
 end
 
 local function update_deband()
@@ -345,27 +366,27 @@ local function update_deband()
     local threshold = mp.get_property_number("deband-threshold")
     local range = mp.get_property_number("deband-range")
     local grain = mp.get_property_number("deband-grain")
-    local is_default = deband_enabled and 
-                       iterations == state.default_deband.iterations and 
-                       threshold == state.default_deband.threshold and 
-                       range == state.default_deband.range and 
-                       grain == state.default_deband.grain
+    local is_default = deband_enabled and iterations == state.default_deband.iterations and threshold ==
+                           state.default_deband.threshold and range == state.default_deband.range and grain ==
+                           state.default_deband.grain
 
-    local profile_match = false
+    local item_match = false
     local custom_exists = false
 
     for _, item in ipairs(menu.deband.items) do
         if item.id == "default" then
+            if is_default and not item_match then
+                item_match = true
+            end
             item.active = is_default
         elseif item.id == "custom" then
             custom_exists = true
-            item.active = not profile_match and deband_enabled and not is_default
         else
             local is_active = deband_enabled and item.iterations == iterations and item.threshold == threshold and
-                              item.range == range and item.grain == grain
+                                  item.range == range and item.grain == grain
 
-            if is_active and not profile_match then
-                profile_match = true
+            if is_active and not item_match then
+                item_match = true
             end
 
             if item.active ~= is_active then
@@ -375,7 +396,7 @@ local function update_deband()
     end
 
     -- Handle the custom item
-    if not profile_match and deband_enabled and not is_default then
+    if not item_match and deband_enabled then
         if not custom_exists then
             table.insert(menu.deband.items, {
                 title = "Custom",
@@ -414,7 +435,7 @@ local function update_shaders(value)
         return true
     end
 
-    local profile_match = false
+    local item_match = false
 
     for _, profile in ipairs(profiles.shader) do
         local profile_shaders = {}
@@ -430,13 +451,13 @@ local function update_shaders(value)
         end
 
         local is_active = compare_shaders(current_shaders, profile_shaders)
-        if is_active and not profile_match then
-            profile_match = true
+        if is_active and not item_match then
+            item_match = true
         end
         profile.active = is_active
     end
 
-    if profile_match then
+    if item_match then
         state.shader = "profile"
     elseif options.include_none_shader_profile and #current_shaders == 0 then
         state.shader = "none"
@@ -557,6 +578,7 @@ local function init()
     setup_message_handlers()
     setup_property_observers()
     create_deband_menu()
+    create_aspect_menu()
 
     mp.add_key_binding(nil, "open-menu", function()
         local json = mp.utils.format_json(create_menu_data())
