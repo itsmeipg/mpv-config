@@ -70,12 +70,22 @@ local menu = {
 
 local function create_menu_data()
     local items = {}
-    if menu.shader then table.insert(items, menu.shader) end
-    if menu.deband then table.insert(items, menu.deband) end
-    if menu.color then table.insert(items, menu.color) end
-    if menu.aspect then table.insert(items, menu.aspect) end
-    if menu.interpolation then table.insert(items, menu.interpolation) end
-    
+    if menu.shader then
+        table.insert(items, menu.shader)
+    end
+    if menu.deband then
+        table.insert(items, menu.deband)
+    end
+    if menu.color then
+        table.insert(items, menu.color)
+    end
+    if menu.aspect then
+        table.insert(items, menu.aspect)
+    end
+    if menu.interpolation then
+        table.insert(items, menu.interpolation)
+    end
+
     return {
         type = "video_settings",
         title = "Video settings",
@@ -245,16 +255,17 @@ local function create_deband_profile()
     for deband_profile in options.deband_profiles:gmatch("([^;]+)") do
         local name, settings = deband_profile:match("(.+):(.+)")
         if name and settings then
-            local profile_iterations, profile_threshold, profile_range, profile_grain = settings:match("([^,]+),([^,]+),([^,]+),([^,]+)")
-            if profile_iterations and profile_threshold and profile_range and profile_grain then
+            local iterations, threshold, range, grain = settings:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+            if iterations and threshold and range and grain then
                 table.insert(profile.deband, {
                     title = name:match("^%s*(.-)%s*$"),
-                    iterations = tonumber(profile_iterations),
-                    threshold = tonumber(profile_threshold),
-                    range = tonumber(profile_range),
-                    grain = tonumber(profile_grain),
+                    iterations = tonumber(iterations),
+                    threshold = tonumber(threshold),
+                    range = tonumber(range),
+                    grain = tonumber(grain),
                     active = false,
-                    value = command("adjust-deband " .. profile_iterations .. "," .. profile_threshold .. "," .. profile_range .. "," .. profile_grain)
+                    value = command("adjust-deband " .. iterations .. "," .. threshold .. "," .. range .. "," ..
+                                        grain)
                 })
             end
         end
@@ -272,29 +283,33 @@ local function create_deband_menu()
         deband_items[#deband_items].separator = true
     end
 
-    table.insert(deband_items, {
-        title = "Iterations",
-        hint = tostring(mp.get_property_number("deband-iterations")),
-        id = "iterations"
-    })
+    local function create_adjustment_actions(prop)
+        local increment = 1
+        return {{
+            name = command("adjust-deband-property " .. prop .. " " .. increment),
+            icon = "add",
+            label = "Increase by 1"
+        }, {
+            name = command("adjust-deband-property " .. prop .. " -" .. increment),
+            icon = "remove",
+            label = "Decrease by 1"
+        }, {
+            name = command("adjust-deband-property " .. prop .. " reset"),
+            icon = "clear",
+            label = "Reset"
+        }}
+    end
 
-    table.insert(deband_items, {
-        title = "Threshold",
-        hint = tostring(mp.get_property_number("deband-threshold")),
-        id = "threshold"
-    })
+    local deband_properties = {"iterations", "threshold", "range", "grain"}
 
-    table.insert(deband_items, {
-        title = "Range",
-        hint = tostring(mp.get_property_number("deband-range")),
-        id = "range"
-    })
-
-    table.insert(deband_items, {
-        title = "Grain",
-        hint = tostring(mp.get_property_number("deband-grain")),
-        id = "grain"
-    })
+    for _, prop in ipairs(deband_properties) do
+        table.insert(deband_items, {
+            title = prop:gsub("^%l", string.upper),
+            hint = tostring(mp.get_property_number("deband-" .. prop)),
+            actions = create_adjustment_actions(prop),
+            actions_place = "outside"
+        })
+    end
 
     return {
         title = "Deband",
@@ -336,11 +351,9 @@ local function update_deband()
         end
     end
 
-    menu.deband = create_deband_menu()
-
     if not profile_match and deband_enabled then
         if not custom_exists then
-            table.insert(menu.deband.items, {
+            table.insert(profile.deband, {
                 title = "Custom",
                 active = true,
                 selectable = false,
@@ -349,20 +362,20 @@ local function update_deband()
         end
     else
         if custom_exists then
-            for i = #menu.deband.items, 1, -1 do
-                if menu.deband.items[i].id == "custom" then
-                    table.remove(menu.deband.items, i)
+            for i = #profile.deband, 1, -1 do
+                if profile.deband[i].id == "custom" then
+                    table.remove(profile.deband, i)
                     break
                 end
             end
         end
     end
 
+    menu.deband = create_deband_menu()
     update_menu()
 end
 
 -- Interpolation
-
 
 -- Shaders
 local function create_shader_profile()
@@ -556,6 +569,17 @@ local message_handlers = {
             mp.set_property(prop, value)
         end
     end,
+    ["adjust-deband-property"] = function(prop, value)
+        if value == "reset" then
+            mp.set_property(prop, default_deband[prop])
+        else
+            local current = mp.get_property_number("deband-" .. prop)
+            local num_value = tonumber(value)
+            local new_value = current + num_value
+            new_value = math.max(0, math.min(100, new_value))
+            mp.set_property("deband-" .. prop, new_value)
+        end
+    end,
     ["adjust-deband"] = function(value)
         if value == "off" then
             mp.set_property("deband", "no")
@@ -626,7 +650,7 @@ local function setup_property_observers()
     mp.observe_property("deband-grain", "number", update_deband)
 
     mp.observe_property("interpolation", "bool", function(name, value)
-        
+
     end)
 
     mp.observe_property("glsl-shaders", "native", function(name, value)
