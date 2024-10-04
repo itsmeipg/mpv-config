@@ -1,7 +1,7 @@
 # mpv-config
 
 # In progress
-
+- Update SSimDownscaler/Check other shaders/scripts to update.
 - Basically major update coming soon that updates literally everything.
 - Add option to put profiles into submenu. Add option to change profile submenu name.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
