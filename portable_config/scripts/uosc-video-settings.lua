@@ -111,7 +111,7 @@ local function create_aspect_menu()
         table.insert(aspect_items, profile)
     end
 
-    menu.aspect = {
+    return {
         title = "Aspect override",
         items = aspect_items
     }
@@ -123,7 +123,7 @@ local function update_aspect(value)
     local profile_match = false
     local custom_exists = false
 
-    for _, item in ipairs(menu.aspect.items) do
+    for _, item in ipairs(profile.aspect) do
         if item.id == "off" then
             if not profile_match then
                 profile_match = true
@@ -148,6 +148,8 @@ local function update_aspect(value)
         end
     end
 
+    menu.aspect = create_aspect_menu()
+
     if not profile_match then
         if not custom_exists then
             table.insert(menu.aspect.items, {
@@ -168,6 +170,8 @@ local function update_aspect(value)
             end
         end
     end
+
+    update_menu()
 end
 
 -- Color
@@ -253,6 +257,10 @@ end
 local function create_deband_menu()
     local deband_items = {}
 
+    for _, profile in ipairs(profile.deband) do
+        table.insert(deband_items, profile)
+    end
+
     if #deband_items > 0 then
         deband_items[#deband_items].separator = true
     end
@@ -281,11 +289,7 @@ local function create_deband_menu()
         id = "grain"
     })
 
-    for _, profile in ipairs(profile.deband) do
-        table.insert(deband_items, profile)
-    end
-
-    menu.deband = {
+    return {
         title = "Deband",
         items = deband_items
     }
@@ -303,16 +307,8 @@ local function update_deband()
     local profile_match = false
     local custom_exists = false
 
-    for _, item in ipairs(menu.deband.items) do
-        if item.id == "iterations" then
-            item.hint = iterations
-        elseif item.id == "threshold" then
-            item.hint = threshold
-        elseif item.id == "range" then
-            item.hint = range
-        elseif item.id == "grain" then
-            item.hint = grain
-        elseif item.id == "default" then
+    for _, item in ipairs(profile.deband) do
+        if item.id == "default" then
             if is_default and not profile_match then
                 profile_match = true
             end
@@ -332,6 +328,8 @@ local function update_deband()
             end
         end
     end
+
+    menu.deband = create_deband_menu()
 
     if not profile_match and deband_enabled then
         if not custom_exists then
@@ -449,6 +447,10 @@ local function create_shader_menu()
         table.insert(shader_items, profile)
     end
 
+    if #shader_items > 0 then
+        shader_items[#shader_items].separator = true
+    end
+
     local shader_list = {}
     local current_shaders = mp.get_property_native("glsl-shaders", {})
     local is_active = {}
@@ -498,7 +500,7 @@ local function update_shaders(value)
     local profile_match = false
     local custom_exists = false
 
-    for _, item in ipairs(profile.shader.items) do
+    for _, item in ipairs(profile.shader) do
         if item.id == "none" then
             if #current_shaders == 0 and not profile_match then
                 profile_match = true
@@ -645,7 +647,6 @@ end
 local function setup_property_observers()
     mp.observe_property("video-aspect-override", "number", function(name, value)
         update_aspect(value)
-        update_menu()
     end)
 
     mp.observe_property("brightness", "number", update_menu)
@@ -662,7 +663,6 @@ local function setup_property_observers()
 
     mp.observe_property("interpolation", "bool", function(name, value)
         update_interpolation(value)
-        update_menu()
     end)
 
     mp.observe_property("glsl-shaders", "native", function(name, value)
