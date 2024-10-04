@@ -53,11 +53,11 @@ for i, shader in ipairs(shader_files) do
 end
 
 local profile = {
-    aspect = nil,
-    color = nil,
-    deband = nil,
-    interpolation = nil,
-    shader = nil
+    aspect = {},
+    color = {},
+    deband = {},
+    interpolation = {},
+    shader = {}
 }
 
 local menu = {
@@ -69,10 +69,17 @@ local menu = {
 }
 
 local function create_menu_data()
+    local items = {}
+    if menu.shader then table.insert(items, menu.shader) end
+    if menu.deband then table.insert(items, menu.deband) end
+    if menu.color then table.insert(items, menu.color) end
+    if menu.aspect then table.insert(items, menu.aspect) end
+    if menu.interpolation then table.insert(items, menu.interpolation) end
+    
     return {
         type = "video_settings",
         title = "Video settings",
-        items = {menu.shader, menu.deband, menu.color, menu.aspect, menu.interpolation},
+        items = items,
         search_submenus = true,
         keep_open = true,
         callback = {script_name, 'menu-event'}
@@ -93,8 +100,8 @@ local function create_aspect_profile()
         id = "off"
     })
 
-    for profile in options.aspect_profiles:gmatch("([^,]+)") do
-        local aspect = profile:match("^%s*(.-)%s*$")
+    for aspect_profile in options.aspect_profiles:gmatch("([^,]+)") do
+        local aspect = aspect_profile:match("^%s*(.-)%s*$")
         table.insert(profile.aspect, {
             title = aspect,
             aspect = aspect,
@@ -235,19 +242,19 @@ local function create_deband_profile()
         })
     end
 
-    for profile in options.deband_profiles:gmatch("([^;]+)") do
-        local name, settings = profile:match("(.+):(.+)")
+    for deband_profile in options.deband_profiles:gmatch("([^;]+)") do
+        local name, settings = deband_profile:match("(.+):(.+)")
         if name and settings then
-            local iterations, threshold, range, grain = settings:match("([^,]+),([^,]+),([^,]+),([^,]+)")
-            if iterations and threshold and range and grain then
+            local profile_iterations, profile_threshold, profile_range, profile_grain = settings:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+            if profile_iterations and profile_threshold and profile_range and profile_grain then
                 table.insert(profile.deband, {
                     title = name:match("^%s*(.-)%s*$"),
-                    iterations = tonumber(iterations),
-                    threshold = tonumber(threshold),
-                    range = tonumber(range),
-                    grain = tonumber(grain),
+                    iterations = tonumber(profile_iterations),
+                    threshold = tonumber(profile_threshold),
+                    range = tonumber(profile_range),
+                    grain = tonumber(profile_grain),
                     active = false,
-                    value = command("adjust-deband " .. iterations .. "," .. threshold .. "," .. range .. "," .. grain)
+                    value = command("adjust-deband " .. profile_iterations .. "," .. profile_threshold .. "," .. profile_range .. "," .. profile_grain)
                 })
             end
         end
@@ -267,25 +274,25 @@ local function create_deband_menu()
 
     table.insert(deband_items, {
         title = "Iterations",
-        hint = mp.get_property_number("deband-iterations"),
+        hint = tostring(mp.get_property_number("deband-iterations")),
         id = "iterations"
     })
 
     table.insert(deband_items, {
         title = "Threshold",
-        hint = mp.get_property_number("deband-threshold"),
+        hint = tostring(mp.get_property_number("deband-threshold")),
         id = "threshold"
     })
 
     table.insert(deband_items, {
         title = "Range",
-        hint = mp.get_property_number("deband-range"),
+        hint = tostring(mp.get_property_number("deband-range")),
         id = "range"
     })
 
     table.insert(deband_items, {
         title = "Grain",
-        hint = mp.get_property_number("deband-grain"),
+        hint = tostring(mp.get_property_number("deband-grain")),
         id = "grain"
     })
 
@@ -355,50 +362,7 @@ local function update_deband()
 end
 
 -- Interpolation
-local function create_interpolation_menu()
-    local interpolation_items = {}
 
-    table.insert(interpolation_items, {
-        title = "Enabled",
-        value = command("toggle-interpolation"),
-        icon = "check_box_outline_blank",
-        id = "enabled"
-    })
-
-    menu.interpolation = {
-        title = "Interpolation",
-        items = interpolation_items
-    }
-end
-
-local function update_interpolation(value)
-    local profile_match = false
-    local custom_exists = false
-
-    for _, item in ipairs(menu.interpolation.items) do
-        if item.id == "enabled" then
-            if value and not profile_match then
-                profile_match = true
-            end
-            item.icon = value and "check_box" or "check_box_outline_blank"
-        elseif item.id == "custom" then
-            custom_exists = true
-        else
-            local is_active = deband_enabled and item.iterations == iterations and item.threshold == threshold and
-                                  item.range == range and item.grain == grain
-
-            if is_active and not profile_match then
-                profile_match = true
-            end
-
-            if item.active ~= is_active then
-                item.active = is_active
-            end
-        end
-    end
-
-    update_menu()
-end
 
 -- Shaders
 local function create_shader_profile()
@@ -420,8 +384,8 @@ local function create_shader_profile()
         })
     end
 
-    for profile in options.shader_profiles:gmatch("([^;]+)") do
-        local name, shaders = profile:match("(.+):(.+)")
+    for shader_profile in options.shader_profiles:gmatch("([^;]+)") do
+        local name, shaders = shader_profile:match("(.+):(.+)")
         if name and shaders then
             name = name:match("^%s*(.-)%s*$")
             local shader_list = {}
@@ -662,7 +626,7 @@ local function setup_property_observers()
     mp.observe_property("deband-grain", "number", update_deband)
 
     mp.observe_property("interpolation", "bool", function(name, value)
-        update_interpolation(value)
+        
     end)
 
     mp.observe_property("glsl-shaders", "native", function(name, value)
