@@ -66,27 +66,26 @@ local menu = {
 }
 
 local function create_menu_data()
-    local items = {}
-    if menu.shader then
-        table.insert(items, menu.shader)
+    local menu_items = {}
+    if menu.aspect then
+        table.insert(menu_items, menu.aspect)
     end
     if menu.deband then
-        table.insert(items, menu.deband)
+        table.insert(menu_items, menu.deband)
     end
     if menu.color then
-        table.insert(items, menu.color)
-    end
-    if menu.aspect then
-        table.insert(items, menu.aspect)
+        table.insert(menu_items, menu.color)
     end
     if menu.interpolation then
-        table.insert(items, menu.interpolation)
+        table.insert(menu_items, menu.interpolation)
     end
-
+    if menu.shader then
+        table.insert(menu_items, menu.shader)
+    end
     return {
         type = "video_settings",
         title = "Video settings",
-        items = items,
+        items = menu_items,
         search_submenus = true,
         keep_open = true,
         callback = {script_name, 'menu-event'}
@@ -220,9 +219,8 @@ local function create_deband_profile()
         table.insert(profile.deband, {
             title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command(
-                "adjust-deband profile " .. default_deband.iterations .. "," .. default_deband.threshold .. "," ..
-                    default_deband.range .. "," .. default_deband.grain),
+            value = command("adjust-deband profile " .. default_deband.iterations .. "," .. default_deband.threshold ..
+                                "," .. default_deband.range .. "," .. default_deband.grain),
             id = "default"
         })
     end
@@ -234,13 +232,13 @@ local function create_deband_profile()
             if iterations and threshold and range and grain then
                 table.insert(profile.deband, {
                     title = name:match("^%s*(.-)%s*$"),
+                    active = false,
                     iterations = tonumber(iterations),
                     threshold = tonumber(threshold),
                     range = tonumber(range),
                     grain = tonumber(grain),
-                    active = false,
-                    value = command("adjust-deband profile " .. iterations .. "," .. threshold .. "," .. range ..
-                                        "," .. grain)
+                    value = command("adjust-deband profile " .. iterations .. "," .. threshold .. "," .. range .. "," ..
+                                        grain)
                 })
             end
         end
@@ -328,7 +326,9 @@ local function update_deband()
                                          item.range .. "," .. item.grain)
             end
 
-            item.active = is_active
+            if item.active ~= is_active then
+                item.active = is_active
+            end
         end
     end
 
@@ -369,10 +369,12 @@ local function create_shader_profile()
                     table.insert(shader_list, trimmed_shader)
                 end
             end
+            local prof_shaders = table.concat(shader_list, ",")
             table.insert(profile.shader, {
                 title = name,
                 active = false,
-                value = command("adjust-shaders " .. ("%q"):format(table.concat(shader_list, ",")))
+                profshaders = prof_shaders,
+                value = command("adjust-shaders " .. prof_shaders)
             })
         end
     end
@@ -421,8 +423,6 @@ local function create_shader_menu()
 end
 
 local function update_shaders(value)
-    local current_shaders = value
-
     local function compare_shaders(shaders1, shaders2)
         if #shaders1 ~= #shaders2 then
             return false
@@ -435,38 +435,34 @@ local function update_shaders(value)
         return true
     end
 
-    local profile_match = false
-    local custom_exists = false
+    local current_shaders = value
+    local is_default = compare_shaders(current_shaders, default_shaders)
 
     for _, item in ipairs(profile.shader) do
         if item.id == "none" then
-            if #current_shaders == 0 and not profile_match then
-                profile_match = true
-            end
             item.active = #current_shaders == 0
         elseif item.id == "default" then
-            if compare_shaders(current_shaders, default_shaders) and not profile_match then
-                profile_match = true
+            if is_default then
+                item.value = command("adjust-shaders")
+            else
+                item.value = command("default-shaders")
             end
-            item.active = compare_shaders(current_shaders, default_shaders)
-        elseif item.id == "custom" then
-            custom_exists = true
+            item.active = is_default
         else
-            local profile_shaders = {}
-            if item.value:find("adjust%-shaders%s+(.+)") then
-                local shader_list = item.value:match("adjust%-shaders%s+(.+)")
-                for shader in shader_list:gsub('"', ''):gmatch("([^,]+)") do
-                    local trimmed_shader = shader:match("^%s*(.-)%s*$")
-                    if options.expand_profile_shader_path then
-                        trimmed_shader = mp.utils.join_path(options.shader_path, trimmed_shader)
-                    end
-                    table.insert(profile_shaders, trimmed_shader)
+            local profile_shader = {}
+            for shader in item.profshaders:gsub('"', ''):gmatch("([^,]+)") do
+                if options.expand_profile_shader_path then
+                    shader = mp.utils.join_path(options.shader_path, shader)
                 end
+                table.insert(profile_shader, shader)
             end
 
-            local is_active = compare_shaders(current_shaders, profile_shaders)
-            if is_active and not profile_match then
-                profile_match = true
+            local is_active = compare_shaders(current_shaders, profile_shader)
+
+            if is_active then
+                item.value = command("adjust-shaders")
+            else
+                item.value = command("adjust-shaders " .. item.profshaders)
             end
 
             if item.active ~= is_active then
