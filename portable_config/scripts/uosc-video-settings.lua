@@ -6,15 +6,12 @@ local options = {
     include_default_shader_profile = true,
     none_shader_profile_name = "None",
     default_shader_profile_name = "Default",
-    show_custom_shader_profile = true,
 
     deband_profiles = "",
     include_default_deband_profile = true,
     default_deband_profile_name = "Default",
-    show_custom_deband_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
-    show_custom_aspect_profile = true,
 
     brightness_increment = 0.25,
     contrast_increment = 0.25,
@@ -146,8 +143,6 @@ local function update_aspect(value)
                 profile_match = true
             end
             item.active = current_aspect_value == -1
-        elseif item.id == "custom" then
-            custom_exists = true
         else
             local w, h = item.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
             if w and h then
@@ -166,28 +161,6 @@ local function update_aspect(value)
     end
 
     menu.aspect = create_aspect_menu()
-
-    if not profile_match then
-        if not custom_exists then
-            table.insert(menu.aspect.items, {
-                title = "Custom",
-                active = true,
-                selectable = false,
-                id = "custom"
-            })
-        end
-    else
-
-        if custom_exists then
-            for i = #menu.aspect.items, 1, -1 do
-                if menu.aspect.items[i].id == "custom" then
-                    table.remove(menu.aspect.items, i)
-                    break
-                end
-            end
-        end
-    end
-
     update_menu()
 end
 
@@ -247,7 +220,9 @@ local function create_deband_profile()
         table.insert(profile.deband, {
             title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("adjust-deband default"),
+            value = command(
+                "adjust-deband profile " .. default_deband.iterations .. "," .. default_deband.threshold .. "," ..
+                    default_deband.range .. "," .. default_deband.grain),
             id = "default"
         })
     end
@@ -264,8 +239,8 @@ local function create_deband_profile()
                     range = tonumber(range),
                     grain = tonumber(grain),
                     active = false,
-                    value = command("adjust-deband " .. iterations .. "," .. threshold .. "," .. range .. "," ..
-                                        grain)
+                    value = command("adjust-deband profile " .. iterations .. "," .. threshold .. "," .. range ..
+                                        "," .. grain)
                 })
             end
         end
@@ -283,20 +258,26 @@ local function create_deband_menu()
         deband_items[#deband_items].separator = true
     end
 
-    local function create_adjustment_actions(prop)
+    table.insert(deband_items, {
+        title = "Enable",
+        icon = mp.get_property_bool("deband") and "check_box" or "check_box_outline_blank",
+        value = command("adjust-deband toggle")
+    })
+
+    local function create_adjustment_actions(property)
         local increment = 1
         return {{
-            name = command("adjust-deband-property " .. prop .. " " .. increment),
+            label = "Increase " .. property .. " by 1",
             icon = "add",
-            label = "Increase by 1"
+            name = command("adjust-deband " .. property .. " " .. increment)
         }, {
-            name = command("adjust-deband-property " .. prop .. " -" .. increment),
+            label = "Decrease " .. property .. " by 1",
             icon = "remove",
-            label = "Decrease by 1"
+            name = command("adjust-deband " .. property .. " -" .. increment)
         }, {
-            name = command("adjust-deband-property " .. prop .. " reset"),
+            label = "Reset",
             icon = "clear",
-            label = "Reset"
+            name = command("adjust-deband " .. property .. " reset")
         }}
     end
 
@@ -326,48 +307,28 @@ local function update_deband()
     local is_default = deband_enabled and iterations == default_deband.iterations and threshold ==
                            default_deband.threshold and range == default_deband.range and grain == default_deband.grain
 
-    local profile_match = false
-    local custom_exists = false
-
     for _, item in ipairs(profile.deband) do
         if item.id == "default" then
-            if is_default and not profile_match then
-                profile_match = true
+            if is_default then
+                item.value = command("adjust-deband toggle")
+            else
+                item.value = command("adjust-deband profile " .. default_deband.iterations .. "," ..
+                                         default_deband.threshold .. "," .. default_deband.range .. "," ..
+                                         default_deband.grain)
             end
             item.active = is_default
-        elseif item.id == "custom" then
-            custom_exists = true
         else
             local is_active = deband_enabled and item.iterations == iterations and item.threshold == threshold and
                                   item.range == range and item.grain == grain
 
-            if is_active and not profile_match then
-                profile_match = true
+            if is_active then
+                item.value = command("adjust-deband toggle")
+            else
+                item.value = command("adjust-deband profile " .. item.iterations .. "," .. item.threshold .. "," ..
+                                         item.range .. "," .. item.grain)
             end
 
-            if item.active ~= is_active then
-                item.active = is_active
-            end
-        end
-    end
-
-    if not profile_match and deband_enabled then
-        if not custom_exists then
-            table.insert(profile.deband, {
-                title = "Custom",
-                active = true,
-                selectable = false,
-                id = "custom"
-            })
-        end
-    else
-        if custom_exists then
-            for i = #profile.deband, 1, -1 do
-                if profile.deband[i].id == "custom" then
-                    table.remove(profile.deband, i)
-                    break
-                end
-            end
+            item.active = is_active
         end
     end
 
@@ -515,27 +476,6 @@ local function update_shaders(value)
     end
 
     menu.shader = create_shader_menu()
-
-    if not profile_match then
-        if not custom_exists then
-            table.insert(menu.shader.items, {
-                title = "Custom",
-                active = true,
-                selectable = false,
-                id = "custom"
-            })
-        end
-    else
-        if custom_exists then
-            for i = #menu.deband.items, 1, -1 do
-                if menu.deband.items[i].id == "custom" then
-                    table.remove(menu.deband.items, i)
-                    break
-                end
-            end
-        end
-    end
-
     update_menu()
 end
 
@@ -569,26 +509,10 @@ local message_handlers = {
             mp.set_property(prop, value)
         end
     end,
-    ["adjust-deband-property"] = function(prop, value)
-        if value == "reset" then
-            mp.set_property(prop, default_deband[prop])
-        else
-            local current = mp.get_property_number("deband-" .. prop)
-            local num_value = tonumber(value)
-            local new_value = current + num_value
-            new_value = math.max(0, math.min(100, new_value))
-            mp.set_property("deband-" .. prop, new_value)
-        end
-    end,
-    ["adjust-deband"] = function(value)
-        if value == "off" then
-            mp.set_property("deband", "no")
-        elseif value == "default" then
-            mp.set_property("deband", "yes")
-            for prop, val in pairs(default_deband) do
-                mp.set_property("deband-" .. prop, val)
-            end
-        elseif value:find(",") then
+    ["adjust-deband"] = function(property, value)
+        if property == "toggle" then
+            mp.set_property("deband", not mp.get_property_bool("deband") and "yes" or "no")
+        elseif property == "profile" then
             local iterations, threshold, range, grain = value:match("([^,]+),([^,]+),([^,]+),([^,]+)")
             if iterations and threshold and range and grain then
                 mp.set_property("deband", "yes")
@@ -596,6 +520,16 @@ local message_handlers = {
                 mp.set_property("deband-threshold", tonumber(threshold))
                 mp.set_property("deband-range", tonumber(range))
                 mp.set_property("deband-grain", tonumber(grain))
+            end
+        else
+            if value == "reset" then
+                mp.set_property("deband-" .. property, default_deband[property])
+            else
+                local current = mp.get_property_number("deband-" .. property)
+                local num_value = tonumber(value)
+                local new_value = current + num_value
+                new_value = math.max(0, math.min(100, new_value))
+                mp.set_property("deband-" .. property, new_value)
             end
         end
     end,
