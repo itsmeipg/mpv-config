@@ -7,6 +7,10 @@ local options = {
     none_shader_profile_name = "None",
     default_shader_profile_name = "Default",
 
+    color_profiles = "",
+    include_default_color_profile = true,
+    default_color_profile_name = "Default",
+
     deband_profiles = "",
     include_default_deband_profile = true,
     default_deband_profile_name = "Default",
@@ -98,11 +102,11 @@ local function update_menu()
 end
 
 -- Aspect override
-local function create_aspect_profile()
+local function create_aspect_profiles()
     table.insert(profile.aspect, {
         title = "Off",
         active = false,
-        value = command("set-aspect -1"),
+        value = command("adjust-aspect -1"),
         id = "off"
     })
 
@@ -112,7 +116,7 @@ local function create_aspect_profile()
             title = aspect,
             aspect = aspect,
             active = false,
-            value = command("set-aspect " .. aspect)
+            value = command("adjust-aspect " .. aspect)
         })
     end
 end
@@ -133,14 +137,8 @@ end
 local function update_aspect(value)
     local current_aspect_value = value
 
-    local profile_match = false
-    local custom_exists = false
-
     for _, item in ipairs(profile.aspect) do
         if item.id == "off" then
-            if not profile_match then
-                profile_match = true
-            end
             item.active = current_aspect_value == -1
         else
             local w, h = item.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
@@ -148,8 +146,10 @@ local function update_aspect(value)
                 local profile_aspect_value = tonumber(w) / tonumber(h)
                 local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
 
-                if is_active and not profile_match then
-                    profile_match = true
+                if is_active then
+                    item.value = command("adjust-aspect -1")
+                else
+                    item.value = command("adjust-aspect " .. item.aspect)
                 end
 
                 if item.active ~= is_active then
@@ -164,12 +164,55 @@ local function update_aspect(value)
 end
 
 -- Color
-local function create_color_menu()
-    local color_items = {}
+local function create_color_profiles()
+    if options.include_default_color_profile then
+        table.insert(profile.color, {
+            title = options.default_color_profile_name:match("^%s*(.-)%s*$"),
+            active = false,
+            value = command(
+                "adjust-color profile " .. default_color.brightness .. "," .. default_color.contrast .. "," ..
+                    default_color.saturation .. "," .. default_color.gamma .. "," .. default_color.hue),
+            id = "default"
+        })
+    end
 
+    for color_profile in options.color_profiles:gmatch("([^;]+)") do
+        local name, settings = color_profile:match("(.+):(.+)")
+        if name and settings then
+            local brightness, contrast, saturation, gamma, hue = settings:match(
+                "([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)")
+            if brightness and contrast and saturation and gamma and hue then
+                table.insert(profile.color, {
+                    title = name:match("^%s*(.-)%s*$"),
+                    active = false,
+                    brightness = tonumber(brightness),
+                    contrast = tonumber(contrast),
+                    saturation = tonumber(saturation),
+                    gamma = tonumber(gamma),
+                    hue = tonumber(hue),
+                    value = command(
+                        "adjust-color profile " .. brightness .. "," .. contrast .. "," .. saturation .. "," .. gamma ..
+                            "," .. hue)
+                })
+            end
+        end
+    end
+end
+
+local function create_color_menu()
     local function get_color_hint(property)
         local value = mp.get_property_number(property)
-        return value ~= 0 and (value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)) or nil
+        return value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)
+    end
+
+    local color_items = {}
+
+    for _, profile in ipairs(profile.color) do
+        table.insert(color_items, profile)
+    end
+
+    if #color_items > 0 then
+        color_items[#color_items].separator = true
     end
 
     local function create_adjustment_actions(prop)
@@ -183,7 +226,7 @@ local function create_color_menu()
             icon = "remove",
             label = "Decrease by " .. string.format("%.2f", increment)
         }, {
-            name = command("adjust-color " .. prop .. " reset"),
+            name = command("adjust-color reset " .. prop),
             icon = "clear",
             label = "Reset"
         }}
@@ -202,26 +245,70 @@ local function create_color_menu()
 
     table.insert(color_items, {
         title = "Reset all",
-        value = command("reset-color"),
+        value = command("adjust-color resetall"),
         italic = true,
         muted = true
     })
 
-    menu.color = {
+    return {
         title = "Color",
         items = color_items
     }
 end
 
+local function update_color()
+    local brightness = mp.get_property_number("brightness")
+    local contrast = mp.get_property_number("contrast")
+    local saturation = mp.get_property_number("saturation")
+    local gamma = mp.get_property_number("gamma")
+    local hue = mp.get_property_number("hue")
+    local is_default = brightness == default_color.brightness and contrast == default_color.contrast and saturation ==
+                           default_color.saturation and gamma == default_color.gamma and hue == default_color.hue
+
+    for _, item in ipairs(profile.color) do
+        if item.id == "default" then
+            if is_default then
+                item.value = command("adjust-color resetall")
+            else
+                item.value = command("adjust-color profile " .. default_color.brightness .. "," ..
+                                         default_color.contrast .. "," .. default_color.saturation .. "," ..
+                                         default_color.gamma .. "," .. default_color.hue)
+            end
+            item.active = is_default
+        else
+            local is_active = brightness == item.brightness and contrast == item.contrast and saturation ==
+                                  item.saturation and gamma == item.gamma and hue == item.hue
+
+            if is_active then
+                item.value = command("adjust-color resetall")
+            else
+                item.value = command("adjust-color profile " .. item.brightness .. "," .. item.contrast .. "," ..
+                                         item.saturation .. "," .. item.gamma .. "," .. item.hue)
+            end
+
+            if item.active ~= is_active then
+                item.active = is_active
+            end
+        end
+    end
+
+    menu.color = create_color_menu()
+    update_menu()
+end
+
 -- Deband
-local function create_deband_profile()
+local function create_deband_profiles()
     if options.include_default_deband_profile then
         table.insert(profile.deband, {
             title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
             active = false,
             value = command("adjust-deband profile " .. default_deband.iterations .. "," .. default_deband.threshold ..
                                 "," .. default_deband.range .. "," .. default_deband.grain),
-            id = "default"
+            iterations = tonumber(default_deband.iterations),
+            threshold = tonumber(default_deband.threshold),
+            range = tonumber(default_deband.range),
+            grain = tonumber(default_deband.grain),
+            id = "profile"
         })
     end
 
@@ -233,16 +320,27 @@ local function create_deband_profile()
                 table.insert(profile.deband, {
                     title = name:match("^%s*(.-)%s*$"),
                     active = false,
+                    value = command("adjust-deband profile " .. iterations .. "," .. threshold .. "," .. range .. "," ..
+                                        grain),
                     iterations = tonumber(iterations),
                     threshold = tonumber(threshold),
                     range = tonumber(range),
                     grain = tonumber(grain),
-                    value = command("adjust-deband profile " .. iterations .. "," .. threshold .. "," .. range .. "," ..
-                                        grain)
+                    id = "profile"
                 })
             end
         end
     end
+
+    table.insert(profile.deband, {
+        title = "Custom",
+        active = false,
+        selectable = false,
+        muted = true,
+        value = command("adjust-deband toggle"),
+        id = "custom"
+    })
+
 end
 
 local function create_deband_menu()
@@ -305,46 +403,50 @@ local function update_deband()
     local is_default = deband_enabled and iterations == default_deband.iterations and threshold ==
                            default_deband.threshold and range == default_deband.range and grain == default_deband.grain
 
+    local profile_match = false
+
     for _, item in ipairs(profile.deband) do
-        if item.id == "default" then
-            if is_default then
-                item.value = command("adjust-deband toggle")
-            else
-                item.value = command("adjust-deband profile " .. default_deband.iterations .. "," ..
-                                         default_deband.threshold .. "," .. default_deband.range .. "," ..
-                                         default_deband.grain)
-            end
-            item.active = is_default
-        else
-            local is_active = deband_enabled and item.iterations == iterations and item.threshold == threshold and
+        if item.id == "profile" then
+            local is_active = item.iterations == iterations and item.threshold == threshold and
                                   item.range == range and item.grain == grain
 
             if is_active then
                 item.value = command("adjust-deband toggle")
+                if not profile_match then
+                    profile_match = true
+                end
             else
                 item.value = command("adjust-deband profile " .. item.iterations .. "," .. item.threshold .. "," ..
                                          item.range .. "," .. item.grain)
             end
 
-            if item.active ~= is_active then
-                item.active = is_active
-            end
+            item.active = deband_enabled and is_active
         end
     end
 
+    for _, item in ipairs(profile.deband) do
+        if item.id == "custom" then
+            item.active = deband_enabled and not profile_match
+            item.selectable = not profile_match
+            item.muted = profile_match
+        end
+    end
+    
+
     menu.deband = create_deband_menu()
+
     update_menu()
 end
 
 -- Interpolation
 
 -- Shaders
-local function create_shader_profile()
+local function create_shader_profiles()
     if options.include_none_shader_profile then
         table.insert(profile.shader, {
             title = options.none_shader_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("adjust-shaders"),
+            value = command("adjust-shaders profile"),
             id = "none"
         })
     end
@@ -353,7 +455,7 @@ local function create_shader_profile()
         table.insert(profile.shader, {
             title = options.default_shader_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("default-shaders"),
+            value = command("adjust-shaders default"),
             id = "default"
         })
     end
@@ -374,7 +476,7 @@ local function create_shader_profile()
                 title = name,
                 active = false,
                 profshaders = prof_shaders,
-                value = command("adjust-shaders " .. prof_shaders)
+                value = command("adjust-shaders profile " .. prof_shaders)
             })
         end
     end
@@ -412,7 +514,7 @@ local function create_shader_menu()
             title = shader:match("(.+)%..+$") or shader,
             hint = is_active[shader_path] and string.format("%d", i) or nil,
             icon = is_active[shader_path] and "check_box" or "check_box_outline_blank",
-            value = command("toggle-shader " .. ("%q"):format(shader_path))
+            value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
         })
     end
 
@@ -443,9 +545,9 @@ local function update_shaders(value)
             item.active = #current_shaders == 0
         elseif item.id == "default" then
             if is_default then
-                item.value = command("adjust-shaders")
+                item.value = command("adjust-shaders profile")
             else
-                item.value = command("default-shaders")
+                item.value = command("adjust-shaders default")
             end
             item.active = is_default
         else
@@ -460,9 +562,9 @@ local function update_shaders(value)
             local is_active = compare_shaders(current_shaders, profile_shader)
 
             if is_active then
-                item.value = command("adjust-shaders")
+                item.value = command("adjust-shaders profile")
             else
-                item.value = command("adjust-shaders " .. item.profshaders)
+                item.value = command("adjust-shaders profile " .. item.profshaders)
             end
 
             if item.active ~= is_active then
@@ -486,24 +588,8 @@ local message_handlers = {
             mp.command(event.action)
         end
     end,
-    ["set-aspect"] = function(aspect)
+    ["adjust-aspect"] = function(aspect)
         mp.set_property("video-aspect-override", aspect)
-    end,
-    ["adjust-color"] = function(property, value)
-        if value == "reset" then
-            mp.set_property(property, default_color[property])
-        else
-            local current = mp.get_property_number(property)
-            local num_value = tonumber(value)
-            local new_value = current + num_value
-            new_value = math.max(-100, math.min(100, new_value))
-            mp.set_property(property, new_value)
-        end
-    end,
-    ["reset-color"] = function()
-        for prop, value in pairs(default_color) do
-            mp.set_property(prop, value)
-        end
     end,
     ["adjust-deband"] = function(property, value)
         if property == "toggle" then
@@ -518,40 +604,64 @@ local message_handlers = {
                 mp.set_property("deband-grain", tonumber(grain))
             end
         else
-            if value == "reset" then
-                mp.set_property("deband-" .. property, default_deband[property])
+            local current = mp.get_property_number("deband-" .. property)
+            local num_value = tonumber(value)
+            local new_value = current + num_value
+            new_value = math.max(0, math.min(100, new_value))
+            mp.set_property("deband-" .. property, new_value)
+        end
+    end,
+    ["adjust-color"] = function(property, value)
+        if property == "profile" then
+            local brightness, contrast, saturation, gamma, hue = value:match("([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)")
+            if brightness and contrast and saturation and gamma and hue then
+                mp.set_property("brightness", tonumber(brightness))
+                mp.set_property("contrast", tonumber(contrast))
+                mp.set_property("saturation", tonumber(saturation))
+                mp.set_property("gamma", tonumber(gamma))
+                mp.set_property("hue", tonumber(hue))
+            end
+        else
+            if property == "resetall" then
+                for prop, value in pairs(default_color) do
+                    mp.set_property(prop, value)
+                end
+            elseif property == "reset" then
+                mp.set_property(value, default_color[value])
             else
-                local current = mp.get_property_number("deband-" .. property)
+                local current = mp.get_property_number(property)
                 local num_value = tonumber(value)
                 local new_value = current + num_value
-                new_value = math.max(0, math.min(100, new_value))
-                mp.set_property("deband-" .. property, new_value)
+                new_value = math.max(-100, math.min(100, new_value))
+                mp.set_property(property, new_value)
             end
         end
     end,
     ["toggle-interpolation"] = function()
         mp.set_property("interpolation", not mp.get_property_bool("interpolation") and "yes" or "no")
     end,
-    ["adjust-shaders"] = function(shader_list)
-        local profile_shaders = {}
-        if shader_list and shader_list ~= "" then
-            for shader in shader_list:gmatch("([^,]+)") do
-                local trimmed_shader = shader:match("^%s*(.-)%s*$")
-                if trimmed_shader ~= "" then
-                    if options.expand_profile_shader_path then
-                        trimmed_shader = mp.utils.join_path(options.shader_path, trimmed_shader)
+    ["adjust-shaders"] = function(property, value)
+        if property == "toggle" then
+            local shader_path = value
+            mp.commandv("change-list", "glsl-shaders", "toggle", shader_path)
+        elseif property == "default" then
+            mp.set_property_native("glsl-shaders", default_shaders)
+        elseif property == "profile" then
+            local profile_shaders = {}
+            local shader_list = value
+            if shader_list and shader_list ~= "" then
+                for shader in shader_list:gmatch("([^,]+)") do
+                    local trimmed_shader = shader:match("^%s*(.-)%s*$")
+                    if trimmed_shader ~= "" then
+                        if options.expand_profile_shader_path then
+                            trimmed_shader = mp.utils.join_path(options.shader_path, trimmed_shader)
+                        end
+                        table.insert(profile_shaders, trimmed_shader)
                     end
-                    table.insert(profile_shaders, trimmed_shader)
                 end
             end
+            mp.set_property_native("glsl-shaders", profile_shaders)
         end
-        mp.set_property_native("glsl-shaders", profile_shaders)
-    end,
-    ["default-shaders"] = function()
-        mp.set_property_native("glsl-shaders", default_shaders)
-    end,
-    ["toggle-shader"] = function(shader_path)
-        mp.commandv("change-list", "glsl-shaders", "toggle", shader_path)
     end
 }
 
@@ -567,11 +677,11 @@ local function setup_property_observers()
         update_aspect(value)
     end)
 
-    mp.observe_property("brightness", "number", update_menu)
-    mp.observe_property("contrast", "number", update_menu)
-    mp.observe_property("saturation", "number", update_menu)
-    mp.observe_property("gamma", "number", update_menu)
-    mp.observe_property("hue", "number", update_menu)
+    mp.observe_property("brightness", "number", update_color)
+    mp.observe_property("contrast", "number", update_color)
+    mp.observe_property("saturation", "number", update_color)
+    mp.observe_property("gamma", "number", update_color)
+    mp.observe_property("hue", "number", update_color)
 
     mp.observe_property("deband", "bool", update_deband)
     mp.observe_property("deband-iterations", "number", update_deband)
@@ -589,9 +699,10 @@ local function setup_property_observers()
 end
 
 local function init()
-    create_aspect_profile()
-    create_deband_profile()
-    create_shader_profile()
+    create_aspect_profiles()
+    create_deband_profiles()
+    create_color_profiles()
+    create_shader_profiles()
 
     setup_message_handlers()
     setup_property_observers()
