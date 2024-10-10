@@ -103,22 +103,25 @@ end
 
 -- Aspect override
 local function create_aspect_profiles()
-    table.insert(profile.aspect, {
-        title = "Off",
-        active = false,
-        value = command("adjust-aspect -1"),
-        id = "off"
-    })
-
     for aspect_profile in options.aspect_profiles:gmatch("([^,]+)") do
         local aspect = aspect_profile:match("^%s*(.-)%s*$")
         table.insert(profile.aspect, {
             title = aspect,
-            aspect = aspect,
             active = false,
-            value = command("adjust-aspect " .. aspect)
+            value = command("adjust-aspect " .. aspect),
+            aspect = aspect,
+            id = "profile"
         })
     end
+
+    table.insert(profile.aspect, {
+        title = "Custom",
+        active = false,
+        selectable = false,
+        muted = true,
+        value = command("adjust-aspect -1"),
+        id = "custom"
+    })
 end
 
 local function create_aspect_menu()
@@ -136,26 +139,32 @@ end
 
 local function update_aspect(value)
     local current_aspect_value = value
-
+    local is_original = current_aspect_value == -1
+    local profile_match = false
     for _, item in ipairs(profile.aspect) do
-        if item.id == "off" then
-            item.active = current_aspect_value == -1
-        else
+        if item.id == "profile" then
             local w, h = item.aspect:match("(%d+%.?%d*):(%d+%.?%d*)")
             if w and h then
                 local profile_aspect_value = tonumber(w) / tonumber(h)
                 local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
 
                 if is_active then
+                    profile_match = true
                     item.value = command("adjust-aspect -1")
                 else
                     item.value = command("adjust-aspect " .. item.aspect)
                 end
 
-                if item.active ~= is_active then
-                    item.active = is_active
-                end
+                item.active = is_active
             end
+        end
+    end
+
+    for _, item in ipairs(profile.aspect) do
+        if item.id == "custom" then
+            item.active = not is_original and not profile_match
+            item.selectable = not is_original and not profile_match
+            item.muted = is_original or profile_match
         end
     end
 
@@ -172,7 +181,12 @@ local function create_color_profiles()
             value = command(
                 "adjust-color profile " .. default_color.brightness .. "," .. default_color.contrast .. "," ..
                     default_color.saturation .. "," .. default_color.gamma .. "," .. default_color.hue),
-            id = "default"
+            brightness = tonumber(default_color.brightness),
+            contrast = tonumber(default_color.contrast),
+            saturation = tonumber(default_color.saturation),
+            gamma = tonumber(default_color.gamma),
+            hue = tonumber(default_color.hue),
+            id = "profile"
         })
     end
 
@@ -185,18 +199,28 @@ local function create_color_profiles()
                 table.insert(profile.color, {
                     title = name:match("^%s*(.-)%s*$"),
                     active = false,
+                    value = command(
+                        "adjust-color profile " .. brightness .. "," .. contrast .. "," .. saturation .. "," .. gamma ..
+                            "," .. hue),
                     brightness = tonumber(brightness),
                     contrast = tonumber(contrast),
                     saturation = tonumber(saturation),
                     gamma = tonumber(gamma),
                     hue = tonumber(hue),
-                    value = command(
-                        "adjust-color profile " .. brightness .. "," .. contrast .. "," .. saturation .. "," .. gamma ..
-                            "," .. hue)
+                    id = "profile"
                 })
             end
         end
     end
+
+    table.insert(profile.color, {
+        title = "Custom",
+        active = false,
+        selectable = false,
+        muted = true,
+        value = command("adjust-color clear"),
+        id = "custom"
+    })
 end
 
 local function create_color_menu()
@@ -245,7 +269,7 @@ local function create_color_menu()
 
     table.insert(color_items, {
         title = "Reset all",
-        value = command("adjust-color resetall"),
+        value = command("adjust-color clear"),
         italic = true,
         muted = true
     })
@@ -262,33 +286,31 @@ local function update_color()
     local saturation = mp.get_property_number("saturation")
     local gamma = mp.get_property_number("gamma")
     local hue = mp.get_property_number("hue")
-    local is_default = brightness == default_color.brightness and contrast == default_color.contrast and saturation ==
-                           default_color.saturation and gamma == default_color.gamma and hue == default_color.hue
+    local is_original = brightness == 0 and contrast == 0 and saturation == 0 and gamma == 0 and hue == 0
 
+    local profile_match = false
     for _, item in ipairs(profile.color) do
-        if item.id == "default" then
-            if is_default then
-                item.value = command("adjust-color resetall")
-            else
-                item.value = command("adjust-color profile " .. default_color.brightness .. "," ..
-                                         default_color.contrast .. "," .. default_color.saturation .. "," ..
-                                         default_color.gamma .. "," .. default_color.hue)
-            end
-            item.active = is_default
-        else
+        if item.id == "profile" then
             local is_active = brightness == item.brightness and contrast == item.contrast and saturation ==
                                   item.saturation and gamma == item.gamma and hue == item.hue
 
             if is_active then
-                item.value = command("adjust-color resetall")
+                profile_match = true
+                item.value = command("adjust-color clear")
             else
                 item.value = command("adjust-color profile " .. item.brightness .. "," .. item.contrast .. "," ..
                                          item.saturation .. "," .. item.gamma .. "," .. item.hue)
             end
 
-            if item.active ~= is_active then
-                item.active = is_active
-            end
+            item.active = is_active
+        end
+    end
+
+    for _, item in ipairs(profile.color) do
+        if item.id == "custom" then
+            item.active = not is_original and not profile_match
+            item.selectable = not is_original and not profile_match
+            item.muted = is_original or profile_match
         end
     end
 
@@ -389,24 +411,22 @@ local function create_deband_menu()
 end
 
 local function update_deband()
-    local deband_enabled = mp.get_property_bool("deband")
     local iterations = mp.get_property_number("deband-iterations")
     local threshold = mp.get_property_number("deband-threshold")
     local range = mp.get_property_number("deband-range")
     local grain = mp.get_property_number("deband-grain")
+    local deband_enabled = mp.get_property_bool("deband")
 
     local profile_match = false
 
     for _, item in ipairs(profile.deband) do
         if item.id == "profile" then
-            local is_active = item.iterations == iterations and item.threshold == threshold and
-                                  item.range == range and item.grain == grain
+            local is_active = item.iterations == iterations and item.threshold == threshold and item.range == range and
+                                  item.grain == grain
 
             if is_active then
+                profile_match = true
                 item.value = command("adjust-deband toggle")
-                if not profile_match then
-                    profile_match = true
-                end
             else
                 item.value = command("adjust-deband profile " .. item.iterations .. "," .. item.threshold .. "," ..
                                          item.range .. "," .. item.grain)
@@ -423,7 +443,6 @@ local function update_deband()
             item.muted = profile_match
         end
     end
-    
 
     menu.deband = create_deband_menu()
 
@@ -616,10 +635,12 @@ local message_handlers = {
                 mp.set_property("hue", tonumber(hue))
             end
         else
-            if property == "resetall" then
-                for prop, value in pairs(default_color) do
-                    mp.set_property(prop, value)
-                end
+            if property == "clear" then
+                mp.set_property("brightness", 0)
+                mp.set_property("contrast", 0)
+                mp.set_property("saturation", 0)
+                mp.set_property("gamma", 0)
+                mp.set_property("hue", 0)
             elseif property == "reset" then
                 mp.set_property(value, default_color[value])
             else
