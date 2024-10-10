@@ -1,10 +1,7 @@
 local options = {
     shader_path = "~~/shaders",
     shader_profiles = "",
-    expand_profile_shader_path = true,
-    include_none_shader_profile = true,
     include_default_shader_profile = true,
-    none_shader_profile_name = "None",
     default_shader_profile_name = "Default",
 
     color_profiles = "",
@@ -267,13 +264,6 @@ local function create_color_menu()
         })
     end
 
-    table.insert(color_items, {
-        title = "Reset all",
-        value = command("adjust-color clear"),
-        italic = true,
-        muted = true
-    })
-
     return {
         title = "Color",
         items = color_items
@@ -445,7 +435,6 @@ local function update_deband()
     end
 
     menu.deband = create_deband_menu()
-
     update_menu()
 end
 
@@ -453,21 +442,13 @@ end
 
 -- Shaders
 local function create_shader_profiles()
-    if options.include_none_shader_profile then
-        table.insert(profile.shader, {
-            title = options.none_shader_profile_name:match("^%s*(.-)%s*$"),
-            active = false,
-            value = command("adjust-shaders profile"),
-            id = "none"
-        })
-    end
-
     if options.include_default_shader_profile then
         table.insert(profile.shader, {
             title = options.default_shader_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("adjust-shaders default"),
-            id = "default"
+            value = command("adjust-shaders profile " .. table.concat(default_shaders, ",")),
+            profshaders = table.concat(default_shaders, ","),
+            id = "profile"
         })
     end
 
@@ -486,11 +467,21 @@ local function create_shader_profiles()
             table.insert(profile.shader, {
                 title = name,
                 active = false,
+                value = command("adjust-shaders profile " .. prof_shaders),
                 profshaders = prof_shaders,
-                value = command("adjust-shaders profile " .. prof_shaders)
+                id = "profile"
             })
         end
     end
+
+    table.insert(profile.shader, {
+        title = "Custom",
+        active = false,
+        selectable = false,
+        muted = true,
+        value = command("adjust-shaders clear"),
+        id = "custom"
+    })
 end
 
 local function create_shader_menu()
@@ -551,17 +542,10 @@ local function update_shaders(value)
     local current_shaders = value
     local is_default = compare_shaders(current_shaders, default_shaders)
 
+    local profile_match = false
+
     for _, item in ipairs(profile.shader) do
-        if item.id == "none" then
-            item.active = #current_shaders == 0
-        elseif item.id == "default" then
-            if is_default then
-                item.value = command("adjust-shaders profile")
-            else
-                item.value = command("adjust-shaders default")
-            end
-            item.active = is_default
-        else
+        if item.id == "profile" then
             local profile_shader = {}
             for shader in item.profshaders:gsub('"', ''):gmatch("([^,]+)") do
                 if options.expand_profile_shader_path then
@@ -573,14 +557,21 @@ local function update_shaders(value)
             local is_active = compare_shaders(current_shaders, profile_shader)
 
             if is_active then
-                item.value = command("adjust-shaders profile")
+                profile_match = true
+                item.value = command("adjust-shaders clear")
             else
                 item.value = command("adjust-shaders profile " .. item.profshaders)
             end
 
-            if item.active ~= is_active then
-                item.active = is_active
-            end
+            item.active = is_active
+        end
+    end
+
+    for _, item in ipairs(profile.shader) do
+        if item.id == "custom" then
+            item.active = #current_shaders > 0 and not profile_match
+            item.selectable = #current_shaders > 0 and not profile_match
+            item.muted = #current_shaders == 0 or profile_match
         end
     end
 
@@ -659,8 +650,8 @@ local message_handlers = {
         if property == "toggle" then
             local shader_path = value
             mp.commandv("change-list", "glsl-shaders", "toggle", shader_path)
-        elseif property == "default" then
-            mp.set_property_native("glsl-shaders", default_shaders)
+        elseif property == "clear" then
+            mp.set_property_native("glsl-shaders", {})
         elseif property == "profile" then
             local profile_shaders = {}
             local shader_list = value
@@ -668,9 +659,6 @@ local message_handlers = {
                 for shader in shader_list:gmatch("([^,]+)") do
                     local trimmed_shader = shader:match("^%s*(.-)%s*$")
                     if trimmed_shader ~= "" then
-                        if options.expand_profile_shader_path then
-                            trimmed_shader = mp.utils.join_path(options.shader_path, trimmed_shader)
-                        end
                         table.insert(profile_shaders, trimmed_shader)
                     end
                 end
