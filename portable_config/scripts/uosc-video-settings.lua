@@ -354,12 +354,6 @@ local function create_deband_menu()
         deband_items[#deband_items].separator = true
     end
 
-    table.insert(deband_items, {
-        title = "Enable",
-        icon = mp.get_property_bool("deband") and "check_box" or "check_box_outline_blank",
-        value = command("adjust-deband toggle")
-    })
-
     local function create_adjustment_actions(property)
         local increment = 1
         return {{
@@ -373,7 +367,7 @@ local function create_deband_menu()
         }, {
             label = "Reset",
             icon = "clear",
-            name = command("adjust-deband " .. property .. " reset")
+            name = command("adjust-deband reset " .. property)
         }}
     end
 
@@ -400,8 +394,6 @@ local function update_deband()
     local threshold = mp.get_property_number("deband-threshold")
     local range = mp.get_property_number("deband-range")
     local grain = mp.get_property_number("deband-grain")
-    local is_default = deband_enabled and iterations == default_deband.iterations and threshold ==
-                           default_deband.threshold and range == default_deband.range and grain == default_deband.grain
 
     local profile_match = false
 
@@ -603,6 +595,8 @@ local message_handlers = {
                 mp.set_property("deband-range", tonumber(range))
                 mp.set_property("deband-grain", tonumber(grain))
             end
+        elseif property == "reset" then
+            mp.set_property("deband-" .. value, default_deband[value])
         else
             local current = mp.get_property_number("deband-" .. property)
             local num_value = tonumber(value)
