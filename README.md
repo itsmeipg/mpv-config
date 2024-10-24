@@ -2,16 +2,11 @@
 
 # In progress
 - Update SSimDownscaler/Check other shaders/scripts to update.
-- Basically major update coming soon that updates literally everything.
-- Add option to put profiles into submenu. Add option to change profile submenu name.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
 - Change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
-- Add color profiles.
-- Add adjustable deband settings in deband section.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if video current video is interlaced.
-- Use new action buttons to increase/decrease color properties.
-- Update README.md pictures. At least try to make less commits or try using another branch before merging into main. (I think that's how it works?)
-- Work on uosc-subtitle-settings.lua. Make hint values disappear if different from mpv defaults, instead of mpv.conf's defaults. Replace radio buttons with active state. Clean up code logic.
+- Update README.md pictures.
+- Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 
 # Theme
