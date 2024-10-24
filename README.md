@@ -8,7 +8,9 @@
 - Update README.md pictures.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
-
+- Re-edit uosc proximity, video-quality script + change its FPS display.
+- Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither
+- Fix filtering of avc video format for YouTube.
 # Theme
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
