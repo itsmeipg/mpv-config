@@ -1,6 +1,7 @@
 local options = {
     shader_path = "~~/shaders",
     shader_profiles = "",
+    include_none_shader_profile = true,
     include_default_shader_profile = true,
     default_shader_profile_name = "Default",
 
@@ -44,6 +45,11 @@ local deband = {
     range = mp.get_property_number("deband-range"),
     grain = mp.get_property_number("deband-grain")
 }
+local scale = {
+    scale = mp.get_property_native("scale"),
+    dscale = mp.get_property_native("dscale"),
+    cscale = mp.get_property_native("cscale")
+}
 local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
 for i, shader in ipairs(shader_files) do
     shader_files[i] = mp.utils.join_path(options.shader_path, shader)
@@ -62,8 +68,51 @@ local menu = {
     color = nil,
     deband = nil,
     interpolation = nil,
+    scale = nil,
     shader = nil
 }
+
+local function create_property_toggle(title, property)
+    return {
+        title = title,
+        icon = mp.get_property_bool(property) and "check_box" or "check_box_outline_blank",
+        value = command("toggle-property " .. property)
+    }
+end
+
+local function create_property_selection(title, property, options, off_or_default_option, include_custom_item)
+    local property_items = {}
+
+    local option_match = false
+    for _, item in ipairs(options) do
+        local is_active = mp.get_property(property) == item.value
+
+        if is_active then
+            option_match = true
+        end
+        table.insert(property_items, {
+            title = item.name,
+            active = is_active,
+            value = is_active and command("adjust-property " .. property .. " " .. off_or_default_option) or
+                command("adjust-property " .. property .. " " .. item.value)
+        })
+    end
+
+    if include_custom_item then
+        table.insert(property_items, {
+            title = "Custom",
+            active = not off_or_default_option and not option_match,
+            selectable = not off_or_default_option and not option_match,
+            muted = off_or_default_option or option_match,
+            value = command("adjust-property " .. property .. " " .. off_or_default_option)
+        })
+    end
+
+    return {
+        title = title,
+        items = property_items
+    }
+end
 
 local function create_menu_data()
     local menu_items = {}
@@ -79,9 +128,13 @@ local function create_menu_data()
     if menu.interpolation then
         table.insert(menu_items, menu.interpolation)
     end
+    if menu.scale then
+        table.insert(menu_items, menu.scale)
+    end
     if menu.shader then
         table.insert(menu_items, menu.shader)
     end
+    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
     return {
         type = "video_settings",
         title = "Video settings",
@@ -168,9 +221,8 @@ local function create_color_profiles()
         table.insert(profile.color, {
             title = options.default_color_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command(
-                "adjust-color profile " .. color.brightness .. "," .. color.contrast .. "," ..
-                    color.saturation .. "," .. color.gamma .. "," .. color.hue),
+            value = command("adjust-color profile " .. color.brightness .. "," .. color.contrast .. "," ..
+                                color.saturation .. "," .. color.gamma .. "," .. color.hue),
             brightness = tonumber(color.brightness),
             contrast = tonumber(color.contrast),
             saturation = tonumber(color.saturation),
@@ -276,8 +328,6 @@ local function create_color_menu()
         color_items[#color_items].separator = true
     end
 
-    
-
     local color_properties = {"brightness", "contrast", "saturation", "gamma", "hue"}
 
     for _, prop in ipairs(color_properties) do
@@ -303,8 +353,8 @@ local function create_deband_profiles()
         table.insert(profile.deband, {
             title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("adjust-deband profile " .. deband.iterations .. "," .. deband.threshold ..
-                                "," .. deband.range .. "," .. deband.grain),
+            value = command("adjust-deband profile " .. deband.iterations .. "," .. deband.threshold .. "," ..
+                                deband.range .. "," .. deband.grain),
             iterations = tonumber(deband.iterations),
             threshold = tonumber(deband.threshold),
             range = tonumber(deband.range),
@@ -338,7 +388,7 @@ local function create_deband_profiles()
         active = false,
         selectable = false,
         muted = true,
-        value = command("adjust-deband toggle"),
+        value = command("toggle-property deband"),
         id = "custom"
     })
 
@@ -362,7 +412,7 @@ local function create_deband_menu()
 
             if is_active then
                 profile_match = true
-                item.value = command("adjust-deband toggle")
+                item.value = command("toggle-property deband")
             else
                 item.value = command("adjust-deband profile " .. item.iterations .. "," .. item.threshold .. "," ..
                                          item.range .. "," .. item.grain)
@@ -401,11 +451,7 @@ local function create_deband_menu()
         }}
     end
 
-    table.insert(deband_items, {
-        title = "Enable",
-        icon = mp.get_property_bool("deband") and "check_box" or "check_box_outline_blank",
-        value = command("adjust-deband toggle")
-    })
+    table.insert(deband_items, create_property_toggle("Enable", "deband"))
 
     local deband_properties = {"iterations", "threshold", "range", "grain"}
 
@@ -472,6 +518,69 @@ local function create_shader_profiles()
     })
 end
 
+local function create_scale_menu()
+    local scale_items = {}
+
+    -- Helper function to create scale property selections
+    local function add_scale_selection(title, property, additional_items)
+        local items = {{
+            name = "Bilinear",
+            value = "bilinear"
+        }, {
+            name = "Lanczos",
+            value = "lanczos"
+        }, {
+            name = "EWA Lanczos",
+            value = "ewa_lanczos"
+        }, {
+            name = "EWA Lanczos Sharp",
+            value = "ewa_lanczossharp"
+        }, {
+            name = "EWA Lanczos Sharpest",
+            value = "ewa_lanczos4sharpest"
+        }, {
+            name = "Mitchell",
+            value = "mitchell"
+        }, {
+            name = "Hermite",
+            value = "hermite"
+        }, {
+            name = "Catmull Rom",
+            value = "catmull_rom"
+        }, {
+            name = "Oversample",
+            value = "oversample"
+        }}
+
+        if additional_items then
+            for _, item in ipairs(additional_items) do
+                table.insert(items, item)
+            end
+        end
+
+        table.insert(scale_items, create_property_selection(title, property, items, scale[property], true)) -- Use scale[property] instead of scale.scale
+    end
+
+    add_scale_selection("Upscale", "scale")
+    add_scale_selection("Downscale", "dscale") -- Added dscale
+    add_scale_selection("Chromascale", "cscale", { -- Added cscale
+    {
+        name = "Spline64",
+        value = "spline64"
+    }})
+
+    table.insert(scale_items, create_property_toggle("Correct Downscaling", "correct-downscaling"))
+    table.insert(scale_items, create_property_toggle("Linear Downscaling", "linear-downscaling"))
+    table.insert(scale_items, create_property_toggle("Sigmoid Upscaling", "sigmoid-upscaling"))
+
+    menu.scale = {
+        title = "Scale",
+        items = scale_items
+    }
+
+    update_menu()
+end
+
 local function create_shader_menu(value)
     local function compare_shaders(shaders1, shaders2)
         if #shaders1 ~= #shaders2 then
@@ -527,7 +636,6 @@ local function create_shader_menu(value)
     end
 
     local shader_list = {}
-    local current_shaders = mp.get_property_native("glsl-shaders", {})
     local is_active = {}
 
     for _, shader_path in ipairs(current_shaders) do
@@ -574,9 +682,7 @@ local message_handlers = {
         mp.set_property("video-aspect-override", aspect)
     end,
     ["adjust-deband"] = function(property, value)
-        if property == "toggle" then
-            mp.set_property("deband", not mp.get_property_bool("deband") and "yes" or "no")
-        elseif property == "profile" then
+        if property == "profile" then
             local iterations, threshold, range, grain = value:match("([^,]+),([^,]+),([^,]+),([^,]+)")
             if iterations and threshold and range and grain then
                 mp.set_property("deband", "yes")
@@ -632,8 +738,12 @@ local message_handlers = {
             end
         end
     end,
-    ["toggle-interpolation"] = function()
-        mp.set_property("interpolation", not mp.get_property_bool("interpolation") and "yes" or "no")
+    ["toggle-property"] = function(property)
+        mp.set_property(property, not mp.get_property_bool(property) and "yes" or "no")
+    end,
+
+    ["adjust-property"] = function(property, value)
+        mp.set_property(property, value)
     end,
     ["adjust-shaders"] = function(property, value)
         if property == "toggle" then
@@ -682,8 +792,14 @@ local function setup_property_observers()
     mp.observe_property("deband-grain", "number", create_deband_menu)
 
     mp.observe_property("interpolation", "bool", function(name, value)
-
+        update_menu()
     end)
+    mp.observe_property("scale", "string", create_scale_menu)
+    mp.observe_property("dscale", "string", create_scale_menu)
+    mp.observe_property("cscale", "string", create_scale_menu)
+    mp.observe_property("correct-downscaling", "string", create_scale_menu)
+    mp.observe_property("linear-downscaling", "string", create_scale_menu)
+    mp.observe_property("sigmoid-upscaling", "string", create_scale_menu)
 
     mp.observe_property("glsl-shaders", "native", function(name, value)
         create_shader_menu(value)
