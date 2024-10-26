@@ -1,7 +1,6 @@
 # mpv-config
 
 # In progress
-- Change order of buttons.
 - Update SSimDownscaler/Check other shaders/scripts to update.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
 - Maybe change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
