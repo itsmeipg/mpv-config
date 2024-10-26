@@ -9,6 +9,7 @@
 - Add folder support for shaders.
 - Change ontop button icon because it's already used for secondary subtitle action button in default uosc subtitle menu.
 - Edit action button footnotes.
+- Consider actual mpv profiles.
 - Maybe add scaler options to specify specific scalers instead of listing all of them for d/c/scale.
 - Update SSimDownscaler/Check other shaders/scripts to update.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
