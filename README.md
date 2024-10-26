@@ -1,5 +1,5 @@
 # mpv-config
-![image](https://github.com/user-attachments/assets/02e4088b-f4ed-476b-8641-933cfe2b5a3c)
+![image](https://github.com/user-attachments/assets/6a890502-a91d-4958-8c52-7bf8ef289781)
 ![image](https://github.com/user-attachments/assets/fbc5e922-c33d-44e1-b4b6-ad3c5ba83380)
 ![image](https://github.com/user-attachments/assets/8113278d-1d06-4828-959c-678b922f539b)
 
