@@ -1,6 +1,7 @@
 # mpv-config
 ![image](https://github.com/user-attachments/assets/fbc5e922-c33d-44e1-b4b6-ad3c5ba83380)
-![image](https://github.com/user-attachments/assets/5a328a01-38e4-4377-9a70-62dcb3b1b8dd)
+![image](https://github.com/user-attachments/assets/8113278d-1d06-4828-959c-678b922f539b)
+
 
 # In progress
 - Update SSimDownscaler/Check other shaders/scripts to update.
