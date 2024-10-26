@@ -1,11 +1,12 @@
 # mpv-config
+![image](https://github.com/user-attachments/assets/fbc5e922-c33d-44e1-b4b6-ad3c5ba83380)
+![image](https://github.com/user-attachments/assets/5a328a01-38e4-4377-9a70-62dcb3b1b8dd)
 
 # In progress
 - Update SSimDownscaler/Check other shaders/scripts to update.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
 - Maybe change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if current video is interlaced.
-- Update README.md pictures.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Re-edit uosc proximity, video-quality script + change its FPS display.
