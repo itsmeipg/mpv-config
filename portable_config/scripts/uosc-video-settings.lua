@@ -32,24 +32,20 @@ local function command(str)
     return string.format("script-message-to %s %s", script_name, str)
 end
 
-local color = {
-    brightness = mp.get_property_number("brightness"),
-    contrast = mp.get_property_number("contrast"),
-    saturation = mp.get_property_number("saturation"),
-    gamma = mp.get_property_number("gamma"),
-    hue = mp.get_property_number("hue")
+local default_property = {
+    ["brightness"] = mp.get_property_number("brightness"),
+    ["contrast"] = mp.get_property_number("contrast"),
+    ["saturation"] = mp.get_property_number("saturation"),
+    ["gamma"] = mp.get_property_number("gamma"),
+    ["hue"] = mp.get_property_number("hue"),
+
+    ["deband-iterations"] = mp.get_property_number("deband-iterations"),
+    ["deband-threshold"] = mp.get_property_number("deband-threshold"),
+    ["deband-range"] = mp.get_property_number("deband-range"),
+    ["deband-grain"] = mp.get_property_number("deband-grain")
+
 }
-local deband = {
-    iterations = mp.get_property_number("deband-iterations"),
-    threshold = mp.get_property_number("deband-threshold"),
-    range = mp.get_property_number("deband-range"),
-    grain = mp.get_property_number("deband-grain")
-}
-local scale = {
-    scale = mp.get_property_native("scale"),
-    dscale = mp.get_property_native("dscale"),
-    cscale = mp.get_property_native("cscale")
-}
+
 local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
 for i, shader in ipairs(shader_files) do
     shader_files[i] = mp.utils.join_path(options.shader_path, shader)
@@ -84,16 +80,20 @@ local function create_property_selection(title, property, options, off_or_defaul
     local property_items = {}
 
     local option_match = false
+
     for _, item in ipairs(options) do
         local is_active = mp.get_property(property) == item.value
 
         if is_active then
             option_match = true
         end
+
         table.insert(property_items, {
             title = item.name,
             active = is_active,
-            value = is_active and command("adjust-property " .. property .. " " .. off_or_default_option) or
+            separator = item.separator,
+            value = is_active and off_or_default_option and
+                command("adjust-property " .. property .. " " .. off_or_default_option) or
                 command("adjust-property " .. property .. " " .. item.value)
         })
     end
@@ -104,13 +104,40 @@ local function create_property_selection(title, property, options, off_or_defaul
             active = not off_or_default_option and not option_match,
             selectable = not off_or_default_option and not option_match,
             muted = off_or_default_option or option_match,
-            value = command("adjust-property " .. property .. " " .. off_or_default_option)
+            value = off_or_default_option and command("adjust-property " .. property .. " " .. off_or_default_option)
         })
     end
 
     return {
         title = title,
         items = property_items
+    }
+end
+
+local function create_property_number_adjustment(title, property, increment, min, max)
+    local current_value = mp.get_property_number(property)
+
+    local function create_adjustment_actions()
+        return {{
+            name = command("adjust-property " .. property .. " " .. increment),
+            icon = "add",
+            label = "Increase by " .. increment .. "."
+        }, {
+            name = command("adjust-property " .. property .. " -" .. increment),
+            icon = "remove",
+            label = "Decrease by " .. increment .. "."
+        }, {
+            name = command("adjust-property " .. property .. " reset"),
+            icon = "clear",
+            label = "Reset."
+        }}
+    end
+
+    return {
+        title = title,
+        hint = tostring(current_value),
+        actions = create_adjustment_actions(),
+        actions_place = "outside"
     }
 end
 
@@ -221,13 +248,14 @@ local function create_color_profiles()
         table.insert(profile.color, {
             title = options.default_color_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("adjust-color profile " .. color.brightness .. "," .. color.contrast .. "," ..
-                                color.saturation .. "," .. color.gamma .. "," .. color.hue),
-            brightness = tonumber(color.brightness),
-            contrast = tonumber(color.contrast),
-            saturation = tonumber(color.saturation),
-            gamma = tonumber(color.gamma),
-            hue = tonumber(color.hue),
+            value = command("adjust-color profile " .. default_property["brightness"] .. "," ..
+                                default_property["contrast"] .. "," .. default_property["saturation"] .. "," ..
+                                default_property["gamma"] .. "," .. default_property["hue"]),
+            brightness = tonumber(default_property["brightness"]),
+            contrast = tonumber(default_property["contrast"]),
+            saturation = tonumber(default_property["saturation"]),
+            gamma = tonumber(default_property["gamma"]),
+            hue = tonumber(default_property["hue"]),
             id = "profile"
         })
     end
@@ -266,28 +294,6 @@ local function create_color_profiles()
 end
 
 local function create_color_menu()
-    local function get_color_hint(property)
-        local value = mp.get_property_number(property)
-        return value > 0 and "+" .. string.format("%.2f", value) or string.format("%.2f", value)
-    end
-
-    local function create_adjustment_actions(prop)
-        local increment = options[prop .. "_increment"]
-        return {{
-            name = command("adjust-color " .. prop .. " " .. increment),
-            icon = "add",
-            label = "Increase by " .. string.format("%.2f", increment)
-        }, {
-            name = command("adjust-color " .. prop .. " -" .. increment),
-            icon = "remove",
-            label = "Decrease by " .. string.format("%.2f", increment)
-        }, {
-            name = command("adjust-color reset " .. prop),
-            icon = "clear",
-            label = "Reset"
-        }}
-    end
-
     local color_items = {}
 
     local brightness = mp.get_property_number("brightness")
@@ -307,6 +313,11 @@ local function create_color_menu()
             if is_active then
                 profile_match = true
                 item.value = command("adjust-color clear")
+                default_property["brightness"] = brightness
+                default_property["contrast"] = contrast
+                default_property["saturation"] = saturation
+                default_property["gamma"] = gamma
+                default_property["hue"] = hue
             else
                 item.value = command("adjust-color profile " .. item.brightness .. "," .. item.contrast .. "," ..
                                          item.saturation .. "," .. item.gamma .. "," .. item.hue)
@@ -331,12 +342,8 @@ local function create_color_menu()
     local color_properties = {"brightness", "contrast", "saturation", "gamma", "hue"}
 
     for _, prop in ipairs(color_properties) do
-        table.insert(color_items, {
-            title = prop:gsub("^%l", string.upper),
-            hint = get_color_hint(prop),
-            actions = create_adjustment_actions(prop),
-            actions_place = "outside"
-        })
+        table.insert(color_items, create_property_number_adjustment(prop:gsub("^%l", string.upper), prop,
+            options[prop .. "_increment"]))
     end
 
     menu.color = {
@@ -353,12 +360,13 @@ local function create_deband_profiles()
         table.insert(profile.deband, {
             title = options.default_deband_profile_name:match("^%s*(.-)%s*$"),
             active = false,
-            value = command("adjust-deband profile " .. deband.iterations .. "," .. deband.threshold .. "," ..
-                                deband.range .. "," .. deband.grain),
-            iterations = tonumber(deband.iterations),
-            threshold = tonumber(deband.threshold),
-            range = tonumber(deband.range),
-            grain = tonumber(deband.grain),
+            value = command("adjust-deband profile " .. default_property["deband-iterations"] .. "," ..
+                                default_property["deband-threshold"] .. "," .. default_property["deband-range"] .. "," ..
+                                default_property["deband-grain"]),
+            iterations = tonumber(default_property["deband-iterations"]),
+            threshold = tonumber(default_property["deband-threshold"]),
+            range = tonumber(default_property["deband-range"]),
+            grain = tonumber(default_property["deband-grain"]),
             id = "profile"
         })
     end
@@ -413,6 +421,10 @@ local function create_deband_menu()
             if is_active then
                 profile_match = true
                 item.value = command("toggle-property deband")
+                default_property["deband-iterations"] = iterations
+                default_property["deband-threshold"] = threshold
+                default_property["deband-range"] = range
+                default_property["deband-grain"] = grain
             else
                 item.value = command("adjust-deband profile " .. item.iterations .. "," .. item.threshold .. "," ..
                                          item.range .. "," .. item.grain)
@@ -434,34 +446,13 @@ local function create_deband_menu()
         deband_items[#deband_items].separator = true
     end
 
-    local function create_adjustment_actions(property)
-        local increment = 1
-        return {{
-            label = "Increase " .. property .. " by 1",
-            icon = "add",
-            name = command("adjust-deband " .. property .. " " .. increment)
-        }, {
-            label = "Decrease " .. property .. " by 1",
-            icon = "remove",
-            name = command("adjust-deband " .. property .. " -" .. increment)
-        }, {
-            label = "Reset",
-            icon = "clear",
-            name = command("adjust-deband reset " .. property)
-        }}
-    end
-
     table.insert(deband_items, create_property_toggle("Enable", "deband"))
 
     local deband_properties = {"iterations", "threshold", "range", "grain"}
 
     for _, prop in ipairs(deband_properties) do
-        table.insert(deband_items, {
-            title = prop:gsub("^%l", string.upper),
-            hint = tostring(mp.get_property_number("deband-" .. prop)),
-            actions = create_adjustment_actions(prop),
-            actions_place = "outside"
-        })
+        table.insert(deband_items,
+            create_property_number_adjustment(prop:gsub("^%l", string.upper), "deband-" .. prop, 1))
     end
 
     menu.deband = {
@@ -522,25 +513,42 @@ local function create_scale_menu()
     local scale_items = {}
 
     -- Helper function to create scale property selections
-    local function add_scale_selection(title, property, additional_items)
-        local items = {{
+    local function add_scale_selection(title, property)
+
+        local scalers = {}
+
+        local fixed_scale = {{
             name = "Bilinear",
             value = "bilinear"
+        }, {
+            name = "Bicubic Fast",
+            value = "bicubic_fast"
+        }, {
+            name = "Oversample",
+            value = "oversample"
+        }}
+
+        local non_polar_filter = {{
+            name = "Spline16",
+            value = "spline16"
+        }, {
+            name = "Spline36",
+            value = "spline36"
+        }, {
+            name = "Spline64",
+            value = "spline64"
+        }, {
+            name = "Sinc",
+            value = "sinc"
         }, {
             name = "Lanczos",
             value = "lanczos"
         }, {
-            name = "EWA Lanczos",
-            value = "ewa_lanczos"
+            name = "Ginseng",
+            value = "ginseng"
         }, {
-            name = "EWA Lanczos Sharp",
-            value = "ewa_lanczossharp"
-        }, {
-            name = "EWA Lanczos Sharpest",
-            value = "ewa_lanczos4sharpest"
-        }, {
-            name = "Mitchell",
-            value = "mitchell"
+            name = "Bicubic",
+            value = "bicubic"
         }, {
             name = "Hermite",
             value = "hermite"
@@ -548,26 +556,86 @@ local function create_scale_menu()
             name = "Catmull Rom",
             value = "catmull_rom"
         }, {
-            name = "Oversample",
-            value = "oversample"
+            name = "Mitchell",
+            value = "mitchell"
+        }, {
+            name = "Robidoux",
+            value = "robidoux"
+        }, {
+            name = "Robidoux Sharp",
+            value = "robidouxsharp"
+        }, {
+            name = "Box",
+            value = "box"
+        }, {
+            name = "Nearest",
+            value = "nearest"
+        }, {
+            name = "Triangle",
+            value = "triangle"
+        }, {
+            name = "Gaussian",
+            value = "gaussian"
         }}
 
-        if additional_items then
-            for _, item in ipairs(additional_items) do
-                table.insert(items, item)
-            end
+        local polar_filter = {{
+            name = "Jinc",
+            value = "jinc"
+        }, {
+            name = "EWA Lanczos",
+            value = "ewa_lanczos"
+        }, {
+            name = "EWA Hanning",
+            value = "ewa_hanning"
+        }, {
+            name = "EWA Ginseng",
+            value = "ewa_ginseng"
+        }, {
+            name = "EWA Lanczos Sharp",
+            value = "ewa_lanczossharp"
+        }, {
+            name = "EWA Lanczos 4 Sharpest",
+            value = "ewa_lanczos4sharpest"
+        }, {
+            name = "EWA Lanczos Soft",
+            value = "ewa_lanczossoft"
+        }, {
+            name = "Haasnsoft",
+            value = "haasnsoft"
+        }, {
+            name = "EWA Robidoux",
+            value = "ewa_robidoux"
+        }, {
+            name = "EWA Robidoux Sharp",
+            value = "ewa_robidouxsharp"
+        }}
+
+        for _, item in ipairs(fixed_scale) do
+            table.insert(scalers, item)
         end
 
-        table.insert(scale_items, create_property_selection(title, property, items, scale[property], true)) -- Use scale[property] instead of scale.scale
+        if #scalers > 0 then
+            scalers[#scalers].separator = true
+        end
+
+        for _, item in ipairs(non_polar_filter) do
+            table.insert(scalers, item)
+        end
+
+        if #scalers > 0 then
+            scalers[#scalers].separator = true
+        end
+
+        for _, item in ipairs(polar_filter) do
+            table.insert(scalers, item)
+        end
+
+        table.insert(scale_items, create_property_selection(title, property, scalers))
     end
 
     add_scale_selection("Upscale", "scale")
     add_scale_selection("Downscale", "dscale") -- Added dscale
-    add_scale_selection("Chromascale", "cscale", { -- Added cscale
-    {
-        name = "Spline64",
-        value = "spline64"
-    }})
+    add_scale_selection("Chromascale", "cscale")
 
     table.insert(scale_items, create_property_toggle("Correct Downscaling", "correct-downscaling"))
     table.insert(scale_items, create_property_toggle("Linear Downscaling", "linear-downscaling"))
@@ -690,13 +758,9 @@ local message_handlers = {
                 mp.set_property("deband-threshold", tonumber(threshold))
                 mp.set_property("deband-range", tonumber(range))
                 mp.set_property("deband-grain", tonumber(grain))
-                deband.iterations = iterations
-                deband.threshold = threshold
-                deband.range = range
-                deband.grain = grain
             end
         elseif property == "reset" then
-            mp.set_property("deband-" .. value, deband[value])
+            mp.set_property("deband-" .. value, default_property[value])
         else
             local current = mp.get_property_number("deband-" .. property)
             local num_value = tonumber(value)
@@ -714,11 +778,6 @@ local message_handlers = {
                 mp.set_property("saturation", tonumber(saturation))
                 mp.set_property("gamma", tonumber(gamma))
                 mp.set_property("hue", tonumber(hue))
-                color.brightness = brightness
-                color.contrast = contrast
-                color.saturation = saturation
-                color.gamma = gamma
-                color.hue = hue
             end
         else
             if property == "clear" then
@@ -728,7 +787,7 @@ local message_handlers = {
                 mp.set_property("gamma", 0)
                 mp.set_property("hue", 0)
             elseif property == "reset" then
-                mp.set_property(value, color[value])
+                mp.set_property(value, default_property[value])
             else
                 local current = mp.get_property_number(property)
                 local num_value = tonumber(value)
@@ -742,8 +801,24 @@ local message_handlers = {
         mp.set_property(property, not mp.get_property_bool(property) and "yes" or "no")
     end,
 
-    ["adjust-property"] = function(property, value)
-        mp.set_property(property, value)
+    ["adjust-property"] = function(property, value, min, max)
+        min = min or -math.huge
+        max = max or math.huge
+        local num_value = tonumber(value)
+        if num_value then
+            local current = mp.get_property_number(property)
+            local new_value = current + num_value
+            new_value = math.max(min, math.min(max, new_value))
+            mp.set_property(property, new_value)
+        else
+            print("howdy")
+            print(default_property[property])
+            if value == "reset" then
+                mp.set_property(property, default_property[property])
+            else
+                mp.set_property(property, value)
+            end
+        end
     end,
     ["adjust-shaders"] = function(property, value)
         if property == "toggle" then
@@ -822,3 +897,4 @@ local function init()
 end
 
 init()
+
