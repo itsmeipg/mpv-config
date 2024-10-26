@@ -5,6 +5,9 @@
 
 
 # In progress
+- Change ontop button icon because it's already used for secondary subtitle action button in default uosc subtitle menu.
+- Edit action button footnotes.
+- Maybe add scaler options to specify specific scalers instead of listing all of them for d/c/scale.
 - Update SSimDownscaler/Check other shaders/scripts to update.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
 - Maybe change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
@@ -13,7 +16,6 @@
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Re-edit uosc proximity, video-quality script + change its FPS display.
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither
-- Fix filtering of avc video format for YouTube.
 # Theme
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
