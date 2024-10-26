@@ -32,6 +32,22 @@ local function command(str)
     return string.format("script-message-to %s %s", script_name, str)
 end
 
+local function serialize(tbl)
+    local result = "{"
+    for i, v in ipairs(tbl) do
+        result = result .. string.format("%q", v)
+        if i < #tbl then
+            result = result .. ","
+        end
+    end
+    return result .. "}"
+end
+
+local function deserialize(str)
+    local fn = load("return " .. str)
+    return fn and fn() or {}
+end
+
 local default_property = {
     ["brightness"] = mp.get_property_number("brightness"),
     ["contrast"] = mp.get_property_number("contrast"),
@@ -463,52 +479,6 @@ local function create_deband_menu()
     update_menu()
 end
 
--- Interpolation
-
--- Shaders
-local function create_shader_profiles()
-    if options.include_default_shader_profile then
-        table.insert(profile.shader, {
-            title = options.default_shader_profile_name:match("^%s*(.-)%s*$"),
-            active = false,
-            value = command("adjust-shaders profile " .. table.concat(mp.get_property_native("glsl-shaders", {}), ",")),
-            profshaders = table.concat(mp.get_property_native("glsl-shaders", {}), ","),
-            id = "profile"
-        })
-    end
-
-    for shader_profile in options.shader_profiles:gmatch("([^;]+)") do
-        local name, shaders = shader_profile:match("(.+):(.+)")
-        if name and shaders then
-            name = name:match("^%s*(.-)%s*$")
-            local shader_list = {}
-            for shader in shaders:gmatch("([^,]+)") do
-                local trimmed_shader = shader:match("^%s*(.-)%s*$")
-                if trimmed_shader ~= "" then
-                    table.insert(shader_list, trimmed_shader)
-                end
-            end
-            local prof_shaders = table.concat(shader_list, ",")
-            table.insert(profile.shader, {
-                title = name,
-                active = false,
-                value = command("adjust-shaders profile " .. prof_shaders),
-                profshaders = prof_shaders,
-                id = "profile"
-            })
-        end
-    end
-
-    table.insert(profile.shader, {
-        title = "Custom",
-        active = false,
-        selectable = false,
-        muted = true,
-        value = command("adjust-shaders clear"),
-        id = "custom"
-    })
-end
-
 local function create_scale_menu()
     local scale_items = {}
 
@@ -649,7 +619,74 @@ local function create_scale_menu()
     update_menu()
 end
 
+-- Shaders
+local function create_shader_profiles()
+    if options.include_default_shader_profile then
+        table.insert(profile.shader, {
+            title = options.default_shader_profile_name:match("^%s*(.-)%s*$"),
+            active = false,
+            value = command("adjust-shaders profile " .. table.concat(mp.get_property_native("glsl-shaders", {}), ",")),
+            profshaders = table.concat(mp.get_property_native("glsl-shaders", {}), ","),
+            id = "profile"
+        })
+    end
+
+    for shader_profile in options.shader_profiles:gmatch("([^;]+)") do
+        local name, shaders = shader_profile:match("(.+):(.+)")
+        if name and shaders then
+            name = name:match("^%s*(.-)%s*$")
+            local shader_list = {}
+            for shader in shaders:gmatch("([^,]+)") do
+                local trimmed_shader = shader:match("^%s*(.-)%s*$")
+                if trimmed_shader ~= "" then
+                    table.insert(shader_list, trimmed_shader)
+                end
+            end
+            local prof_shaders = table.concat(shader_list, ",")
+            table.insert(profile.shader, {
+                title = name,
+                active = false,
+                value = command("adjust-shaders profile " .. prof_shaders),
+                profshaders = prof_shaders,
+                id = "profile"
+            })
+        end
+    end
+
+    table.insert(profile.shader, {
+        title = "Custom",
+        active = false,
+        selectable = false,
+        muted = true,
+        value = command("adjust-shaders clear"),
+        id = "custom"
+    })
+end
+
 local function create_shader_menu(value)
+    local shader_items = {}
+
+    local current_shaders = value
+
+    local function create_shader_adjustment_actions(shader, index)
+        local actions = {}
+        if index > 1 then
+            table.insert(actions, {
+                name = command("move-shader " .. shader .. " up"),
+                icon = "keyboard_arrow_up",
+                label = "Move shader up."
+            })
+        end
+        if index < #current_shaders then
+            table.insert(actions, {
+                name = command("move-shader " .. shader .. " down"),
+                icon = "keyboard_arrow_down",
+                label = "Move shader down."
+            })
+        end
+        return actions
+    end
+
     local function compare_shaders(shaders1, shaders2)
         if #shaders1 ~= #shaders2 then
             return false
@@ -661,10 +698,6 @@ local function create_shader_menu(value)
         end
         return true
     end
-
-    local shader_items = {}
-
-    local current_shaders = value
 
     local profile_match = false
 
@@ -723,6 +756,8 @@ local function create_shader_menu(value)
             title = shader:match("(.+)%..+$") or shader,
             hint = is_active[shader_path] and string.format("%d", i) or nil,
             icon = is_active[shader_path] and "check_box" or "check_box_outline_blank",
+            actions = is_active[shader_path] and #current_shaders > 1 and create_shader_adjustment_actions(shader_path, i),
+            actions_place = "outside",
             value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
         })
     end
@@ -739,11 +774,10 @@ end
 local message_handlers = {
     ["menu-event"] = function(json)
         local event = mp.utils.parse_json(json)
-        if event.value ~= nil then
-            mp.command(event.value)
-        end
         if event.action ~= nil then
             mp.command(event.action)
+        elseif event.value ~= nil then
+            mp.command(event.value)
         end
     end,
     ["adjust-aspect"] = function(aspect)
@@ -839,6 +873,55 @@ local message_handlers = {
             end
             mp.set_property_native("glsl-shaders", profile_shaders)
         end
+    end,
+    ["move-shader"] = function(shader, dir)
+        local current_shaders = mp.get_property_native("glsl-shaders", {})
+        
+        --Used AI for this one lol
+        local function moveStringInList(list, target, direction)
+            -- Create a new list by copying all elements
+            local newList = {}
+            for i, str in ipairs(list) do
+                newList[i] = str
+            end
+            
+            -- Find the index of the target string
+            local index = -1
+            for i, str in ipairs(newList) do
+                if str == target then
+                    index = i
+                    break
+                end
+            end
+            
+            -- If string not found, return the new copy of the list
+            if index == -1 then
+                return newList
+            end
+            
+            -- Handle moving up (left)
+            if direction == "up" or direction == "left" then
+                -- If already at the start, return new list without changes
+                if index == 1 then
+                    return newList
+                end
+                -- Swap with previous element
+                newList[index], newList[index-1] = newList[index-1], newList[index]
+            
+            -- Handle moving down (right)
+            elseif direction == "down" or direction == "right" then
+                -- If already at the end, return new list without changes
+                if index == #newList then
+                    return newList
+                end
+                -- Swap with next element
+                newList[index], newList[index+1] = newList[index+1], newList[index]
+            end
+            
+            return newList
+        end
+
+        mp.set_property_native("glsl-shaders", moveStringInList(current_shaders, shader, dir))
     end
 }
 
