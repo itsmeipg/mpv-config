@@ -5,6 +5,8 @@
 
 
 # In progress
+- I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
+- Add folder support for shaders.
 - Change ontop button icon because it's already used for secondary subtitle action button in default uosc subtitle menu.
 - Edit action button footnotes.
 - Maybe add scaler options to specify specific scalers instead of listing all of them for d/c/scale.
