@@ -6,7 +6,7 @@
 
 # In progress
 - I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
-- Add folder support for shaders.
+- Organize shaders into folders. Replace Anime4K shaders with the individual ones.
 - Change ontop button icon because it's already used for secondary subtitle action button in default uosc subtitle menu.
 - Edit action button footnotes.
 - Consider actual mpv profiles.
