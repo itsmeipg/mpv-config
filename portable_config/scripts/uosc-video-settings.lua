@@ -58,8 +58,13 @@ local default_property = {
     ["deband-iterations"] = mp.get_property_number("deband-iterations"),
     ["deband-threshold"] = mp.get_property_number("deband-threshold"),
     ["deband-range"] = mp.get_property_number("deband-range"),
-    ["deband-grain"] = mp.get_property_number("deband-grain")
+    ["deband-grain"] = mp.get_property_number("deband-grain"),
 
+    ["tscale-antiring"] = mp.get_property_number("tscale-antiring"),
+    ["tscale-blur"] = mp.get_property_number("tscale-blur"),
+    ["tscale-clamp"] = mp.get_property_number("tscale-clamp"),
+    ["tscale-radius"] = mp.get_property_number("tscale-radius"),
+    ["tscale-taper"] = mp.get_property_number("tscale-taper")
 }
 
 local profile = {
@@ -129,12 +134,16 @@ local function create_property_number_adjustment(title, property, increment, min
     local current_value = mp.get_property_number(property)
 
     local function create_adjustment_actions()
+        local range = ""
+        if min or max then
+            range = " " .. (min or "") .. (max and " " .. max or "")
+        end
         return {{
-            name = command("adjust-property " .. property .. " " .. increment),
+            name = command("adjust-property " .. property .. " " .. increment .. range),
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = command("adjust-property " .. property .. " -" .. increment),
+            name = command("adjust-property " .. property .. " -" .. increment .. range),
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, {
@@ -154,25 +163,14 @@ end
 
 local function create_menu_data()
     local menu_items = {}
-    if menu.aspect then
-        table.insert(menu_items, menu.aspect)
-    end
-    if menu.deband then
-        table.insert(menu_items, menu.deband)
-    end
-    if menu.color then
-        table.insert(menu_items, menu.color)
-    end
-    if menu.interpolation then
-        table.insert(menu_items, menu.interpolation)
-    end
-    if menu.scale then
-        table.insert(menu_items, menu.scale)
-    end
-    if menu.shader then
-        table.insert(menu_items, menu.shader)
-    end
-    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
+
+    table.insert(menu_items, menu.aspect)
+    table.insert(menu_items, menu.deband)
+    table.insert(menu_items, menu.color)
+    table.insert(menu_items, menu.interpolation)
+    table.insert(menu_items, menu.scale)
+    table.insert(menu_items, menu.shader)
+
     return {
         type = "video_settings",
         title = "Video settings",
@@ -474,6 +472,24 @@ local function create_deband_menu()
     update_menu()
 end
 
+local function create_interpolation_menu()
+local interpolation_items = {}
+
+table.insert(interpolation_items, create_property_toggle("Enabled", "interpolation"))
+table.insert(interpolation_items, create_property_number_adjustment("Tscale antiring", "tscale-antiring", .005, 0, 1))
+table.insert(interpolation_items, create_property_number_adjustment("Tscale blur", "tscale-blur", .005, 0))
+table.insert(interpolation_items, create_property_number_adjustment("Tscale clamp", "tscale-clamp", .005, 0, 1))
+table.insert(interpolation_items, create_property_number_adjustment("Tscale radius", "tscale-radius", .005, 0.5, 16))
+table.insert(interpolation_items, create_property_number_adjustment("Tscale taper", "tscale-taper", .005, 0, 1))
+
+menu.interpolation = {
+    title = "Interpolation",
+    items = interpolation_items
+}
+
+update_menu()
+end
+
 local function create_scale_menu()
     local scale_items = {}
 
@@ -665,7 +681,7 @@ local function create_shader_menu(value)
 
     local function create_shader_adjustment_actions(shader_path, index)
         local actions = {}
-        
+
         if index > 1 then
             table.insert(actions, {
                 name = command("move-shader " .. shader_path .. " up"),
@@ -984,9 +1000,15 @@ local function setup_property_observers()
     mp.observe_property("deband-range", "number", create_deband_menu)
     mp.observe_property("deband-grain", "number", create_deband_menu)
 
-    mp.observe_property("interpolation", "bool", function(name, value)
-        update_menu()
-    end)
+
+    mp.observe_property("interpolation", "bool", create_interpolation_menu)
+
+    mp.observe_property("tscale-antiring", "number", create_interpolation_menu)
+    mp.observe_property("tscale-blur", "number", create_interpolation_menu)
+    mp.observe_property("tscale-clamp", "number", create_interpolation_menu)
+    mp.observe_property("tscale-radius", "number", create_interpolation_menu)
+    mp.observe_property("tscale-taper", "number", create_interpolation_menu)
+
     mp.observe_property("scale", "string", create_scale_menu)
     mp.observe_property("dscale", "string", create_scale_menu)
     mp.observe_property("cscale", "string", create_scale_menu)
