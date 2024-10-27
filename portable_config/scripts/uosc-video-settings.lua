@@ -665,6 +665,7 @@ local function create_shader_menu(value)
 
     local function create_shader_adjustment_actions(shader_path, index)
         local actions = {}
+        
         if index > 1 then
             table.insert(actions, {
                 name = command("move-shader " .. shader_path .. " up"),
@@ -743,9 +744,8 @@ local function create_shader_menu(value)
         table.insert(active_shader_items, {
             title = shader_name:match("(.+)%..+$") or shader_name,
             hint = string.format("%d", i) or nil,
-            actions = #current_shaders > 1 and create_shader_adjustment_actions(shader_path, i),
-            actions_place = "outside",
-            value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
+            actions = create_shader_adjustment_actions(shader_path, i),
+            actions_place = "outside"
         })
     end
 
