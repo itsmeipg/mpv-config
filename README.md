@@ -9,6 +9,7 @@ SHADER FOLDERS ADDED!! Reads folders within the shaders folder and within those 
 
 # In progress
 - I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
+- Show default profile only if user-defined profile is not found in the case that a user creates a profile that matches mpv.conf's defaults.
 - Organize shaders into folders. Replace Anime4K shaders with the individual ones.
 - Check if shader exists before listing as active.
 - Consider actual mpv profiles.
