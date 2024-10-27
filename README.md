@@ -3,6 +3,9 @@
 ![image](https://github.com/user-attachments/assets/fbc5e922-c33d-44e1-b4b6-ad3c5ba83380)
 ![image](https://github.com/user-attachments/assets/8113278d-1d06-4828-959c-678b922f539b)
 
+# NEWS
+SHADER FOLDERS ADDED!! Reads folders within the shaders folder and within those folders and within those folders and... I finally used recursive loop for the first time.
+![image](https://github.com/user-attachments/assets/a3e53642-19a2-49de-853a-fee76af06109)
 
 # In progress
 - I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
