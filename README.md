@@ -11,7 +11,6 @@ SHADER FOLDERS ADDED!! Reads folders within the shaders folder and within those 
 - I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
 - Organize shaders into folders. Replace Anime4K shaders with the individual ones.
 - Check if shader exists before listing as active.
-- Change ontop button icon because it's already used for secondary subtitle action button in default uosc subtitle menu.
 - Consider actual mpv profiles.
 - Maybe add scaler options to specify specific scalers instead of listing all of them for d/c/scale.
 - Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
