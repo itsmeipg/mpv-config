@@ -62,11 +62,6 @@ local default_property = {
 
 }
 
-local shader_files = mp.utils.readdir(mp.command_native({"expand-path", options.shader_path}), "files")
-for i, shader in ipairs(shader_files) do
-    shader_files[i] = mp.utils.join_path(options.shader_path, shader)
-end
-
 local profile = {
     aspect = {},
     color = {},
@@ -705,9 +700,6 @@ local function create_shader_menu(value)
         if item.id == "profile" then
             local profile_shader = {}
             for shader in item.profshaders:gsub('"', ''):gmatch("([^,]+)") do
-                if options.expand_profile_shader_path then
-                    shader = mp.utils.join_path(options.shader_path, shader)
-                end
                 table.insert(profile_shader, shader)
             end
 
@@ -736,32 +728,66 @@ local function create_shader_menu(value)
         shader_items[#shader_items].separator = true
     end
 
-    local shader_list = {}
     local is_active = {}
-
-    for _, shader_path in ipairs(current_shaders) do
+    for i, shader_path in ipairs(current_shaders) do
         is_active[shader_path] = true
-        table.insert(shader_list, shader_path)
-    end
-
-    for _, shader_path in ipairs(shader_files) do
-        if not is_active[shader_path] then
-            table.insert(shader_list, shader_path)
-        end
-    end
-
-    for i, shader_path in ipairs(shader_list) do
-        local _, shader = mp.utils.split_path(shader_path)
+        local _, shader_name = mp.utils.split_path(shader_path)
         table.insert(shader_items, {
-            title = shader:match("(.+)%..+$") or shader,
-            hint = is_active[shader_path] and string.format("%d", i) or nil,
-            icon = is_active[shader_path] and "check_box" or "check_box_outline_blank",
-            actions = is_active[shader_path] and #current_shaders > 1 and create_shader_adjustment_actions(shader_path, i),
+            title = shader_name:match("(.+)%..+$") or shader_name,
+            hint = string.format("%d", i) or nil,
+            icon = "check_box",
+            actions = #current_shaders > 1 and create_shader_adjustment_actions(shader_path, i),
             actions_place = "outside",
             value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
         })
     end
 
+    local function listShaderFiles(path, option_path)
+        local dir_items = {}
+        local is_original_path = path == mp.command_native({"expand-path", options.shader_path})
+
+        local _, current_dir = mp.utils.split_path(path)
+
+        if not is_original_path then
+            option_path = option_path:gsub("/+$", "") .. "/" .. current_dir
+        end
+
+        local shader_files = mp.utils.readdir(path, "files")
+        if shader_files ~= nil then
+            for i, shader_file in ipairs(shader_files) do
+                shader_files[i] = mp.utils.join_path(option_path, shader_file)
+            end
+            for i, shader_path in ipairs(shader_files) do
+                if not is_active[shader_path] then
+                    local _, shader = mp.utils.split_path(shader_path)
+                    table.insert(dir_items, {
+                        title = shader:match("(.+)%..+$") or shader,
+                        icon = "check_box_outline_blank",
+                        value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
+                    })
+                end
+            end
+        end
+
+        local shader_dirs = mp.utils.readdir(path, "dirs")
+        if shader_dirs then
+            for _, folder in ipairs(shader_dirs) do
+                local nextPath = mp.command_native({"expand-path", mp.utils.join_path(path, folder)})
+                local subdir_items = listShaderFiles(nextPath, option_path)
+                local subdir = {
+                    title = folder,
+                    items = subdir_items
+                }
+
+                table.insert(dir_items, subdir)
+            end
+        end
+        return dir_items
+    end
+
+    for _, item in ipairs(listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path)) do
+        table.insert(shader_items, item)
+    end
     menu.shader = {
         title = "Shaders",
         items = shader_items
@@ -845,8 +871,6 @@ local message_handlers = {
             new_value = math.max(min, math.min(max, new_value))
             mp.set_property(property, new_value)
         else
-            print("howdy")
-            print(default_property[property])
             if value == "reset" then
                 mp.set_property(property, default_property[property])
             else
@@ -876,15 +900,15 @@ local message_handlers = {
     end,
     ["move-shader"] = function(shader, dir)
         local current_shaders = mp.get_property_native("glsl-shaders", {})
-        
-        --Used AI for this one lol
+
+        -- Used AI for this one lol
         local function moveStringInList(list, target, direction)
             -- Create a new list by copying all elements
             local newList = {}
             for i, str in ipairs(list) do
                 newList[i] = str
             end
-            
+
             -- Find the index of the target string
             local index = -1
             for i, str in ipairs(newList) do
@@ -893,12 +917,12 @@ local message_handlers = {
                     break
                 end
             end
-            
+
             -- If string not found, return the new copy of the list
             if index == -1 then
                 return newList
             end
-            
+
             -- Handle moving up (left)
             if direction == "up" or direction == "left" then
                 -- If already at the start, return new list without changes
@@ -906,18 +930,18 @@ local message_handlers = {
                     return newList
                 end
                 -- Swap with previous element
-                newList[index], newList[index-1] = newList[index-1], newList[index]
-            
-            -- Handle moving down (right)
+                newList[index], newList[index - 1] = newList[index - 1], newList[index]
+
+                -- Handle moving down (right)
             elseif direction == "down" or direction == "right" then
                 -- If already at the end, return new list without changes
                 if index == #newList then
                     return newList
                 end
                 -- Swap with next element
-                newList[index], newList[index+1] = newList[index+1], newList[index]
+                newList[index], newList[index + 1] = newList[index + 1], newList[index]
             end
-            
+
             return newList
         end
 
