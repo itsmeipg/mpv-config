@@ -787,7 +787,7 @@ end
 ---@param menu_type UIState
 local function uosc_menu_open(formats, active_format, menu_type)
     local menu = {
-        title = menu_type.type_capitalized .. ' Formats',
+        title = menu_type.type_capitalized .. ' formats',
         items = {},
         type = 'quality-menu-' .. menu_type.name,
         keep_open = true,
