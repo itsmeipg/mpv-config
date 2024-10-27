@@ -663,22 +663,28 @@ local function create_shader_menu(value)
 
     local current_shaders = value
 
-    local function create_shader_adjustment_actions(shader, index)
+    local function create_shader_adjustment_actions(shader_path, index)
         local actions = {}
         if index > 1 then
             table.insert(actions, {
-                name = command("move-shader " .. shader .. " up"),
+                name = command("move-shader " .. shader_path .. " up"),
                 icon = "keyboard_arrow_up",
-                label = "Move shader up."
+                label = "Move up."
             })
         end
         if index < #current_shaders then
             table.insert(actions, {
-                name = command("move-shader " .. shader .. " down"),
+                name = command("move-shader " .. shader_path .. " down"),
                 icon = "keyboard_arrow_down",
-                label = "Move shader down."
+                label = "Move down."
             })
         end
+
+        table.insert(actions, {
+            name = command("adjust-shaders toggle " .. ("%q"):format(shader_path)),
+            icon = "clear",
+            label = "Remove."
+        })
         return actions
     end
 
@@ -728,19 +734,26 @@ local function create_shader_menu(value)
         shader_items[#shader_items].separator = true
     end
 
+    local active_shader_items = {}
     local is_active = {}
+
     for i, shader_path in ipairs(current_shaders) do
         is_active[shader_path] = true
         local _, shader_name = mp.utils.split_path(shader_path)
-        table.insert(shader_items, {
+        table.insert(active_shader_items, {
             title = shader_name:match("(.+)%..+$") or shader_name,
             hint = string.format("%d", i) or nil,
-            icon = "check_box",
             actions = #current_shaders > 1 and create_shader_adjustment_actions(shader_path, i),
             actions_place = "outside",
             value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
         })
     end
+
+    table.insert(shader_items, {
+        title = "Active",
+        items = active_shader_items,
+        separator = true
+    })
 
     local function listShaderFiles(path, option_path)
         local dir_items = {}
@@ -758,14 +771,12 @@ local function create_shader_menu(value)
                 shader_files[i] = mp.utils.join_path(option_path, shader_file)
             end
             for i, shader_path in ipairs(shader_files) do
-                if not is_active[shader_path] then
-                    local _, shader = mp.utils.split_path(shader_path)
-                    table.insert(dir_items, {
-                        title = shader:match("(.+)%..+$") or shader,
-                        icon = "check_box_outline_blank",
-                        value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
-                    })
-                end
+                local _, shader = mp.utils.split_path(shader_path)
+                table.insert(dir_items, {
+                    title = shader:match("(.+)%..+$") or shader,
+                    icon = is_active[shader_path] and "check_box" or "check_box_outline_blank",
+                    value = command("adjust-shaders toggle " .. ("%q"):format(shader_path))
+                })
             end
         end
 
