@@ -8,6 +8,7 @@ SHADER FOLDERS ADDED!! Reads folders within the shaders folder and within those 
 ![image](https://github.com/user-attachments/assets/a3e53642-19a2-49de-853a-fee76af06109)
 
 # In progress
+- Instead of relying on strings for item values, find a way to send stuff like lists directly or reference them indirectly.
 - I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
 - Show default profile only if user-defined profile is not found in the case that a user creates a profile that matches mpv.conf's defaults.
 - Organize shaders into folders. Replace Anime4K shaders with the individual ones.
