@@ -8,15 +8,12 @@ SHADER FOLDERS ADDED!! Reads folders within the shaders folder and within those 
 ![image](https://github.com/user-attachments/assets/a3e53642-19a2-49de-853a-fee76af06109)
 
 # In progress
-- Instead of relying on strings for item values, find a way to send stuff like lists directly or reference them indirectly.
+- Replace item values with reference to stored functions.
 - I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
 - Show default profile only if user-defined profile is not found in the case that a user creates a profile that matches mpv.conf's defaults.
 - Organize shaders into folders. Replace Anime4K shaders with the individual ones.
 - Check if shader exists before listing as active.
-- Consider actual mpv profiles.
-- Maybe add scaler options to specify specific scalers instead of listing all of them for d/c/scale.
-- Add interpolation submenu instead of single toggle. Add options for tscale, tscale-clamp, tscale-radius, tscale-blur. Add profiles.
-- Maybe change tscale-radius in mpv.conf to .955 and tscale-clamp to 0.
+- Add interpolation profiles.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if current video is interlaced.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
