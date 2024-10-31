@@ -778,7 +778,7 @@ local function create_shader_menu(value)
         local _, current_dir = mp.utils.split_path(path)
 
         if not is_original_path then
-            option_path = option_path:gsub("/+$", "") .. "/" .. current_dir
+            option_path = mp.utils.join_path(option_path, current_dir)
         end
 
         local shader_files = mp.utils.readdir(path, "files")
