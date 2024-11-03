@@ -34,7 +34,7 @@ end
 local properties = {
     "video-aspect-override",
 
-    deband_properties = {"deband-iterations", "deband-threshold", "deband-range", "deband-grain"},
+    deband_properties = {"deband", "deband-iterations", "deband-threshold", "deband-range", "deband-grain"},
 
     color_properties = {"brightness", "contrast", "saturation", "gamma", "hue"},
 
@@ -234,7 +234,7 @@ local function create_property_number_adjustment(title, property, increment, min
 
     return {
         title = title,
-        hint = mp.get_property(property),
+        hint = string.format("%.3f", mp.get_property_number(property)):gsub("%.?0*$", ""),
         actions = create_adjustment_actions(),
         actions_place = "outside"
     }
@@ -257,8 +257,8 @@ local function create_aspect_menu(value)
         table.insert(aspect_profiles, {
             title = aspect,
             active = is_active,
-            value = command("function " ..
-                                (is_active and store_function(set_property, "video-aspect-override", "-1") or store_function(set_property, "video-aspect-override", aspect)))
+            value = command("function " .. (is_active and store_function(set_property, "video-aspect-override", "-1") or
+                                store_function(set_property, "video-aspect-override", aspect)))
         })
 
         if is_active then
@@ -300,52 +300,64 @@ local function create_deband_menu()
     end
 
     local deband_items = {}
-    local deband_profiles = {}
+    local deband_profile_items = {}
 
     local profile_match = false
 
+    local function create_deband_profile_item(name, profile_iterations, profile_threshold, profile_range, profile_grain)
+        local is_active = (tonumber(profile_iterations) == tonumber(iterations) and tonumber(profile_threshold) ==
+                              tonumber(threshold) and tonumber(profile_range) == tonumber(range) and
+                              tonumber(profile_grain) == tonumber(grain))
+
+        if is_active then
+            profile_match = true
+            cached_property["deband-iterations"] = profile_iterations
+            cached_property["deband-threshold"] = profile_threshold
+            cached_property["deband-range"] = profile_range
+            cached_property["deband-grain"] = profile_grain
+        end
+
+        return {
+            title = name,
+            active = deband_enabled and is_active,
+            value = command("function " .. (is_active and store_function(toggle_property, "deband") or
+                                store_function(apply_deband_profile, profile_iterations, profile_threshold,
+                    profile_range, profile_grain)))
+        }
+    end
+
+    local default_profile_override = false
+
     for deband_profile in options.deband_profiles:gmatch("([^;]+)") do
         local name, settings = deband_profile:match("(.+):(.+)")
+
         if name and settings then
             local profile_iterations, profile_threshold, profile_range, profile_grain = settings:match(
                 "([^,]+),([^,]+),([^,]+),([^,]+)")
 
             if profile_iterations and profile_threshold and profile_range and profile_grain then
-                local is_active =
-                    profile_iterations == iterations and profile_threshold == threshold and profile_range == range and
-                        profile_grain == grain
+                local is_default = tonumber(profile_iterations) == tonumber(default_property["deband-iterations"]) and
+                                       tonumber(profile_threshold) == tonumber(default_property["deband-threshold"]) and
+                                       tonumber(profile_range) == tonumber(default_property["deband-range"]) and
+                                       tonumber(profile_grain) == tonumber(default_property["deband-grain"])
 
-                table.insert(deband_profiles, {
-                    title = name,
-                    active = is_active,
-                    value = command("function " .. (is_active and store_function(toggle_property, "deband") or
-                                        store_function(apply_deband_profile, profile_iterations, profile_threshold,
-                            profile_range, profile_grain)))
-                })
-
-                if is_active then
-                    profile_match = true
-                    cached_property["deband-iterations"] = profile_iterations
-                    cached_property["deband-threshold"] = profile_threshold
-                    cached_property["deband-range"] = profile_range
-                    cached_property["deband-grain"] = profile_grain
+                if is_default then
+                    default_profile_override = true
                 end
+
+                table.insert(deband_profile_items, create_deband_profile_item(name, profile_iterations,
+                    profile_threshold, profile_range, profile_grain))
             end
         end
     end
 
-    if options.include_default_deband_profile then
-        table.insert(deband_profiles, 1, {
-            title = options.default_deband_profile_name,
-            active = false,
-            value = command("function " ..
-                                store_function(apply_deband_profile, default_property["deband-iterations"],
-                    default_property["deband-threshold"], default_property["deband-range"],
-                    default_property["deband-grain"]))
-        })
+    if not default_profile_override and options.include_default_deband_profile then
+        table.insert(deband_profile_items, 1,
+            create_deband_profile_item(options.default_deband_profile_name, default_property["deband-iterations"],
+                default_property["deband-threshold"], default_property["deband-range"], default_property["deband-grain"]))
     end
 
-    table.insert(deband_profiles, {
+    table.insert(deband_profile_items, {
         title = "Custom",
         active = deband_enabled and not profile_match,
         selectable = not profile_match,
@@ -353,7 +365,7 @@ local function create_deband_menu()
         value = command("function " .. store_function(toggle_property, "deband"))
     })
 
-    for _, profile in ipairs(deband_profiles) do
+    for _, profile in ipairs(deband_profile_items) do
         table.insert(deband_items, profile)
     end
 
@@ -523,6 +535,8 @@ local function create_interpolation_menu()
     }
 end
 
+-- Scale
+
 local function create_scale_menu()
     local scale_items = {}
 
@@ -666,84 +680,131 @@ local function create_scale_menu()
     }
 end
 
-local function create_shader_menu()
-    local current_shaders = mp.get_property_native("glsl-shaders")
+-- Shaders
+local function clear_shaders()
+    mp.set_property_native("glsl-shaders", {})
+end
 
-    local function clear_shaders()
-        mp.set_property_native("glsl-shaders", {})
-    end
-    
-    local function toggle_shader(shader_path)
-        mp.commandv("change-list", "glsl-shaders", "toggle", shader_path)
-    end
+local function toggle_shader(shader_path)
+    mp.commandv("change-list", "glsl-shaders", "toggle", shader_path)
+end
 
-    local function apply_shader_profile(shader_profile_list)
-        mp.set_property_native("glsl-shaders", shader_profile_list)
-    end
+local function apply_shader_profile(shader_profile_list)
+    mp.set_property_native("glsl-shaders", shader_profile_list)
+end
 
-    local function move_shader(shader, direction)
-        local function moveStringInList(list, target, direction)
-            local newList = {}
-            for i, str in ipairs(list) do
-                newList[i] = str
+local function move_shader(current_shaders, shader, direction)
+    local function moveStringInList(list, target, direction)
+        local newList = {}
+        for i, str in ipairs(list) do
+            newList[i] = str
+        end
+
+        local index = -1
+        for i, str in ipairs(newList) do
+            if str == target then
+                index = i
+                break
             end
+        end
 
-            local index = -1
-            for i, str in ipairs(newList) do
-                if str == target then
-                    index = i
-                    break
-                end
-            end
-
-            if index == -1 then
-                return newList
-            end
-
-            if direction == "up" or direction == "left" then
-                if index == 1 then
-                    return newList
-                end
-                newList[index], newList[index - 1] = newList[index - 1], newList[index]
-            elseif direction == "down" or direction == "right" then
-                if index == #newList then
-                    return newList
-                end
-                newList[index], newList[index + 1] = newList[index + 1], newList[index]
-            end
-
+        if index == -1 then
             return newList
         end
 
-        mp.set_property_native("glsl-shaders", moveStringInList(current_shaders, shader, direction))
+        if direction == "up" or direction == "left" then
+            if index == 1 then
+                return newList
+            end
+            newList[index], newList[index - 1] = newList[index - 1], newList[index]
+        elseif direction == "down" or direction == "right" then
+            if index == #newList then
+                return newList
+            end
+            newList[index], newList[index + 1] = newList[index + 1], newList[index]
+        end
+
+        return newList
     end
 
-    local function create_shader_adjustment_actions(shader_path, index)
-        local action_items = {}
+    mp.set_property_native("glsl-shaders", moveStringInList(current_shaders, shader, direction))
+end
 
-        if index > 1 then
-            table.insert(action_items, {
-                name = command("function " .. store_function(move_shader, shader_path, "up")),
-                icon = "keyboard_arrow_up",
-                label = "Move up."
-            })
-        end
-        if index < #current_shaders then
-            table.insert(action_items, {
-                name = command("function " .. store_function(move_shader, shader_path, "down")),
-                icon = "keyboard_arrow_down",
-                label = "Move down."
-            })
-        end
+local function create_shader_adjustment_actions(current_shaders, shader_path, index)
+    local action_items = {}
 
+    if index > 1 then
         table.insert(action_items, {
-            name = command("function " .. store_function(toggle_shader, shader_path)),
-            icon = "clear",
-            label = "Remove."
+            name = command("function " .. store_function(move_shader, current_shaders, shader_path, "up")),
+            icon = "keyboard_arrow_up",
+            label = "Move up."
         })
-
-        return action_items
     end
+    if index < #current_shaders then
+        table.insert(action_items, {
+            name = command("function " .. store_function(move_shader, current_shaders, shader_path, "down")),
+            icon = "keyboard_arrow_down",
+            label = "Move down."
+        })
+    end
+
+    table.insert(action_items, {
+        name = command("function " .. store_function(toggle_shader, shader_path)),
+        icon = "clear",
+        label = "Remove."
+    })
+
+    return action_items
+end
+
+local function listShaderFiles(path, option_path, is_active)
+    local _, current_dir = mp.utils.split_path(path)
+
+    local dir_items = {}
+
+    local is_original_path = path == mp.command_native({"expand-path", options.shader_path})
+
+    if not is_original_path then
+        option_path = mp.utils.join_path(option_path, current_dir)
+    end
+
+    local files = mp.utils.readdir(path, "files")
+
+    if files ~= nil then
+        local shader_file_paths = {}
+        for i, shader_file in ipairs(files) do
+            table.insert(shader_file_paths, mp.utils.join_path(option_path, shader_file))
+        end
+        for i, shader_file_path in ipairs(shader_file_paths) do
+            local _, shader = mp.utils.split_path(shader_file_path)
+            table.insert(dir_items, {
+                title = shader,
+                icon = is_active[shader_file_path] and "check_box" or "check_box_outline_blank",
+                value = command("function " .. store_function(toggle_shader, shader_file_path))
+            })
+        end
+    end
+
+    local subdirs = mp.utils.readdir(path, "dirs")
+
+    if subdirs then
+        for _, subdir in ipairs(subdirs) do
+            local subdir_items = listShaderFiles(mp.command_native({"expand-path", mp.utils.join_path(path, subdir)}),
+                option_path, is_active)
+            local subdir = {
+                title = subdir,
+                items = subdir_items
+            }
+
+            table.insert(dir_items, subdir)
+        end
+    end
+
+    return dir_items
+end
+
+local function create_shader_menu()
+    local current_shaders = mp.get_property_native("glsl-shaders")
 
     local shader_items = {}
     local shader_profiles = {}
@@ -798,7 +859,7 @@ local function create_shader_menu()
         table.insert(active_shader_items, {
             title = shader,
             hint = tostring(i),
-            actions = create_shader_adjustment_actions(shader_path, i),
+            actions = create_shader_adjustment_actions(current_shaders, shader_path, i),
             actions_place = "outside"
         })
     end
@@ -809,53 +870,7 @@ local function create_shader_menu()
         separator = true
     })
 
-    local function listShaderFiles(path, option_path)
-        local _, current_dir = mp.utils.split_path(path)
-
-        local dir_items = {}
-
-        local is_original_path = path == mp.command_native({"expand-path", options.shader_path})
-
-        if not is_original_path then
-            option_path = mp.utils.join_path(option_path, current_dir)
-        end
-
-        local files = mp.utils.readdir(path, "files")
-
-        if files ~= nil then
-            local shader_file_paths = {}
-            for i, shader_file in ipairs(files) do
-                table.insert(shader_file_paths, mp.utils.join_path(option_path, shader_file))
-            end
-            for i, shader_file_path in ipairs(shader_file_paths) do
-                local _, shader = mp.utils.split_path(shader_file_path)
-                table.insert(dir_items, {
-                    title = shader,
-                    icon = is_active[shader_file_path] and "check_box" or "check_box_outline_blank",
-                    value = command("function " .. store_function(toggle_shader, shader_file_path))
-                })
-            end
-        end
-
-        local subdirs = mp.utils.readdir(path, "dirs")
-
-        if subdirs then
-            for _, subdir in ipairs(subdirs) do
-                local subdir_items = listShaderFiles(
-                    mp.command_native({"expand-path", mp.utils.join_path(path, subdir)}), option_path)
-                local subdir = {
-                    title = subdir,
-                    items = subdir_items
-                }
-
-                table.insert(dir_items, subdir)
-            end
-        end
-
-        return dir_items
-    end
-
-    for _, item in ipairs(listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path)) do
+    for _, item in ipairs(listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path, is_active)) do
         table.insert(shader_items, item)
     end
 
