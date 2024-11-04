@@ -225,7 +225,7 @@ local function create_property_number_adjustment(title, property, increment, min
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
-            name = command("function " .. store_function(set_cached, property)),
+            name = command("function " .. store_function(set_property, property, cached_property[property])),
             icon = "clear",
             label = "Reset."
         } or nil}
@@ -830,7 +830,7 @@ end
 
 local function create_shader_menu()
     local active_shaders = {}
-    
+
     for i, shader_path in ipairs(mp.get_property_native("glsl-shaders")) do
         if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
             table.insert(active_shaders, shader_path)
