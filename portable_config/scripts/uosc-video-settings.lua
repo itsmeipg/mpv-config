@@ -11,7 +11,7 @@ local options = {
     include_custom_deband_profile = true,
 
     color_profiles = "",
-    include_default_color_profile = false,
+    include_default_color_profile = true,
     default_color_profile_name = "Default",
     include_custom_color_profile = true,
 
