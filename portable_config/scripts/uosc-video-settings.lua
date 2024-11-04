@@ -147,10 +147,6 @@ local function toggle_property(property)
     mp.set_property(property, not mp.get_property_bool(property) and "yes" or "no")
 end
 
-local function set_cached(property)
-    mp.set_property(property, cached_property[property])
-end
-
 local function set_property(property, value)
     if type(value) == "table" then
         mp.set_property_native(property, value)
@@ -243,6 +239,7 @@ local function create_property_number_adjustment(title, property, increment, min
     }
 end
 
+-- Aspect override
 local function create_aspect_menu(value)
     local current_aspect_value = mp.get_property_number("video-aspect-override")
 
@@ -289,20 +286,21 @@ local function create_aspect_menu(value)
     }
 end
 
+-- Deband
+local function apply_deband_profile(profile_iterations, profile_threshold, profile_range, profile_grain)
+    mp.set_property("deband", "yes")
+    mp.set_property("deband-iterations", profile_iterations)
+    mp.set_property("deband-threshold", profile_threshold)
+    mp.set_property("deband-range", profile_range)
+    mp.set_property("deband-grain", profile_grain)
+end
+
 local function create_deband_menu()
     local deband_enabled = mp.get_property_bool("deband")
     local iterations = mp.get_property("deband-iterations")
     local threshold = mp.get_property("deband-threshold")
     local range = mp.get_property("deband-range")
     local grain = mp.get_property("deband-grain")
-
-    local function apply_deband_profile(profile_iterations, profile_threshold, profile_range, profile_grain)
-        mp.set_property("deband", "yes")
-        mp.set_property("deband-iterations", profile_iterations)
-        mp.set_property("deband-threshold", profile_threshold)
-        mp.set_property("deband-range", profile_range)
-        mp.set_property("deband-grain", profile_grain)
-    end
 
     local deband_items = {}
     local deband_profile_items = {}
@@ -508,53 +506,6 @@ local function create_color_menu()
     }
 end
 
-local function create_interpolation_menu()
-    local interpolation_items = {}
-
-    local filter_windows = {{
-        name = "Bartlett",
-        value = "bartlett"
-    }, {
-        name = "Cosine",
-        value = "cosine"
-    }, {
-        name = "Hanning",
-        value = "hanning"
-    }, {
-        name = "Tukey",
-        value = "tukey"
-    }, {
-        name = "Hamming",
-        value = "hamming"
-    }, {
-        name = "Quadric",
-        value = "quadric"
-    }, {
-        name = "Welch",
-        value = "welch"
-    }, {
-        name = "Kaiser",
-        value = "kaiser"
-    }, {
-        name = "Blackman",
-        value = "blackman"
-    }, {
-        name = "Sphinx",
-        value = "sphinx"
-    }, {
-        name = "Jinc",
-        value = "jinc"
-    }}
-
-    table.insert(interpolation_items, create_property_selection("Tscale", "tscale", filter_windows))
-    table.insert(interpolation_items, create_property_selection("Tscale window", "tscale-window", filter_windows, ""))
-
-    return {
-        title = "Interpolation",
-        items = interpolation_items
-    }
-end
-
 -- Scale
 local function create_filter_selection(property)
 
@@ -672,39 +623,78 @@ local function create_scale_menu()
     }
 
     table.insert(upscale.items, create_filter_selection("scale"))
+    table.insert(scale_items, upscale)
 
     local downscale = {
         title = "Downscale",
         items = {}
     }
+
     table.insert(downscale.items, create_filter_selection("dscale"))
+    table.insert(scale_items, downscale)
 
     local chromascale = {
         title = "Chromascale",
         items = {}
     }
+
     table.insert(chromascale.items, create_filter_selection("cscale"))
-
-    table.insert(scale_items, upscale)
-    table.insert(scale_items, downscale)
     table.insert(scale_items, chromascale)
-
-    table.insert(scale_items, create_property_toggle("Correct Downscaling", "correct-downscaling"))
-    table.insert(scale_items, create_property_toggle("Linear Downscaling", "linear-downscaling"))
-    table.insert(scale_items, create_property_toggle("Sigmoid Upscaling", "sigmoid-upscaling"))
 
     local temporalscale = {
         title = "Temporalscale",
         items = {}
     }
 
-    table.insert(temporalscale.items, create_property_toggle("Enabled", "interpolation"))
-    table.insert(temporalscale.items,
-        create_property_number_adjustment("Tscale antiring", "tscale-antiring", .005, 0, 1))
-    table.insert(temporalscale.items, create_property_number_adjustment("Tscale blur", "tscale-blur", .005, 0))
-    table.insert(temporalscale.items, create_property_number_adjustment("Tscale clamp", "tscale-clamp", .005, 0, 1))
-    table.insert(temporalscale.items, create_property_number_adjustment("Tscale radius", "tscale-radius", .005, 0.5, 16))
-    table.insert(temporalscale.items, create_property_number_adjustment("Tscale taper", "tscale-taper", .005, 0, 1))
+    local filter_windows = {{
+        name = "Bartlett",
+        value = "bartlett"
+    }, {
+        name = "Cosine",
+        value = "cosine"
+    }, {
+        name = "Hanning",
+        value = "hanning"
+    }, {
+        name = "Tukey",
+        value = "tukey"
+    }, {
+        name = "Hamming",
+        value = "hamming"
+    }, {
+        name = "Quadric",
+        value = "quadric"
+    }, {
+        name = "Welch",
+        value = "welch"
+    }, {
+        name = "Kaiser",
+        value = "kaiser"
+    }, {
+        name = "Blackman",
+        value = "blackman"
+    }, {
+        name = "Sphinx",
+        value = "sphinx"
+    }, {
+        name = "Jinc",
+        value = "jinc"
+    }}
+
+    table.insert(temporalscale.items, create_property_selection("Filters", "tscale", filter_windows))
+    table.insert(temporalscale.items, create_property_selection("Filters (window)", "tscale-window", filter_windows, ""))
+
+    table.insert(temporalscale.items, create_property_number_adjustment("Antiring", "tscale-antiring", .005, 0, 1))
+    table.insert(temporalscale.items, create_property_number_adjustment("Blur", "tscale-blur", .005, 0))
+    table.insert(temporalscale.items, create_property_number_adjustment("Clamp", "tscale-clamp", .005, 0, 1))
+    table.insert(temporalscale.items, create_property_number_adjustment("Radius", "tscale-radius", .005, 0.5, 16))
+    table.insert(temporalscale.items, create_property_number_adjustment("Taper", "tscale-taper", .005, 0, 1))
+    table.insert(scale_items, temporalscale)
+
+    table.insert(scale_items, create_property_toggle("Correct Downscaling", "correct-downscaling"))
+    table.insert(scale_items, create_property_toggle("Linear Downscaling", "linear-downscaling"))
+    table.insert(scale_items, create_property_toggle("Sigmoid Upscaling", "sigmoid-upscaling"))
+
     return {
         title = "Scale",
         items = scale_items
@@ -948,7 +938,8 @@ end
 
 local function create_menu_data()
     local menu_items = {create_aspect_menu(), create_deband_menu(), create_color_menu(), create_scale_menu(),
-                        create_shader_menu(), create_interpolation_menu()}
+                        create_shader_menu(), create_interpolation_menu(),
+                        create_property_toggle("Interpolation", "interpolation")}
 
     return {
         type = "video_settings",
