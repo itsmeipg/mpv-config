@@ -952,6 +952,7 @@ local function update_menu()
     local json = mp.utils.format_json(create_menu_data())
     mp.commandv("script-message-to", "uosc", "update-menu", json)
 end
+
 local message_handlers = {
     ["menu-event"] = function(json)
         local event = mp.utils.parse_json(json)
