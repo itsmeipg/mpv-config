@@ -938,8 +938,7 @@ end
 
 local function create_menu_data()
     local menu_items = {create_aspect_menu(), create_deband_menu(), create_color_menu(), create_scale_menu(),
-                        create_shader_menu(), create_interpolation_menu(),
-                        create_property_toggle("Interpolation", "interpolation")}
+                        create_shader_menu(), create_property_toggle("Interpolation", "interpolation")}
 
     return {
         type = "video_settings",
