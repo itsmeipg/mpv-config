@@ -829,7 +829,13 @@ local function listShaderFiles(path, option_path, is_active)
 end
 
 local function create_shader_menu()
-    local current_shaders = mp.get_property_native("glsl-shaders")
+    local active_shaders = {}
+    
+    for i, shader_path in ipairs(mp.get_property_native("glsl-shaders")) do
+        if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
+            table.insert(active_shaders, shader_path)
+        end
+    end
 
     local shader_items = {}
     local shader_profile_items = {}
@@ -837,7 +843,7 @@ local function create_shader_menu()
     local profile_match = false
 
     local function create_shader_profile_item(name, profile_shader_list)
-        local is_active = compare_shaders(current_shaders, profile_shader_list)
+        local is_active = compare_shaders(active_shaders, profile_shader_list)
 
         if is_active then
             profile_match = true
@@ -882,9 +888,9 @@ local function create_shader_menu()
     if options.include_custom_shader_profile then
         table.insert(shader_profile_items, {
             title = "Custom",
-            active = #current_shaders > 0 and not profile_match,
-            selectable = #current_shaders > 0 and not profile_match,
-            muted = #current_shaders == 0 or profile_match,
+            active = #active_shaders > 0 and not profile_match,
+            selectable = #active_shaders > 0 and not profile_match,
+            muted = #active_shaders == 0 or profile_match,
             value = command("function " .. store_function(clear_shaders))
         })
     end
@@ -899,14 +905,7 @@ local function create_shader_menu()
 
     local active_shader_items = {}
 
-    local active_shaders = {}
     local is_active = {}
-
-    for i, shader_path in ipairs(current_shaders) do
-        if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
-            table.insert(active_shaders, shader_path)
-        end
-    end
 
     for i, active_shader in ipairs(active_shaders) do
         is_active[active_shader] = true
@@ -986,4 +985,3 @@ mp.add_key_binding(nil, "open-menu", function()
     local json = mp.utils.format_json(create_menu_data())
     mp.commandv("script-message-to", "uosc", "open-menu", json)
 end)
-
