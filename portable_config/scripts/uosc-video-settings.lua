@@ -508,7 +508,6 @@ end
 
 -- Scale
 local function create_filter_selection(property)
-
     local fixed_scale = {{
         name = "Bilinear",
         value = "bilinear"
