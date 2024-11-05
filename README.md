@@ -8,7 +8,8 @@ I got too excited and put too many shaders in.
 Btw, if you want any property added to the video settings menu, make an issue and I'll update it asap.
 
 # In progress
-- Add profile folders
+- Find a faster way to check if a stored_function already exists.
+- Add profile folders.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if current video is interlaced.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
@@ -51,8 +52,7 @@ Buttons can be added for aspect ratio, deband, color, and shader profiles by usi
 If using a keybind to toggle a shader, use the same shader path defined in uosc-video-settings.conf (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
 # Shaders
-- Find a faster way to check if a stored_function already exists.
-- [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable. I don't have a 4K monitor, but less artifacts downscaling to 1440p than on 1080p. Individual shader modes sourced from [Anime4K-GUI](https://github.com/mikigal/Anime4K-GUI/tree/master/resources/shaders) so less clutter in shaders folder.
+- [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable.
 - [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Config has all three separate shaders and put into a profile.
 - [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) No idea what this does but it's cool. Haven't really used it.
 - [FSRCNNX_x2(8-0-4-1/16-0-4-1)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1) 2x upscaler.
