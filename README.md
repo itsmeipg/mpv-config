@@ -4,21 +4,17 @@
 ![image](https://github.com/user-attachments/assets/8113278d-1d06-4828-959c-678b922f539b)
 
 # NEWS
-SHADER FOLDERS ADDED!! Reads folders within the shaders folder and within those folders and within those folders and... I finally used recursive loop for the first time.
-![image](https://github.com/user-attachments/assets/a3e53642-19a2-49de-853a-fee76af06109)
+I got too excited and put too many shaders in.
+Btw, if you want any property added to the video settings menu, make an issue and I'll update it asap.
 
 # In progress
-- Replace item values with reference to stored functions.
-- I just found out about https://github.com/he2a/mpv-config... Such inspiration... and more work to catch up to its brilliancy...
-- Show default profile only if user-defined profile is not found in the case that a user creates a profile that matches mpv.conf's defaults.
-- Organize shaders into folders. Replace Anime4K shaders with the individual ones.
-- Check if shader exists before listing as active.
-- Add interpolation profiles.
+- Add profile folders
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if current video is interlaced.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Re-edit uosc proximity, video-quality script + change its FPS display.
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither
+
 # Theme
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
@@ -45,17 +41,14 @@ Don't worry though I understand 98 percent of the script and bug tested a lot.
 - [uosc-subtitles] Menu for subtitle settings.
 - [uosc-video-settings] Menu for video settings.
 
-Bug: Won't notice unless you look for it. Sometimes menu does not update (especially with updating the sub delay/anything that can be increased/decreased or toggled) until mouse stops hovering over button that updated menu (then it updates correctly). Might be an issue with how I coded menu updates or uosc itself.
-
 # uosc-video-settings.lua
 
-This script could use a little more optimization. I don't know if I coded the menu updates properly, but it works pretty well.
 The script syncs with external changes. For example, toggling a shader or anything listed in the menu (deband, aspect ratio, etc) using a keybind shows live changes in the menu.
 Anything that's a reset/default button goes back to what mpv started with (like shaders) or the defaults of the video (like aspect ratio).
 
-Buttons can be added for aspect ratio, deband, and shader profiles by using uosc-video-settings.conf.
+Buttons can be added for aspect ratio, deband, color, and shader profiles by using uosc-video-settings.conf.
 
-If using a keybind to toggle a shader, use the shader_path (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
+If using a keybind to toggle a shader, use the same shader path defined in uosc-video-settings.conf (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
 # Shaders
 
@@ -83,17 +76,6 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - "pan="stereo|FL < 1.0*FL + 0.707*FC + 0.707*BL|FR < 1.0*FR + 0.707*FC + 0.707*BR""
 - "[loudnorm=i=-14:lra=7:tp=-2]"
 
-# Goals
-
-- ~~Post on Reddit about my config so people actually use my config and I can get feedback.~~
-- ~~Work on uosc-subtitles. Rename to uosc-subtitle-settings. Add options to override ASS subs. Add options to move subs. Possibly fonts section or just add every option available to subs (blur, border, etc) but it might be too much bloat.~~
-- ~~Add options to set the increase/decrease steps for each color setting.~~
-- ~~Hide primary and secondary sub-pos values if default.~~
-- ~~Optimize video aspect updates.~~
-- ~~Add radio buttons to show which shader profile is being used.~~
-- Maybe add .conf for uosc-screenshot.lua.
-- Maybe adjust playlist opacity of the thing on the top left.
-
 # Feedback
 
 - If there is a way to disable OSD messages from uosc without modifying the script, let me know.
@@ -102,6 +84,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - Let me know about shader profiles you use and other cool shaders.
 
 # Inspiration
+- https://github.com/he2a/mpv-config
 - https://github.com/Zabooby/mpv-config
 - https://github.com/hl2guide/better-mpv-config/tree/master
 - https://kokomins.wordpress.com/2019/10/14/mpv-config-guide/#general-mpv-options
@@ -122,5 +105,4 @@ Here are a few audio filters I kind of tested but didn't settle on.
 # Things that bother me
 
 - sub-margin-y can't be set to 49.5.
-- The bug I mentioned about menu updates.
 - No option in uosc to disable OSD text.
