@@ -61,83 +61,79 @@ for _, prop in ipairs(properties) do
 end
 
 local stored_functions = {}
-local free_ids = {}
-local next_id = 1
 
-local function deep_tostring(value, seen)
+local function hash_value(value, seen)
     seen = seen or {}
+
+    if value == nil then
+        return "nil"
+    end
 
     if seen[value] then
         return "recursive"
     end
 
-    if type(value) == "table" then
+    local t = type(value)
+    if t == "table" then
         seen[value] = true
-        local result = "{"
 
+        local parts = {}
         local keys = {}
+
         for k in pairs(value) do
             table.insert(keys, k)
         end
-        table.sort(keys)
+
+        table.sort(keys, function(a, b)
+            return tostring(a) < tostring(b)
+        end)
 
         for _, k in ipairs(keys) do
             local v = value[k]
-            result = result .. "[" .. deep_tostring(k, seen) .. "]="
-            result = result .. deep_tostring(v, seen) .. ","
+            table.insert(parts, string.format("%s=%s", hash_value(k, seen), hash_value(v, seen)))
         end
-        return result .. "}"
-    elseif type(value) == "function" then
-        return tostring(value)
-    else
-        return string.format("%q", tostring(value))
-    end
-end
 
-local function create_key(func, args)
-    return deep_tostring(func) .. deep_tostring(args)
+        seen[value] = nil
+
+        return "t{" .. table.concat(parts, ",") .. "}"
+    elseif t == "function" then
+        local addr = tostring(value):match("function: (.+)")
+        return "f:" .. addr
+    elseif t == "string" then
+        return "s:" .. string.format("%q", value)
+    elseif t == "number" then
+        return "n:" .. string.format("%.10g", value)
+    elseif t == "boolean" then
+        return "b:" .. tostring(value)
+    else
+        return "o:" .. tostring(value)
+    end
 end
 
 local function store_function(func, ...)
     local args = {...}
-    local key = create_key(func, args)
+    local hash = hash_value(func) .. "|" .. hash_value(args)
 
-    for id, stored in pairs(stored_functions) do
-        if create_key(stored.func, stored.args) == key then
-            return id
-        end
+    if not stored_functions[hash] then
+        stored_functions[hash] = {
+            func = func,
+            args = args
+        }
     end
 
-    local id
-    if #free_ids > 0 then
-        id = table.remove(free_ids)
-    else
-        id = "func_" .. next_id
-        next_id = next_id + 1
-    end
-
-    stored_functions[id] = {
-        func = func,
-        args = args
-    }
-
-    return id
+    return hash
 end
 
-local function remove_stored_function(id)
-    if stored_functions[id] then
-        stored_functions[id] = nil
-        local num = tonumber(id:match("func_(%d+)"))
-        if num then
-            table.insert(free_ids, "func_" .. num)
-        end
+local function remove_stored_function(hash)
+    if stored_functions[hash] then
+        stored_functions[hash] = nil
         return true
     end
     return false
 end
 
-local function execute_stored_function(id)
-    local stored = stored_functions[id]
+local function execute_stored_function(hash)
+    local stored = stored_functions[hash]
     if stored then
         return stored.func(table.unpack(stored.args))
     end
@@ -959,8 +955,7 @@ local function create_menu_data()
 end
 
 local function update_menu()
-    local json = mp.utils.format_json(create_menu_data())
-    mp.commandv("script-message-to", "uosc", "update-menu", json)
+    mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
 end
 
 local message_handlers = {
@@ -993,6 +988,5 @@ for _, prop in ipairs(properties) do
 end
 
 mp.add_key_binding(nil, "open-menu", function()
-    local json = mp.utils.format_json(create_menu_data())
-    mp.commandv("script-message-to", "uosc", "open-menu", json)
+    mp.commandv("script-message-to", "uosc", "open-menu", mp.utils.format_json(create_menu_data()))
 end)
