@@ -8,7 +8,6 @@ I got too excited and put too many shaders in.
 Btw, if you want any property added to the video settings menu, make an issue and I'll update it asap.
 
 # In progress
-- Find a faster way to check if a stored_function already exists.
 - Add profile folders.
 - Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if current video is interlaced.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
