@@ -828,11 +828,6 @@ local function listShaderFiles(path, option_path, active_shaders)
                 end
             end
 
-            -- if shader_file_path == "~~/shaders/Anime4K/Experimental effects/Anime4K_Darken_Fast.glsl" then
-            --     local val = store_function(toggle_shader, shader_file_path)
-            --     execute_stored_function(val)
-            -- end
-
             table.insert(dir_items, {
                 title = shader,
                 hint = active_shader_index and tostring(active_shader_index),
