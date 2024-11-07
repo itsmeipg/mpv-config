@@ -808,6 +808,21 @@ local function listShaderFiles(path, option_path, active_shaders)
         option_path = mp.utils.join_path(option_path, current_dir)
     end
 
+    local subdirs = mp.utils.readdir(path, "dirs")
+
+    if subdirs then
+        for _, subdir in ipairs(subdirs) do
+            local subdir_items = listShaderFiles(mp.command_native({"expand-path", mp.utils.join_path(path, subdir)}),
+                option_path, active_shaders)
+            local subdir = {
+                title = subdir,
+                items = subdir_items
+            }
+
+            table.insert(dir_items, subdir)
+        end
+    end
+
     local files = mp.utils.readdir(path, "files")
 
     if files ~= nil then
@@ -836,21 +851,6 @@ local function listShaderFiles(path, option_path, active_shaders)
                 actions = active_shader_index and create_shader_adjustment_actions(shader_file_path),
                 actions_place = "outside"
             })
-        end
-    end
-
-    local subdirs = mp.utils.readdir(path, "dirs")
-
-    if subdirs then
-        for _, subdir in ipairs(subdirs) do
-            local subdir_items = listShaderFiles(mp.command_native({"expand-path", mp.utils.join_path(path, subdir)}),
-                option_path, active_shaders)
-            local subdir = {
-                title = subdir,
-                items = subdir_items
-            }
-
-            table.insert(dir_items, subdir)
         end
     end
 
@@ -949,13 +949,20 @@ local function create_shader_menu()
         })
     end
 
-    table.insert(shader_items, {
+    local active_shader_group = {
         title = "Active",
         items = active_shader_items
-    })
+    }
 
-    for _, item in ipairs(listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path,
-        active_shaders)) do
+    local shader_files = listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path, active_shaders)
+    
+    if #shader_files > 0 then
+        active_shader_group.separator = true
+    end
+
+    table.insert(shader_items, active_shader_group)
+
+    for _, item in ipairs(shader_files) do
         table.insert(shader_items, item)
     end
 
