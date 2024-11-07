@@ -52,8 +52,12 @@ local shader_props = {{
     native = true
 }}
 
-local properties = {unpack(aspect_props), unpack(deband_props), unpack(color_props), unpack(temporal_props),
-                    unpack(scale_props), unpack(shader_props)}
+local properties = {}
+for _, prop in ipairs({aspect_props, deband_props, color_props, temporal_props, scale_props, shader_props}) do
+    for _, p in ipairs(prop) do
+        table.insert(properties, p)
+    end
+end
 
 local default_property = {}
 local cached_property = {}
