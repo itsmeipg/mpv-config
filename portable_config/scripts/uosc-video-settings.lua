@@ -32,7 +32,7 @@ mp.options.read_options(options, "uosc-video-settings", function()
 end)
 
 local function command(str)
-    return string.format("script-message-to %s %s", script_name, str)
+    return string.format("script-message-to %s %s %q", script_name, "function", str)
 end
 
 local properties = {"video-aspect-override", "deband", "deband-iterations", "deband-threshold", "deband-range",
@@ -135,6 +135,7 @@ end
 
 local function execute_stored_function(hash)
     local stored = stored_functions[hash]
+    print(hash)
     if stored then
         return stored.func(table.unpack(stored.args))
     end
@@ -168,7 +169,7 @@ local function create_property_toggle(title, property)
     return {
         title = title,
         icon = mp.get_property_bool(property) and "check_box" or "check_box_outline_blank",
-        value = command("function " .. store_function(toggle_property, property))
+        value = command(store_function(toggle_property, property))
     }
 end
 
@@ -189,8 +190,8 @@ local function create_property_selection(title, property, options, off_or_defaul
             active = is_active,
             separator = item.separator,
             value = is_active and off_or_default_option and
-                command("function " .. store_function(set_property, property, off_or_default_option)) or
-                command("function " .. store_function(set_property, property, item.value))
+                command(store_function(set_property, property, off_or_default_option)) or
+                command(store_function(set_property, property, item.value))
         })
     end
 
@@ -200,8 +201,7 @@ local function create_property_selection(title, property, options, off_or_defaul
             active = not off_or_default_option and not option_match,
             selectable = not off_or_default_option and not option_match,
             muted = off_or_default_option or option_match,
-            value = off_or_default_option and
-                command("function " .. store_function(set_property, property, off_or_default_option))
+            value = off_or_default_option and command(store_function(set_property, property, off_or_default_option))
         })
     end
 
@@ -214,15 +214,15 @@ end
 local function create_property_number_adjustment(title, property, increment, min, max)
     local function create_adjustment_actions()
         return {{
-            name = command("function " .. store_function(adjust_property_number, property, increment, min, max)),
+            name = command(store_function(adjust_property_number, property, increment, min, max)),
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = command("function " .. store_function(adjust_property_number, property, -increment, min, max)),
+            name = command(store_function(adjust_property_number, property, -increment, min, max)),
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
-            name = command("function " .. store_function(set_property, property, cached_property[property])),
+            name = command(store_function(set_property, property, cached_property[property])),
             icon = "clear",
             label = "Reset."
         } or nil}
@@ -254,7 +254,7 @@ local function create_aspect_menu(value)
         table.insert(aspect_profiles, {
             title = aspect,
             active = is_active,
-            value = command("function " .. (is_active and store_function(set_property, "video-aspect-override", "-1") or
+            value = command((is_active and store_function(set_property, "video-aspect-override", "-1") or
                                 store_function(set_property, "video-aspect-override", aspect)))
         })
 
@@ -269,7 +269,7 @@ local function create_aspect_menu(value)
             active = not is_original and not profile_match,
             selectable = not is_original and not profile_match,
             muted = is_original or profile_match,
-            value = command("function " .. store_function(set_property, "video-aspect-override", "-1"))
+            value = command(store_function(set_property, "video-aspect-override", "-1"))
         })
     end
 
@@ -320,7 +320,7 @@ local function create_deband_menu()
         return {
             title = name,
             active = deband_enabled and is_active,
-            value = command("function " .. (is_active and store_function(toggle_property, "deband") or
+            value = command((is_active and store_function(toggle_property, "deband") or
                                 store_function(apply_deband_profile, profile_iterations, profile_threshold,
                     profile_range, profile_grain)))
         }
@@ -363,7 +363,7 @@ local function create_deband_menu()
             active = deband_enabled and not profile_match,
             selectable = not profile_match,
             muted = profile_match,
-            value = command("function " .. store_function(toggle_property, "deband"))
+            value = command(store_function(toggle_property, "deband"))
         })
     end
 
@@ -436,7 +436,7 @@ local function create_color_menu()
         return {
             title = name,
             active = is_active,
-            value = command("function " .. (is_active and store_function(clear_color) or
+            value = command((is_active and store_function(clear_color) or
                                 store_function(apply_color_profile, profile_brightness, profile_contrast,
                     profile_saturation, profile_gamma, profile_hue)))
         }
@@ -480,7 +480,7 @@ local function create_color_menu()
             active = not is_original and not profile_match,
             selectable = not is_original and not profile_match,
             muted = is_original or profile_match,
-            value = command("function " .. store_function(clear_color))
+            value = command(store_function(clear_color))
         })
     end
 
@@ -783,13 +783,13 @@ local function create_shader_adjustment_actions(shader_path)
     local action_items = {}
 
     table.insert(action_items, {
-        name = command("function " .. store_function(move_shader, shader_path, "up")),
+        name = command(store_function(move_shader, shader_path, "up")),
         icon = "keyboard_arrow_up",
         label = "Position up."
     })
 
     table.insert(action_items, {
-        name = command("function " .. store_function(move_shader, shader_path, "down")),
+        name = command(store_function(move_shader, shader_path, "down")),
         icon = "keyboard_arrow_down",
         label = "Position down."
     })
@@ -828,11 +828,16 @@ local function listShaderFiles(path, option_path, active_shaders)
                 end
             end
 
+            -- if shader_file_path == "~~/shaders/Anime4K/Experimental effects/Anime4K_Darken_Fast.glsl" then
+            --     local val = store_function(toggle_shader, shader_file_path)
+            --     execute_stored_function(val)
+            -- end
+
             table.insert(dir_items, {
                 title = shader,
                 hint = active_shader_index and tostring(active_shader_index),
                 icon = active_shader_index and "check_box" or "check_box_outline_blank",
-                value = command("function " .. store_function(toggle_shader, shader_file_path)),
+                value = command(store_function(toggle_shader, shader_file_path)),
                 actions = active_shader_index and create_shader_adjustment_actions(shader_file_path),
                 actions_place = "outside"
             })
@@ -921,7 +926,7 @@ local function create_shader_menu()
             active = #active_shaders > 0 and not profile_match,
             selectable = #active_shaders > 0 and not profile_match,
             muted = #active_shaders == 0 or profile_match,
-            value = command("function " .. store_function(clear_shaders))
+            value = command(store_function(clear_shaders))
         })
     end
 
@@ -944,7 +949,7 @@ local function create_shader_menu()
             title = shader,
             hint = tostring(i),
             icon = "check_box",
-            value = command("function " .. store_function(toggle_shader, active_shader)),
+            value = command(store_function(toggle_shader, active_shader)),
             actions = create_shader_adjustment_actions(active_shader),
             actions_place = "outside"
         })
