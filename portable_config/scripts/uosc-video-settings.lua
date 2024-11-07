@@ -704,7 +704,6 @@ local function clear_shaders()
 end
 
 local function toggle_shader(shader_path)
-    print("high")
     mp.command_native({"change-list", "glsl-shaders", "toggle", shader_path})
 end
 
