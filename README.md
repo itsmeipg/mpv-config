@@ -49,8 +49,8 @@ If using a keybind to toggle a shader, use the same shader path defined in uosc-
 
 # Shaders
 - [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable.
-- [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Config has all three separate shaders and put into a profile.
-- [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) No idea what this does but it's cool. Haven't really used it.
+- [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Reverses blur (sharpener ig) + perceptual quality enhancements.
+- [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) It's cool.
 - [FSRCNNX_x2(8-0-4-1/16-0-4-1)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1) 2x upscaler.
 - [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b) Makes upscaling look a little better.
 - [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10) Makes downscaling look a little better.
