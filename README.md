@@ -8,11 +8,10 @@ Btw, if you want any property added to the video settings menu, make an issue an
 
 # In progress
 - Add profile folders.
-- Add deinterlace. Remove auto-deinterlace script. Add footnote that shows if current video is interlaced.
+- Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Re-edit uosc proximity, video-quality script + change its FPS display.
-- Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither
 
 # Theme
 
