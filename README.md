@@ -1,7 +1,6 @@
 # mpv-config
-![image](https://github.com/user-attachments/assets/6a890502-a91d-4958-8c52-7bf8ef289781)
-![image](https://github.com/user-attachments/assets/fbc5e922-c33d-44e1-b4b6-ad3c5ba83380)
-![image](https://github.com/user-attachments/assets/8113278d-1d06-4828-959c-678b922f539b)
+![image](https://github.com/user-attachments/assets/539e95ef-a438-43a9-87e0-b6ef0037ef9e)
+![image](https://github.com/user-attachments/assets/e5486c15-f466-425d-9869-52dd0a9e63e2)
 
 # NEWS
 I got too excited and put too many shaders in.
