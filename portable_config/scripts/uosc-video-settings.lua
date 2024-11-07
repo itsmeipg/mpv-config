@@ -882,9 +882,8 @@ local function create_shader_menu()
         return {
             title = name,
             active = is_active,
-            value = command("function " ..
-                                (is_active and store_function(clear_shaders) or
-                                    store_function(set_property, "glsl-shaders", profile_shader_list)))
+            value = command((is_active and store_function(clear_shaders) or
+                                store_function(set_property, "glsl-shaders", profile_shader_list)))
         }
     end
 
