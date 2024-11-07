@@ -807,7 +807,7 @@ local function create_shader_adjustment_actions(shader_path)
     return action_items
 end
 
-local function listShaderFiles(path, option_path, active_shaders)
+local function list_shader_files(path, option_path, active_shaders)
     local _, current_dir = mp.utils.split_path(path)
 
     local dir_items = {}
@@ -822,7 +822,7 @@ local function listShaderFiles(path, option_path, active_shaders)
 
     if subdirs then
         for _, subdir in ipairs(subdirs) do
-            local subdir_items = listShaderFiles(mp.command_native({"expand-path", mp.utils.join_path(path, subdir)}),
+            local subdir_items = list_shader_files(mp.command_native({"expand-path", mp.utils.join_path(path, subdir)}),
                 option_path, active_shaders)
             local subdir = {
                 title = subdir,
@@ -964,7 +964,7 @@ local function create_shader_menu()
         items = active_shader_items
     }
 
-    local shader_files = listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path,
+    local shader_files = list_shader_files(mp.command_native({"expand-path", options.shader_path}), options.shader_path,
         active_shaders)
 
     if #shader_files > 0 then
