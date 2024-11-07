@@ -35,14 +35,25 @@ local function command(str)
     return string.format("script-message-to %s %s %q", script_name, "function", str)
 end
 
-local properties = {"video-aspect-override", "deband", "deband-iterations", "deband-threshold", "deband-range",
-                    "deband-grain", "brightness", "contrast", "saturation", "gamma", "hue", "interpolation", "tscale",
-                    "tscale-window", "tscale-antiring", "tscale-blur", "tscale-clamp", "tscale-radius", "tscale-taper",
-                    "scale", "dscale", "cscale", "linear-upscaling", "correct-downscaling", "linear-downscaling",
-                    "sigmoid-upscaling", {
+local aspect_props = {"video-aspect-override"}
+
+local deband_props = {"deband", "deband-iterations", "deband-threshold", "deband-range", "deband-grain"}
+
+local color_props = {"brightness", "contrast", "saturation", "gamma", "hue"}
+
+local temporal_props = {"interpolation", "tscale", "tscale-window", "tscale-antiring", "tscale-blur", "tscale-clamp",
+                        "tscale-radius", "tscale-taper"}
+
+local scale_props = {"scale", "dscale", "cscale", "linear-upscaling", "correct-downscaling", "linear-downscaling",
+                     "sigmoid-upscaling"}
+
+local shader_props = {{
     name = "glsl-shaders",
     native = true
 }}
+
+local properties = {unpack(aspect_props), unpack(deband_props), unpack(color_props), unpack(temporal_props),
+                    unpack(scale_props), unpack(shader_props)}
 
 local default_property = {}
 local cached_property = {}
@@ -135,7 +146,6 @@ end
 
 local function execute_stored_function(hash)
     local stored = stored_functions[hash]
-    print(hash)
     if stored then
         return stored.func(table.unpack(stored.args))
     end
@@ -954,8 +964,9 @@ local function create_shader_menu()
         items = active_shader_items
     }
 
-    local shader_files = listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path, active_shaders)
-    
+    local shader_files = listShaderFiles(mp.command_native({"expand-path", options.shader_path}), options.shader_path,
+        active_shaders)
+
     if #shader_files > 0 then
         active_shader_group.separator = true
     end
