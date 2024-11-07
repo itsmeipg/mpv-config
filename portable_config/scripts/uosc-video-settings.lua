@@ -38,7 +38,8 @@ end
 local properties = {"video-aspect-override", "deband", "deband-iterations", "deband-threshold", "deband-range",
                     "deband-grain", "brightness", "contrast", "saturation", "gamma", "hue", "interpolation", "tscale",
                     "tscale-window", "tscale-antiring", "tscale-blur", "tscale-clamp", "tscale-radius", "tscale-taper",
-                    "scale", "dscale", "cscale", "correct-downscaling", "linear-downscaling", "sigmoid-upscaling", {
+                    "scale", "dscale", "cscale", "linear-upscaling", "correct-downscaling", "linear-downscaling",
+                    "sigmoid-upscaling", {
     name = "glsl-shaders",
     native = true
 }}
@@ -686,9 +687,10 @@ local function create_scale_menu()
     table.insert(temporalscale.items, create_property_number_adjustment("Taper", "tscale-taper", .005, 0, 1))
     table.insert(scale_items, temporalscale)
 
-    table.insert(scale_items, create_property_toggle("Correct Downscaling", "correct-downscaling"))
-    table.insert(scale_items, create_property_toggle("Linear Downscaling", "linear-downscaling"))
-    table.insert(scale_items, create_property_toggle("Sigmoid Upscaling", "sigmoid-upscaling"))
+    table.insert(scale_items, create_property_toggle("Linear upscaling", "linear-upscaling"))
+    table.insert(scale_items, create_property_toggle("Correct downscaling", "correct-downscaling"))
+    table.insert(scale_items, create_property_toggle("Linear downscaling", "linear-downscaling"))
+    table.insert(scale_items, create_property_toggle("Sigmoid upscaling", "sigmoid-upscaling"))
 
     return {
         title = "Scale",
@@ -702,7 +704,8 @@ local function clear_shaders()
 end
 
 local function toggle_shader(shader_path)
-    mp.commandv("change-list", "glsl-shaders", "toggle", shader_path)
+    print("high")
+    mp.command_native({"change-list", "glsl-shaders", "toggle", shader_path})
 end
 
 local function compare_shaders(shaders1, shaders2)
@@ -717,54 +720,77 @@ local function compare_shaders(shaders1, shaders2)
     return true
 end
 
-local function move_shader(active_shaders, shader, direction)
-    local function moveStringInList(list, target, direction)
-        local newList = {}
-        for i, str in ipairs(list) do
-            newList[i] = str
+local function move_shader(shader, direction)
+    local current_shaders = mp.get_property_native("glsl-shaders")
+    local active_shaders = {}
+    for i, shader_path in ipairs(current_shaders) do
+        if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
+            table.insert(active_shaders, shader_path)
         end
-
-        local index = -1
-        for i, str in ipairs(newList) do
+    end
+    local function find_index(list, target)
+        for i, str in ipairs(list) do
             if str == target then
-                index = i
+                return i
+            end
+        end
+        return -1
+    end
+    local active_indices = {}
+    local target_index = -1
+    for i, active_shader in ipairs(active_shaders) do
+        local idx = find_index(current_shaders, active_shader)
+        active_indices[active_shader] = idx
+        if active_shader == shader then
+            target_index = idx
+        end
+    end
+    if target_index == -1 then
+        return current_shaders
+    end
+    local swap_index
+    if direction == "up" or direction == "left" then
+        swap_index = -1
+        for i = target_index - 1, 1, -1 do
+            if active_indices[current_shaders[i]] then
+                swap_index = i
                 break
             end
         end
-
-        if index == -1 then
-            return newList
+        if swap_index == -1 then
+            return current_shaders
         end
-
-        if direction == "up" or direction == "left" then
-            if index == 1 then
-                return newList
+    elseif direction == "down" or direction == "right" then
+        swap_index = -1
+        for i = target_index + 1, #current_shaders do
+            if active_indices[current_shaders[i]] then
+                swap_index = i
+                break
             end
-            newList[index], newList[index - 1] = newList[index - 1], newList[index]
-        elseif direction == "down" or direction == "right" then
-            if index == #newList then
-                return newList
-            end
-            newList[index], newList[index + 1] = newList[index + 1], newList[index]
         end
-
-        return newList
+        if swap_index == -1 then
+            return current_shaders
+        end
     end
-
-    mp.set_property_native("glsl-shaders", moveStringInList(active_shaders, shader, direction))
+    local new_shaders = {}
+    for i, str in ipairs(current_shaders) do
+        new_shaders[i] = str
+    end
+    new_shaders[target_index], new_shaders[swap_index] = new_shaders[swap_index], new_shaders[target_index]
+    mp.set_property_native("glsl-shaders", new_shaders)
 end
 
-local function create_shader_adjustment_actions(active_shaders, shader_path)
+local function create_shader_adjustment_actions(shader_path)
     local action_items = {}
 
     table.insert(action_items, {
-        name = command("function " .. store_function(move_shader, active_shaders, shader_path, "up")),
+        name = command("function " .. store_function(move_shader, shader_path, "up")),
         icon = "keyboard_arrow_up",
         label = "Position up."
     })
 
     table.insert(action_items, {
-        name = command("function " .. store_function(move_shader, active_shaders, shader_path, "down")),
+        name = command("function " .. store_function(move_shader, shader_path, "down")),
         icon = "keyboard_arrow_down",
         label = "Position down."
     })
@@ -808,7 +834,7 @@ local function listShaderFiles(path, option_path, active_shaders)
                 hint = active_shader_index and tostring(active_shader_index),
                 icon = active_shader_index and "check_box" or "check_box_outline_blank",
                 value = command("function " .. store_function(toggle_shader, shader_file_path)),
-                actions = active_shader_index and create_shader_adjustment_actions(active_shaders, shader_file_path),
+                actions = active_shader_index and create_shader_adjustment_actions(shader_file_path),
                 actions_place = "outside"
             })
         end
@@ -833,9 +859,10 @@ local function listShaderFiles(path, option_path, active_shaders)
 end
 
 local function create_shader_menu()
+    local current_shaders = mp.get_property_native("glsl-shaders")
     local active_shaders = {}
 
-    for i, shader_path in ipairs(mp.get_property_native("glsl-shaders")) do
+    for i, shader_path in ipairs(current_shaders) do
         if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
             table.insert(active_shaders, shader_path)
         end
@@ -919,7 +946,7 @@ local function create_shader_menu()
             hint = tostring(i),
             icon = "check_box",
             value = command("function " .. store_function(toggle_shader, active_shader)),
-            actions = create_shader_adjustment_actions(active_shaders, active_shader),
+            actions = create_shader_adjustment_actions(active_shader),
             actions_place = "outside"
         })
     end
