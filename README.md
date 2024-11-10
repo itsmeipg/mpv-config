@@ -7,6 +7,8 @@ I got too excited and put too many shaders in.
 Btw, if you want any property added to the video settings menu, make an issue and I'll update it asap.
 
 # In progress
+- Add support to apply shader twice/thrice/etc. (Low priority).
+- Shift-click action button to apply larger increment.
 - Optimize property observers.
 - Consider going back to script message functions instead of using stored functions.
 - Add profile folders.
