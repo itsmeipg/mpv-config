@@ -42,6 +42,8 @@ Don't worry though I understand 98 percent of the script and bug tested a lot.
 # uosc-video-settings.lua
 Profiles can be added for aspect ratio, deband, color, and shader profiles by using uosc-video-settings.conf.
 
+The "Custom" profile button is both an indicator of custom settings and a way to reset/disable custom settings. For instance, if turned off for shaders in .conf, there is no way to disable all shaders in one click, you'd have to toggle them all off or turn on a profile and click it again to disable all shaders, but I still made it an option because why not. It also doesn't just pop up if settings are custom, this is so that the number of items in the menu does not dynamically change to prevent the menu from moving when adjusting shaders/other properties.
+
 If using a keybind to toggle a shader, use the same shader path defined in uosc-video-settings.conf (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
 # Shaders
