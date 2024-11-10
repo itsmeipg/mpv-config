@@ -97,7 +97,8 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - https://github.com/dyphire/mpv-config/issues/99
 - https://www.reddit.com/r/mpv/comments/1d4he0k/auto_volume_leveller/
 - https://www.reddit.com/r/mpv/comments/1au7ty2/dynaudnorm_or_loudnorm_audio_filters_for_everyday/
-
+- https://github.com/yt-dlp/yt-dlp/issues/7846
+- 
 # Things that bother me
 
 - sub-margin-y can't be set to 49.5.
