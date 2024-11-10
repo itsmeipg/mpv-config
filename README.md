@@ -7,6 +7,8 @@ I got too excited and put too many shaders in.
 Btw, if you want any property added to the video settings menu, make an issue and I'll update it asap.
 
 # In progress
+- Optimize property observers.
+- Consider going back to script message functions instead of using stored functions.
 - Add profile folders.
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
@@ -16,7 +18,7 @@ Btw, if you want any property added to the video settings menu, make an issue an
 # Theme
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
-OSD text is removed as much as possible.
+OSD text is removed as much as possible. (Currently, OSD text is 100% removed).
 
 Minimal but fancy is the goal.
 
@@ -39,11 +41,7 @@ Don't worry though I understand 98 percent of the script and bug tested a lot.
 - [uosc-video-settings] Menu for video settings.
 
 # uosc-video-settings.lua
-
-The script syncs with external changes. For example, toggling a shader or anything listed in the menu (deband, aspect ratio, etc) using a keybind shows live changes in the menu.
-Anything that's a reset/default button goes back to what mpv started with (like shaders) or the defaults of the video (like aspect ratio).
-
-Buttons can be added for aspect ratio, deband, color, and shader profiles by using uosc-video-settings.conf.
+Profiles can be added for aspect ratio, deband, color, and shader profiles by using uosc-video-settings.conf.
 
 If using a keybind to toggle a shader, use the same shader path defined in uosc-video-settings.conf (default: ~~/shaders) to prevent activating shaders twice. If the amount of shaders in the list changes, you messed up something in the uosc-video-settings.conf's shader profile syntax or used the wrong path in input.conf to toggle a shader.
 
