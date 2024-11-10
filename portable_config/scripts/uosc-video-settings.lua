@@ -508,7 +508,7 @@ local function create_color_menu()
 
     for _, prop in ipairs({"brightness", "contrast", "saturation", "gamma", "hue"}) do
         table.insert(color_items, create_property_number_adjustment(prop:gsub("^%l", string.upper), prop,
-            options[prop .. "_increment"], 0, 100))
+            options[prop .. "_increment"], -100, 100))
     end
 
     return {
