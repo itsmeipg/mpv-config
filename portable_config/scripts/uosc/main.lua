@@ -1098,7 +1098,6 @@ bind_command('paste-to-playlist', function()
 		local payload = get_clipboard()
 		if payload then
 			mp.commandv('loadfile', payload, 'append')
-			mp.commandv('show-text', t('Added to playlist') .. ': ' .. payload, 3000)
 		end
 	end
 end)
