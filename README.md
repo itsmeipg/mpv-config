@@ -73,6 +73,8 @@ If using a keybind to toggle a shader, use the same shader path defined in uosc-
 - [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction) Chroma upscaler.
 - [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637) Chroma upscaler.
 
+and a few more... I'll update it later.
+
 # Audio filters
 The config uses "[dynaudnorm=f=250:g=31:p=0.5:m=5:r=0.9:b=1]"
 I heard that the way dynaudorm works is that it compresses audio, so change it if you don't like that.
