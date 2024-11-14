@@ -878,7 +878,6 @@ end
 function get_clipboard()
 	local err, data = call_ziggy({'get-clipboard'})
 	if err then
-		mp.commandv('show-text', 'Get clipboard error. See console for details.')
 		msg.error(err)
 	end
 	return data and data.payload
@@ -889,10 +888,7 @@ end
 function set_clipboard(payload)
 	local err, data = call_ziggy({'set-clipboard', tostring(payload)})
 	if err then
-		mp.commandv('show-text', 'Set clipboard error. See console for details.')
 		msg.error(err)
-	else
-		mp.commandv('show-text', t('Copied to clipboard') .. ': ' .. payload, 3000)
 	end
 	return data and data.payload
 end
