@@ -819,7 +819,6 @@ function open_open_file_menu()
 				mp.commandv(command, event.value, 'append')
 				local serialized = serialize_path(event.value)
 				local filename = serialized and serialized.basename or event.value
-				mp.commandv('show-text', t('Added to playlist') .. ': ' .. filename, 3000)
 			elseif itable_has({nil, 'ctrl', 'alt', 'alt+ctrl'}, event.modifiers) and itable_has({nil, 'force_open'}, event.action) then
 				mp.commandv(command, event.value)
 				if not event.alt then menu:close() end
@@ -871,7 +870,6 @@ function create_track_loader_menu_opener(opts)
 			load_track(opts.prop, event.value)
 			local serialized = serialize_path(event.value)
 			local filename = serialized and serialized.basename or event.value
-			mp.commandv('show-text', opts.loaded_message .. ': ' .. filename, 3000)
 			if not event.alt then menu:close() end
 		end
 
