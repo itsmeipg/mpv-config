@@ -9,8 +9,6 @@ Btw, if you want any property added to the video settings menu, make an issue an
 # In progress
 - Add support to apply shader twice/thrice/etc. (Low priority).
 - Shift-click action button to apply larger increment.
-- Optimize property observers.
-- Consider going back to script message functions instead of using stored functions.
 - Add profile folders.
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
