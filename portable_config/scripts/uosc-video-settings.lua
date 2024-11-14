@@ -237,7 +237,7 @@ local function create_menu_data()
     if shader_menu then
         table.insert(menu_items, shader_menu)
     end
-    
+
     table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
 
     return {
