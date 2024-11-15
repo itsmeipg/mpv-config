@@ -96,8 +96,10 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - Let me know about shader profiles you use and other cool shaders.
 
 # Inspiration
+- https://mpv.io/manual/stable
 - https://github.com/he2a/mpv-config
 - https://github.com/Zabooby/mpv-config
+- https://thewiki.moe/tutorials/mpv/#basic-config
 - https://github.com/hl2guide/better-mpv-config/tree/master
 - https://kokomins.wordpress.com/2019/10/14/mpv-config-guide/#general-mpv-options
 - https://iamscum.wordpress.com/guides/videoplayback-guide/mpv-conf/
