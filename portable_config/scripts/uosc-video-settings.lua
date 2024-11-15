@@ -175,7 +175,7 @@ local function create_property_number_adjustment(title, property, increment, lar
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
             name = {command("set-property", property, cached_property[property])},
-            icon = "clear",
+            icon = "cached",
             label = "Reset."
         } or nil}
     end
@@ -808,13 +808,13 @@ local function create_shader_adjustment_actions(shader_path)
 
     table.insert(action_items, {
         name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
-        icon = "keyboard_arrow_up",
+        icon = "arrow_upward",
         label = "Position up."
     })
 
     table.insert(action_items, {
         name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
-        icon = "keyboard_arrow_down",
+        icon = "arrow_downward",
         label = "Position down."
     })
 
