@@ -16,23 +16,50 @@ local options = {
     include_custom_color_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
-    include_custom_aspect_profile = true,
-
-    brightness_increment = 0.25,
-    contrast_increment = 0.25,
-    saturation_increment = 0.25,
-    gamma_increment = 0.25,
-    hue_increment = 0.25
+    include_custom_aspect_profile = true
 }
 
-local script_name = mp.get_script_name()
 mp.utils = require "mp.utils"
 mp.options = require "mp.options"
 mp.options.read_options(options, "uosc-video-settings", function()
 end)
 
+local properties = {
+    aspect = {"video-aspect-override"},
+    deband = {"deband", "deband-iterations", "deband-threshold", "deband-range", "deband-grain"},
+    color = {"brightness", "contrast", "saturation", "gamma", "hue"},
+    scale = {"tscale", "tscale-window", "tscale-antiring", "tscale-blur", "tscale-clamp", "tscale-radius",
+             "tscale-taper", "scale", "dscale", "cscale", "linear-upscaling", "correct-downscaling",
+             "linear-downscaling", "sigmoid-upscaling"},
+    extra = {"interpolation"},
+    shaders = {{
+        name = "glsl-shaders",
+        native = true
+    }}
+}
+
+local default_property = {}
+local cached_property = {}
+
+for _, property_list in pairs(properties) do
+    for _, prop in ipairs(property_list) do
+        local name, use_native
+        if type(prop) == "table" then
+            name = prop.name
+            use_native = prop.native
+        else
+            name = prop
+            use_native = false
+        end
+
+        default_property[name] = use_native and mp.get_property_native(name) or mp.get_property(name)
+        cached_property[name] = default_property[name]
+    end
+end
+
+-- General commands
 local function command(...)
-    local parts = {"script-message-to", string.format("%q", script_name)}
+    local parts = {"script-message-to", string.format("%q", mp.get_script_name())}
     local args = {...}
     for i = 1, #args do
         parts[#parts + 1] = string.format("%q", args[i])
@@ -40,60 +67,11 @@ local function command(...)
     return table.concat(parts, " ")
 end
 
-local aspect_props = {"video-aspect-override"}
-
-local deband_props = {"deband", "deband-iterations", "deband-threshold", "deband-range", "deband-grain"}
-
-local color_props = {"brightness", "contrast", "saturation", "gamma", "hue"}
-
-local temporal_props = {"tscale", "tscale-window", "tscale-antiring", "tscale-blur", "tscale-clamp", "tscale-radius",
-                        "tscale-taper"}
-
-local scale_props = {"scale", "dscale", "cscale", "linear-upscaling", "correct-downscaling", "linear-downscaling",
-                     "sigmoid-upscaling"}
-
-local extra_props = {"interpolation"}
-
-local shader_props = {{
-    name = "glsl-shaders",
-    native = true
-}}
-
 local function observe_property_list(property_list, update_function)
     for _, prop in ipairs(property_list) do
-        local name
-        if type(prop) == "table" then
-            name = prop.name
-        else
-            name = prop
-        end
-
+        local name = type(prop) == "table" and prop.name or prop
         mp.observe_property(name, "native", update_function)
     end
-end
-
-local properties = {}
-for _, prop in ipairs({aspect_props, deband_props, color_props, temporal_props, scale_props, shader_props}) do
-    for _, p in ipairs(prop) do
-        table.insert(properties, p)
-    end
-end
-
-local default_property = {}
-local cached_property = {}
-
-for _, prop in ipairs(properties) do
-    local name, use_native
-    if type(prop) == "table" then
-        name = prop.name
-        use_native = prop.native
-    else
-        name = prop
-        use_native = false
-    end
-
-    default_property[name] = use_native and mp.get_property_native(name) or mp.get_property(name)
-    cached_property[name] = default_property[name]
 end
 
 local function serialize(tbl)
@@ -120,7 +98,7 @@ mp.register_script_message("set-property", function(property, value)
     mp.set_property(property, value)
 end)
 
-mp.register_script_message("set-property-native", function(property, value)
+mp.register_script_message("set-property-list", function(property, value)
     value = deserialize(value)
     mp.set_property_native(property, value)
 end)
@@ -137,6 +115,7 @@ mp.register_script_message("adjust-property-number", function(property, incremen
     end
 end)
 
+-- Menu templates
 local function create_property_toggle(title, property)
     return {
         title = title,
@@ -182,18 +161,20 @@ local function create_property_selection(title, property, options, off_or_defaul
     }
 end
 
-local function create_property_number_adjustment(title, property, increment, min, max)
+local function create_property_number_adjustment(title, property, increment, large_increment, min, max)
     local function create_adjustment_actions()
         return {{
-            name = command("adjust-property-number", property, increment, min, max),
+            name = {command("adjust-property-number", property, increment, min, max),
+                    command("adjust-property-number", property, large_increment, min, max)},
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = command("adjust-property-number", property, -increment, min, max),
+            name = {command("adjust-property-number", property, -increment, min, max),
+                    command("adjust-property-number", property, -large_increment, min, max)},
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
-            name = command("set-property", property, cached_property[property]),
+            name = {command("set-property", property, cached_property[property])},
             icon = "clear",
             label = "Reset."
         } or nil}
@@ -209,15 +190,6 @@ end
 
 -- Menu data creation
 local aspect_menu, deband_menu, color_menu, scale_menu, shader_menu
-
-mp.register_script_message("menu-event", function(json)
-    local event = mp.utils.parse_json(json)
-    if event.action ~= nil then
-        mp.command(event.action)
-    elseif event.value ~= nil then
-        mp.command(event.value)
-    end
-end)
 
 local function create_menu_data()
     local menu_items = {}
@@ -246,14 +218,14 @@ local function create_menu_data()
         items = menu_items,
         search_submenus = true,
         keep_open = true,
-        callback = {script_name, 'menu-event'}
+        callback = {mp.get_script_name(), 'menu-event'}
     }
 end
 
 local function update_menu()
     mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
 end
-observe_property_list(extra_props, update_menu)
+observe_property_list(properties.extra, update_menu)
 
 -- Aspect override
 local function create_aspect_menu(value)
@@ -303,7 +275,7 @@ local function create_aspect_menu(value)
 
     update_menu()
 end
-observe_property_list(aspect_props, create_aspect_menu)
+observe_property_list(properties.aspect, create_aspect_menu)
 
 -- Deband
 mp.register_script_message("apply-deband-profile",
@@ -399,10 +371,10 @@ local function create_deband_menu()
     end
 
     table.insert(deband_items, create_property_toggle("Enabled", "deband"))
-    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 0, 16))
-    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 0, 4096))
-    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 1, 64))
-    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 0, 4096))
+    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 8, 0, 16))
+    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 8, 0, 4096))
+    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 8, 1, 64))
+    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 8, 0, 4096))
 
     deband_menu = {
         title = "Deband",
@@ -411,7 +383,7 @@ local function create_deband_menu()
 
     update_menu()
 end
-observe_property_list(deband_props, create_deband_menu)
+observe_property_list(properties.deband, create_deband_menu)
 
 -- Color
 mp.register_script_message("clear-color", function()
@@ -520,8 +492,8 @@ local function create_color_menu()
     end
 
     for _, prop in ipairs({"brightness", "contrast", "saturation", "gamma", "hue"}) do
-        table.insert(color_items, create_property_number_adjustment(prop:gsub("^%l", string.upper), prop,
-            options[prop .. "_increment"], -100, 100))
+        table.insert(color_items,
+            create_property_number_adjustment(prop:gsub("^%l", string.upper), prop, .25, 1, -100, 100))
     end
 
     color_menu = {
@@ -531,7 +503,7 @@ local function create_color_menu()
 
     update_menu()
 end
-observe_property_list(color_props, create_color_menu)
+observe_property_list(properties.color, create_color_menu)
 
 -- Scale
 local function create_filter_selection(property)
@@ -710,11 +682,11 @@ local function create_scale_menu()
     table.insert(temporalscale.items, create_property_selection("Filters", "tscale", filter_windows))
     table.insert(temporalscale.items, create_property_selection("Filters (window)", "tscale-window", filter_windows, ""))
 
-    table.insert(temporalscale.items, create_property_number_adjustment("Antiring", "tscale-antiring", .005, 0, 1))
-    table.insert(temporalscale.items, create_property_number_adjustment("Blur", "tscale-blur", .005, 0))
-    table.insert(temporalscale.items, create_property_number_adjustment("Clamp", "tscale-clamp", .005, 0, 1))
-    table.insert(temporalscale.items, create_property_number_adjustment("Radius", "tscale-radius", .005, 0.5, 16))
-    table.insert(temporalscale.items, create_property_number_adjustment("Taper", "tscale-taper", .005, 0, 1))
+    table.insert(temporalscale.items, create_property_number_adjustment("Antiring", "tscale-antiring", .005, .25, 0, 1))
+    table.insert(temporalscale.items, create_property_number_adjustment("Blur", "tscale-blur", .005, .25, 0))
+    table.insert(temporalscale.items, create_property_number_adjustment("Clamp", "tscale-clamp", .005, .25, 0, 1))
+    table.insert(temporalscale.items, create_property_number_adjustment("Radius", "tscale-radius", .005, .25, .5, 16))
+    table.insert(temporalscale.items, create_property_number_adjustment("Taper", "tscale-taper", .005, .25, 0, 1))
     table.insert(scale_items, temporalscale)
 
     table.insert(scale_items, create_property_toggle("Linear upscaling", "linear-upscaling"))
@@ -729,8 +701,7 @@ local function create_scale_menu()
 
     update_menu()
 end
-observe_property_list(scale_props, create_scale_menu)
-observe_property_list(temporal_props, create_scale_menu)
+observe_property_list(properties.scale, create_scale_menu)
 
 -- Shaders
 mp.register_script_message("clear-shaders", function()
@@ -744,60 +715,79 @@ end)
 mp.register_script_message("move-shader", function(shader, direction)
     local current_shaders = mp.get_property_native("glsl-shaders")
     local active_shaders = {}
+    local active_indices = {}
+
     for i, shader_path in ipairs(current_shaders) do
         if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
             table.insert(active_shaders, shader_path)
+            active_indices[shader_path] = i
         end
     end
-    local function find_index(list, target)
-        for i, str in ipairs(list) do
-            if str == target then
-                return i
-            end
-        end
-        return -1
-    end
-    local active_indices = {}
+
     local target_index = -1
     for i, active_shader in ipairs(active_shaders) do
-        local idx = find_index(current_shaders, active_shader)
-        active_indices[active_shader] = idx
         if active_shader == shader then
-            target_index = idx
+            target_index = i
+            break
         end
     end
     if target_index == -1 then
         return current_shaders
     end
-    local swap_index
-    if direction == "up" or direction == "left" then
-        swap_index = -1
-        for i = target_index - 1, 1, -1 do
-            if active_indices[current_shaders[i]] then
-                swap_index = i
-                break
-            end
-        end
-        if swap_index == -1 then
-            return current_shaders
-        end
-    elseif direction == "down" or direction == "right" then
-        swap_index = -1
-        for i = target_index + 1, #current_shaders do
-            if active_indices[current_shaders[i]] then
-                swap_index = i
-                break
-            end
-        end
-        if swap_index == -1 then
-            return current_shaders
-        end
-    end
+
     local new_shaders = {}
     for i, str in ipairs(current_shaders) do
         new_shaders[i] = str
     end
-    new_shaders[target_index], new_shaders[swap_index] = new_shaders[swap_index], new_shaders[target_index]
+
+    if direction == "top" or direction == "bottom" then
+        table.remove(active_shaders, target_index)
+
+        if direction == "top" then
+            table.insert(active_shaders, 1, shader)
+        else
+            table.insert(active_shaders, #active_shaders + 1, shader)
+        end
+
+        new_shaders = {}
+        local active_idx = 1
+        for i, current_shader in ipairs(current_shaders) do
+            if mp.utils.file_info(mp.command_native({"expand-path", current_shader})) then
+                new_shaders[i] = active_shaders[active_idx]
+                active_idx = active_idx + 1
+            else
+                new_shaders[i] = current_shader
+            end
+        end
+    else
+        local swap_index
+        if direction == "up" or direction == "left" then
+            swap_index = -1
+            for i = active_indices[shader] - 1, 1, -1 do
+                if mp.utils.file_info(mp.command_native({"expand-path", current_shaders[i]})) then
+                    swap_index = i
+                    break
+                end
+            end
+            if swap_index == -1 then
+                return current_shaders
+            end
+        elseif direction == "down" or direction == "right" then
+            swap_index = -1
+            for i = active_indices[shader] + 1, #current_shaders do
+                if mp.utils.file_info(mp.command_native({"expand-path", current_shaders[i]})) then
+                    swap_index = i
+                    break
+                end
+            end
+            if swap_index == -1 then
+                return current_shaders
+            end
+        end
+        new_shaders[active_indices[shader]], new_shaders[swap_index] = new_shaders[swap_index],
+            new_shaders[target_index]
+    end
+
     mp.set_property_native("glsl-shaders", new_shaders)
 end)
 
@@ -817,13 +807,13 @@ local function create_shader_adjustment_actions(shader_path)
     local action_items = {}
 
     table.insert(action_items, {
-        name = command("move-shader", shader_path, "up"),
+        name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
         icon = "keyboard_arrow_up",
         label = "Position up."
     })
 
     table.insert(action_items, {
-        name = command("move-shader", shader_path, "down"),
+        name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
         icon = "keyboard_arrow_down",
         label = "Position down."
     })
@@ -919,7 +909,7 @@ local function create_shader_menu()
             title = name,
             active = is_active,
             value = is_active and command("clear-shaders") or
-                command("set-property-native", "glsl-shaders", serialize(profile_shader_list))
+                command("set-property-list", "glsl-shaders", serialize(profile_shader_list))
         }
     end
 
@@ -1009,9 +999,24 @@ local function create_shader_menu()
 
     update_menu()
 end
-observe_property_list(shader_props, create_shader_menu)
+observe_property_list(properties.shaders, create_shader_menu)
 
--- Keybind
+mp.register_script_message("menu-event", function(json)
+    local event = mp.utils.parse_json(json)
+    if event.type == "activate" then
+        if event.action ~= nil then
+            if event.shift and event.action[2] then
+                mp.command(event.action[2])
+            else
+                mp.command(event.action[1])
+            end
+        elseif event.value ~= nil then
+            mp.command(event.value)
+        end
+    end
+end)
+
+-- Keybind/Script message to open menu
 mp.add_key_binding(nil, "open-menu", function()
     mp.commandv("script-message-to", "uosc", "open-menu", mp.utils.format_json(create_menu_data()))
 end)
