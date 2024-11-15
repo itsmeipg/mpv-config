@@ -25,7 +25,8 @@ Btw, if you want any property added to the video settings menu, make an issue an
 
 # In progress
 - Add support to apply shader twice/thrice/etc. (Low priority).
-- Shift-click action button to apply larger increment.
+- Add footnote for action modifiers/keybinds. Normalize keybinds to match normal uosc action keybinds like ctrl+down/pgdown/end etc.
+- Optimize action handling. Don't rely on index. Use string keys that match var key/key combo to get corresponding action command.
 - Add profile folders.
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu. Add crop/rotate.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
