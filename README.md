@@ -6,7 +6,7 @@
 
 Everything I wrote below applies to Windows only (the config should still be usable in linux but I don't use/haven't tested it):
 
-Download [mpv](https://sourceforge.net/projects/mpv-player-windows/files/64bit-v3). If that crashes, use [non-V3 version](https://sourceforge.net/projects/mpv-player-windows/files/64bit). Extract the folder using [7zip](https://www.7-zip.org). Place the folder in Documents or somewhere else. Go into the extracted folder, and left click once on "updater.bat," then right click it and select "Run as administrator." Follow the instructions. Press in order: 2, (2 if downloaded mpv-V3/1 if downloaded non-V3), Y, Y, 1, Y (TLDR: install yt-dlp & ffmpeg). If the terminal crashes from invalid key input, just run "updater.bat" again. Go into "installer" and run "mpv-install.bat" as administrator.
+Download [mpv](https://sourceforge.net/projects/mpv-player-windows/files/64bit-v3). If that crashes, use [non-V3 version](https://sourceforge.net/projects/mpv-player-windows/files/64bit). Extract the folder using [7zip](https://www.7-zip.org). Place the folder in Documents or somewhere else. Go into the extracted folder, and left click once on "updater.bat," then right click it and select "Run as administrator." Follow the instructions. Press in order: 2, (2 if downloaded mpv-V3/1 if downloaded non-V3), Y, Y, 1, Y (TLDR: Install yt-dlp & ffmpeg). If the terminal crashes from invalid key input, just run "updater.bat" again. Go into "installer" and run "mpv-install.bat" as administrator.
 
 Go to the top of this page and click the green button "Code." Download ZIP and extract the portable_config folder, then put it in your mpv folder.
 ![image](https://github.com/user-attachments/assets/2713cccc-64c2-4d36-a429-925f187dc129)
