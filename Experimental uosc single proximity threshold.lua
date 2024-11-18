@@ -1,3 +1,6 @@
+local proximity_fade_in_duration = 0.3 -- Fade in duration in seconds
+local proximity_fade_out_duration = 0.4 -- Fade out duration in seconds
+
 ---@alias ElementProps {enabled?: boolean; render_order?: number; ax?: number; ay?: number; bx?: number; by?: number; ignores_curtain?: boolean; anchor_id?: string;}
 
 -- Base class all elements inherit from.
@@ -27,30 +30,38 @@ function Element:init(id, props)
 	self.anchor_id = nil
 	---@type fun()[] Disposer functions called when element is destroyed.
 	self._disposers = {}
-	self._proximity_state = {
-        animating = false,
-        inside_threshold = false
-    }
+-- Add animation state
+self._proximity_state = {
+	animating = false,
+	inside_threshold = false,
+	fading_in = false
+}
 
-	self._animation_timer = mp.add_periodic_timer(1/60, function()
-        if self._proximity_state.animating then
-            local progress = (mp.get_time() - self._proximity_state.start_time) / 0.3 -- 0.3s animation
-            local range = options.proximity_out - options.proximity_in
-            
-            if progress >= 1 then
-                self._proximity_state.animating = false
-                self.proximity = 1
-                self._animation_timer:kill()
-            else
-                -- Simulate the proximity calculation with our animated progress
-                local simulated_proximity = options.proximity_out - (range * progress)
-                self.proximity = 1 - (clamp(0, simulated_proximity - options.proximity_in, range) / range)
-            end
-            request_render()
-        end
-    end)
-    self._animation_timer:kill() -- Start with timer stopped
-
+-- Create animation timer
+self._animation_timer = mp.add_periodic_timer(1/60, function()
+	if self._proximity_state.animating then
+		local duration = self._proximity_state.fading_in and proximity_fade_in_duration or proximity_fade_out_duration
+		local progress = (mp.get_time() - self._proximity_state.start_time) / duration
+		local range = options.proximity_out - options.proximity_in
+		
+		if progress >= 1 then
+			self._proximity_state.animating = false
+			self.proximity = self._proximity_state.fading_in and 1 or 0
+			self._animation_timer:kill()
+		else
+			-- Simulate the proximity calculation with our animated progress
+			if self._proximity_state.fading_in then
+				local simulated_proximity = options.proximity_out - (range * progress)
+				self.proximity = 1 - (clamp(0, simulated_proximity - options.proximity_in, range) / range)
+			else
+				local simulated_proximity = options.proximity_out - (range * (1 - progress))
+				self.proximity = 1 - (clamp(0, simulated_proximity - options.proximity_in, range) / range)
+			end
+		end
+		request_render()
+	end
+end)
+self._animation_timer:kill() -- Start with timer stopped
 	if props then table_assign(self, props) end
 
 	-- Flash timer
@@ -84,6 +95,7 @@ function Element:reset_proximity()
     self.proximity_raw = math.huge
     self._proximity_state.animating = false
     self._proximity_state.inside_threshold = false
+    self._proximity_state.fading_in = false
     self._animation_timer:kill()
 end
 
@@ -109,15 +121,10 @@ function Element:update_proximity()
     local inside_threshold = self.proximity_raw <= options.proximity_out
     if inside_threshold ~= self._proximity_state.inside_threshold then
         self._proximity_state.inside_threshold = inside_threshold
-        if inside_threshold then
-            -- Start animation
-            self._proximity_state.animating = true
-            self._proximity_state.start_time = mp.get_time()
-            self._animation_timer:resume()
-        else
-            -- Stop animation and reset
-            self:reset_proximity()
-        end
+        self._proximity_state.animating = true
+        self._proximity_state.fading_in = inside_threshold
+        self._proximity_state.start_time = mp.get_time()
+        self._animation_timer:resume()
     end
 end
 
