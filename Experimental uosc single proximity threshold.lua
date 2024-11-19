@@ -1,5 +1,5 @@
-local proximity_fade_in_duration = 0.3 -- Fade in duration in seconds
-local proximity_fade_out_duration = 0.4 -- Fade out duration in seconds
+local proximity_fade_in_duration = 0.25 -- Fade in duration in seconds
+local proximity_fade_out_duration = 0.35 -- Fade out duration in seconds
 
 ---@alias ElementProps {enabled?: boolean; render_order?: number; ax?: number; ay?: number; bx?: number; by?: number; ignores_curtain?: boolean; anchor_id?: string;}
 
@@ -28,17 +28,18 @@ function Element:init(id, props)
     self.ignores_curtain = false
     ---@type nil|string ID of an element from which this one should inherit visibility.
     self.anchor_id = nil
-    ---@type fun()[] Disposer functions called when element is destroyed.
-    self._disposers = {}
     -- Add animation state
     self._proximity_state = {
-        animating = false,
-        inside_threshold = false,
-        fading_in = false,
-        current_speed = 1.0
+        animating = false, -- Animation is currently running
+        inside_threshold = false, -- Cursor within proximity threshold
+        fading_in = false, -- Fading in or out
+        current_speed = 1.0, -- Current animation speed multiplier
+		start_time = 0 -- Start time of current animation
     }
+    ---@type fun()[] Disposer functions called when element is destroyed.
+    self._disposers = {}
 
-    -- Create animation timer
+	-- Proximity animation timer
     self._animation_timer = mp.add_periodic_timer(1/60, function()
         if self._proximity_state.animating then
             local base_duration = self._proximity_state.fading_in and proximity_fade_in_duration or proximity_fade_out_duration
@@ -60,8 +61,6 @@ function Element:init(id, props)
     end)
     self._animation_timer:kill() -- Start with timer stopped
 
-	if props then table_assign(self, props) end
-
 	-- Flash timer
 	self._flash_out_timer = mp.add_timeout(options.flash_duration / 1000, function()
 		local function getTo() return self.proximity end
@@ -73,6 +72,8 @@ function Element:init(id, props)
 		end
 	end)
 	self._flash_out_timer:kill()
+	
+	if props then table_assign(self, props) end
 
 	Elements:add(self)
 end
@@ -80,10 +81,6 @@ end
 function Element:destroy()
 	for _, disposer in ipairs(self._disposers) do disposer() end
 	self.destroyed = true
-	
-	if self._animation_timer then
-        self._animation_timer:kill()
-    end
 
 	Elements:remove(self)
 end
@@ -95,7 +92,7 @@ function Element:reset_proximity()
     self._proximity_state.inside_threshold = false
     self._proximity_state.fading_in = false
     self._proximity_state.current_speed = 1.0
-    self._animation_timer:kill()
+    if self._animation_timer then self._animation_timer:kill() end
 end
 
 ---@param ax number
