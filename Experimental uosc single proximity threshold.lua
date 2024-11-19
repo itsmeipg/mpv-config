@@ -12,54 +12,55 @@ local Element = class()
 ---@param props? ElementProps
 function Element:init(id, props)
 	self.id = id
-	self.render_order = 1
-	-- `false` means element won't be rendered, or receive events
-	self.enabled = true
-	-- Element coordinates
-	self.ax, self.ay, self.bx, self.by = 0, 0, 0, 0
-	-- Relative proximity from `0` - mouse outside `proximity_max` range, to `1` - mouse within `proximity_min` range.
-	self.proximity = 0
-	-- Raw proximity in pixels.
-	self.proximity_raw = math.huge
-	---@type number `0-1` factor to force min visibility. Used for toggling element's permanent visibility.
-	self.min_visibility = 0
-	---@type number `0-1` factor to force a visibility value. Used for flashing, fading out, and other animations
-	self.forced_visibility = nil
-	---@type boolean Show this element even when curtain is visible.
-	self.ignores_curtain = false
-	---@type nil|string ID of an element from which this one should inherit visibility.
-	self.anchor_id = nil
-	---@type fun()[] Disposer functions called when element is destroyed.
-	self._disposers = {}
--- Add animation state
-self._proximity_state = {
-	animating = false,
-	inside_threshold = false,
-	fading_in = false,
-	current_speed = 1.0
-}
+    self.render_order = 1
+    -- `false` means element won't be rendered, or receive events
+    self.enabled = true
+    -- Element coordinates
+    self.ax, self.ay, self.bx, self.by = 0, 0, 0, 0
+    -- Relative proximity from `0` - mouse outside `proximity_max` range, to `1` - mouse within `proximity_min` range.
+    self.proximity = 0
+    -- Raw proximity in pixels.
+    self.proximity_raw = math.huge
+    ---@type number `0-1` factor to force min visibility. Used for toggling element's permanent visibility.
+    self.min_visibility = 0
+    ---@type number `0-1` factor to force a visibility value. Used for flashing, fading out, and other animations
+    self.forced_visibility = nil
+    ---@type boolean Show this element even when curtain is visible.
+    self.ignores_curtain = false
+    ---@type nil|string ID of an element from which this one should inherit visibility.
+    self.anchor_id = nil
+    ---@type fun()[] Disposer functions called when element is destroyed.
+    self._disposers = {}
+    -- Add animation state
+    self._proximity_state = {
+        animating = false,
+        inside_threshold = false,
+        fading_in = false,
+        current_speed = 1.0
+    }
 
--- Create animation timer
-self._animation_timer = mp.add_periodic_timer(1/60, function()
-	if self._proximity_state.animating then
-		local base_duration = self._proximity_state.fading_in and proximity_fade_in_duration or proximity_fade_out_duration
-		
-		-- Apply speed multiplier to duration
-		local actual_duration = base_duration / self._proximity_state.current_speed
-		
-		local progress = (mp.get_time() - self._proximity_state.start_time) / actual_duration
-		
-		if progress >= 1 then
-			self._proximity_state.animating = false
-			self.proximity = self._proximity_state.fading_in and 1 or 0
-			self._animation_timer:kill()
-		else
-			self.proximity = self._proximity_state.fading_in and progress or (1 - progress)
-		end
-		request_render()
-	end
-end)
-self._animation_timer:kill() -- Start with timer stopped
+    -- Create animation timer
+    self._animation_timer = mp.add_periodic_timer(1/60, function()
+        if self._proximity_state.animating then
+            local base_duration = self._proximity_state.fading_in and proximity_fade_in_duration or proximity_fade_out_duration
+            
+            -- Apply speed multiplier to duration
+            local actual_duration = base_duration / self._proximity_state.current_speed
+            
+            local progress = (mp.get_time() - self._proximity_state.start_time) / actual_duration
+            
+            if progress >= 1 then
+                self._proximity_state.animating = false
+                self.proximity = self._proximity_state.fading_in and 1 or 0
+                self._animation_timer:kill()
+            else
+                self.proximity = self._proximity_state.fading_in and progress or (1 - progress)
+            end
+            request_render()
+        end
+    end)
+    self._animation_timer:kill() -- Start with timer stopped
+
 	if props then table_assign(self, props) end
 
 	-- Flash timer
@@ -116,12 +117,14 @@ function Element:update_proximity()
 
     self.proximity_raw = get_point_to_rectangle_proximity(cursor, self)
     
-    -- Calculate speed multiplier based on how far past threshold we are
-    local distance_past_threshold = math.max(0, options.proximity_out - self.proximity_raw)
-    local speed_multiplier = 1.0 + (distance_past_threshold / options.proximity_out) * proximity_speed_scale
-    
-    -- Update current animation speed
-    self._proximity_state.current_speed = speed_multiplier
+    -- Calculate speed based on where we are between proximity_out and proximity_in
+    if self.proximity_raw <= options.proximity_out then
+        -- Get a speed multiplier based on how close we are to proximity_in
+        -- Will be 1.0 at proximity_out and increase as we get closer to proximity_in
+        local distance_from_in = math.max(0, self.proximity_raw - options.proximity_in)
+        local total_range = options.proximity_out - options.proximity_in
+        self._proximity_state.current_speed = total_range / math.max(distance_from_in, 1)
+    end
     
     -- Detect entering/leaving threshold
     local inside_threshold = self.proximity_raw <= options.proximity_out
