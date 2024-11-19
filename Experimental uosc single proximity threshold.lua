@@ -1,6 +1,5 @@
 local proximity_fade_in_duration = 0.3 -- Fade in duration in seconds
 local proximity_fade_out_duration = 0.4 -- Fade out duration in seconds
-local proximity_speed_scale = 2.0      -- How much to speed up animation based on distance
 
 ---@alias ElementProps {enabled?: boolean; render_order?: number; ax?: number; ay?: number; bx?: number; by?: number; ignores_curtain?: boolean; anchor_id?: string;}
 
