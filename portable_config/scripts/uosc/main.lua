@@ -77,6 +77,10 @@ defaults = {
 	flash_duration = 1000,
 	proximity_in = 40,
 	proximity_out = 120,
+	---- Custom code start ----
+	proximity_fade_in_duration = 0.25,
+	proximity_fade_out_duration = 0.35,
+	---- Custom code end ----
 	total_time = false, -- deprecated by below
 	destination_time = 'playtime-remaining',
 	time_precision = 0,
