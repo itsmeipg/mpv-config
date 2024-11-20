@@ -17,7 +17,9 @@ In windows, clicking or focusing on another window can cause mpv to delay/mistim
 
 If you see ringing/flickering (I don't know the correct term) like in anime (the only thing I watch), make sure your monitor settings (internal settings/not driver settings) has "Response Time" on normal. It might be labeled "Low latency" or something else.
 
-If media resolution matches screen resolution and you want it "sharper" you can use the adaptive-sharpen shaders. If screen resolution is bigger than media resolution, try FSRCNNX/RAVU/Anime4K.
+If media resolution matches screen resolution and you want it "sharper" you can use the adaptive-sharpen shaders. If screen resolution is bigger than media resolution, try FSRCNNX/RAVU/Anime4K, and if it's still not sharp enough, add adaptive-sharpen.
+
+Enable interpolation for anime it always looks better with it imo.
 
 # NEWS
 I got too excited and put too many shaders in.
