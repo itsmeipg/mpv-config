@@ -88,7 +88,7 @@ function Element:reset_proximity()
         self._proximity_state.inside_threshold = false
         self._proximity_state.fading_in = false
         self._proximity_state.current_speed = 1.0
-	if self._animation_timer then self._animation_timer:kill() end
+        if self._animation_timer then self._animation_timer:kill() end
         ---- Custom code end ----
 end
 
