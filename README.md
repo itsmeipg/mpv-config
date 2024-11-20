@@ -35,6 +35,7 @@ Btw, if you want any property added to the video settings menu, make an issue an
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Re-edit uosc proximity, video-quality script + change its FPS display.
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
+- Fade out animation continues when cursor outside window.
 - Only toggle shader if file exists.
 
 # Theme
