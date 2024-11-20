@@ -47,7 +47,7 @@ function Element:init(id, props)
         animating = false, -- Animation is currently running
         inside_threshold = false, -- Cursor within proximity threshold
         fading_in = false, -- Fading in or out
-        current_speed = 1.0, -- Current animation speed multiplier
+    	current_speed = 1.0, -- Current animation speed multiplier
 		start_time = 0 -- Start time of current animation
     }
 
