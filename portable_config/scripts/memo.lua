@@ -1158,7 +1158,6 @@ function show_history(entries, next_page, prev_page, update, return_items)
     end
 
     if options.pagination then
-        menu_items[#menu_items].separator = true
         if #menu_items > 0 and state.cursor - max_digits_length > 0 then
             table.insert(menu_items, {title = "Next", value = {"script-binding", "memo-next"}, italic = "true", muted = "true", icon = "navigate_next", keep_open = true})
         end
