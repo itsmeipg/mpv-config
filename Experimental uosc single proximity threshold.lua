@@ -52,26 +52,23 @@ function Element:init(id, props)
 	}
 
 	self._animation_timer = mp.add_periodic_timer(state.render_delay, function()
-        if self._proximity_state.animating then
-            local base_duration = self._proximity_state.fading_in and options.proximity_fade_in_duration or options.proximity_fade_out_duration
-            
-            -- Apply speed multiplier to duration
-            local actual_duration = base_duration / self._proximity_state.current_speed
-            
-            local progress = (mp.get_time() - self._proximity_state.start_time) / actual_duration
-            
-            if progress >= 1 then
-                self._proximity_state.animating = false
-                self.proximity = self._proximity_state.fading_in and 1 or 0
-                self._animation_timer:kill()
-            else
-                self.proximity = self._proximity_state.fading_in and progress or (1 - progress)
-            end
-            request_render()
-        end
-    end)
-    self._animation_timer:kill() -- Start with timer stopped
-	---- Custom code end ----
+                if self._proximity_state.animating then
+                        local base_duration = self._proximity_state.fading_in and options.proximity_fade_in_duration or options.proximity_fade_out_duration
+                        -- Apply speed multiplier to duration
+                        local actual_duration = base_duration / self._proximity_state.current_speed
+                        local progress = (mp.get_time() - self._proximity_state.start_time) / actual_duration
+                        if progress >= 1 then
+                                self._proximity_state.animating = false
+                                self.proximity = self._proximity_state.fading_in and 1 or 0
+                                self._animation_timer:kill()
+                        else
+                                self.proximity = self._proximity_state.fading_in and progress or (1 - progress)
+                        end
+                            request_render()
+                end
+        end)
+        self._animation_timer:kill() -- Start with timer stopped
+        ---- Custom code end ----
 
 	Elements:add(self)
 end
@@ -82,21 +79,18 @@ function Element:destroy()
 	Elements:remove(self)
 end
 
---
 function Element:reset_proximity()
-    self.proximity = 0
-    self.proximity_raw = math.huge
+        self.proximity = 0
+        self.proximity_raw = math.huge
 
 	---- Custom code start ----
-    self._proximity_state.animating = false
-    self._proximity_state.inside_threshold = false
-    self._proximity_state.fading_in = false
-    self._proximity_state.current_speed = 1.0
+        self._proximity_state.animating = false
+        self._proximity_state.inside_threshold = false
+        self._proximity_state.fading_in = false
+        self._proximity_state.current_speed = 1.0
 	if self._animation_timer then self._animation_timer:kill() end
-    ---- Custom code end ----
-	
+        ---- Custom code end ----
 end
---
 
 ---@param ax number
 ---@param ay number
@@ -112,7 +106,6 @@ function Element:update_proximity()
 	if cursor.hidden then
 		self:reset_proximity()
 	else
-
 		-- local range = options.proximity_out - options.proximity_in
 		-- self.proximity_raw = get_point_to_rectangle_proximity(cursor, self)
 		-- self.proximity = 1 - (clamp(0, self.proximity_raw - options.proximity_in, range) / range)
@@ -120,24 +113,23 @@ function Element:update_proximity()
 		---- Custom code start ----
 		self.proximity_raw = get_point_to_rectangle_proximity(cursor, self)
 
-    	-- Calculate speed based on where we are between proximity_out and proximity_in
-    	if self.proximity_raw <= options.proximity_out then
-    	    -- Get a speed multiplier based on how close we are to proximity_in
-        	-- Will be 1.0 at proximity_out and increase as we get closer to proximity_in
-        	local distance_from_in = math.max(0, self.proximity_raw - options.proximity_in)
-        	local total_range = options.proximity_out - options.proximity_in
-        	self._proximity_state.current_speed = total_range / math.max(distance_from_in, 1)
-    	end
-    
-    	-- Detect entering/leaving threshold
-    	local inside_threshold = self.proximity_raw <= options.proximity_out
-    	if inside_threshold ~= self._proximity_state.inside_threshold then
-        	self._proximity_state.inside_threshold = inside_threshold
-        	self._proximity_state.animating = true
-        	self._proximity_state.fading_in = inside_threshold
-        	self._proximity_state.start_time = mp.get_time()
-        	self._animation_timer:resume()
-    	end
+    	        -- Calculate speed based on where we are between proximity_out and proximity_in
+    	        if self.proximity_raw <= options.proximity_out then
+    	                -- Get a speed multiplier based on how close we are to proximity_in
+        	        -- Will be 1.0 at proximity_out and increase as we get closer to proximity_in
+        	        local distance_from_in = math.max(0, self.proximity_raw - options.proximity_in)
+        	        local total_range = options.proximity_out - options.proximity_in
+        	        self._proximity_state.current_speed = total_range / math.max(distance_from_in, 1)
+    	        end
+    	        -- Detect entering/leaving threshold
+    	        local inside_threshold = self.proximity_raw <= options.proximity_out
+    	        if inside_threshold ~= self._proximity_state.inside_threshold then
+        	        self._proximity_state.inside_threshold = inside_threshold
+        	        self._proximity_state.animating = true
+        	        self._proximity_state.fading_in = inside_threshold
+        	        self._proximity_state.start_time = mp.get_time()
+        	        self._animation_timer:resume()
+    	        end
 		---- Custom code end ----
 	end
 end
