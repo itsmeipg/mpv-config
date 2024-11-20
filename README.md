@@ -34,6 +34,7 @@ Btw, if you want any property added to the video settings menu, make an issue an
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Re-edit uosc proximity, video-quality script + change its FPS display.
+- Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Only toggle shader if file exists.
 
 # Theme
