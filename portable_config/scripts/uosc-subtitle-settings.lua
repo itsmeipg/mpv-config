@@ -112,38 +112,38 @@ function create_menu_data()
         title = "ASS override",
         items = {{
             title = "Off",
-            icon = ass_override == "no" and "radio_button_checked" or "radio_button_unchecked",
+            active = ass_override == "no" and true or false,
             value = command("adjust-ass-override off")
         }, {
             title = "On",
-            icon = ass_override == "yes" and "radio_button_checked" or "radio_button_unchecked",
+            active = ass_override == "yes" and true or false,
             value = command("adjust-ass-override on")
         }, {
             title = "Scale",
-            icon = ass_override == "scale" and "radio_button_checked" or "radio_button_unchecked",
+            active = ass_override == "scale" and true or false,
             value = command("adjust-ass-override scale")
         }, {
             title = "Force",
-            icon = ass_override == "force" and "radio_button_checked" or "radio_button_unchecked",
+            active = ass_override == "force" and true or false,
             value = command("adjust-ass-override force")
         }, {
             title = "Strip",
-            icon = ass_override == "strip" and "radio_button_checked" or "radio_button_unchecked",
+            active = ass_override == "strip" and true or false,
             value = command("adjust-ass-override strip")
         }}
     }, {
         title = "Blend",
         items = {{
             title = "Off",
-            icon = blend == "no" and "radio_button_checked" or "radio_button_unchecked",
+            active = blend == "no" and true or false,
             value = command("adjust-blend off")
         }, {
             title = "On",
-            icon = blend == "yes" and "radio_button_checked" or "radio_button_unchecked",
+            active = blend == "yes" and true or false,
             value = command("adjust-blend on")
         }, {
             title = "Video",
-            icon = blend == "video" and "radio_button_checked" or "radio_button_unchecked",
+            active = blend == "video" and true or false,
             value = command("adjust-blend video")
         }}
     }, {
