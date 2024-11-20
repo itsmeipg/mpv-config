@@ -14,16 +14,24 @@ function command(str)
 end
 
 function create_menu_data()
-    local items = {{
+    local items = {}
+
+    table.insert(items, {
         title = "Include subtitles",
         icon = options.include_subs and "check_box" or "check_box_outline_blank",
         value = command("toggle-subs"),
         keep_open = true
-    }, {
+    })
+
+    if #items > 0 then
+        items[#items].separator = true
+    end
+
+    table.insert(items, {
         title = "Save",
         value = command("screenshot"),
         bold = true
-    }}
+    })
 
     return {
         type = "screenshot",
