@@ -1,6 +1,3 @@
-local proximity_fade_in_duration = 0.25 -- Fade in duration in seconds
-local proximity_fade_out_duration = 0.35 -- Fade out duration in seconds
-
 ---@alias ElementProps {enabled?: boolean; render_order?: number; ax?: number; ay?: number; bx?: number; by?: number; ignores_curtain?: boolean; anchor_id?: string;}
 
 -- Base class all elements inherit from.
@@ -11,38 +8,52 @@ local Element = class()
 ---@param props? ElementProps
 function Element:init(id, props)
 	self.id = id
-    self.render_order = 1
-    -- `false` means element won't be rendered, or receive events
-    self.enabled = true
-    -- Element coordinates
-    self.ax, self.ay, self.bx, self.by = 0, 0, 0, 0
-    -- Relative proximity from `0` - mouse outside `proximity_max` range, to `1` - mouse within `proximity_min` range.
-    self.proximity = 0
-    -- Raw proximity in pixels.
-    self.proximity_raw = math.huge
-    ---@type number `0-1` factor to force min visibility. Used for toggling element's permanent visibility.
-    self.min_visibility = 0
-    ---@type number `0-1` factor to force a visibility value. Used for flashing, fading out, and other animations
-    self.forced_visibility = nil
-    ---@type boolean Show this element even when curtain is visible.
-    self.ignores_curtain = false
-    ---@type nil|string ID of an element from which this one should inherit visibility.
-    self.anchor_id = nil
-    -- Add animation state
-    self._proximity_state = {
+	self.render_order = 1
+	-- `false` means element won't be rendered, or receive events
+	self.enabled = true
+	-- Element coordinates
+	self.ax, self.ay, self.bx, self.by = 0, 0, 0, 0
+	-- Relative proximity from `0` - mouse outside `proximity_max` range, to `1` - mouse within `proximity_min` range.
+	self.proximity = 0
+	-- Raw proximity in pixels.
+	self.proximity_raw = math.huge
+	---@type number `0-1` factor to force min visibility. Used for toggling element's permanent visibility.
+	self.min_visibility = 0
+	---@type number `0-1` factor to force a visibility value. Used for flashing, fading out, and other animations
+	self.forced_visibility = nil
+	---@type boolean Show this element even when curtain is visible.
+	self.ignores_curtain = false
+	---@type nil|string ID of an element from which this one should inherit visibility.
+	self.anchor_id = nil
+	---@type fun()[] Disposer functions called when element is destroyed.
+	self._disposers = {}
+
+	if props then table_assign(self, props) end
+
+	-- Flash timer
+	self._flash_out_timer = mp.add_timeout(options.flash_duration / 1000, function()
+		local function getTo() return self.proximity end
+		local function onTweenEnd() self.forced_visibility = nil end
+		if self.enabled then
+			self:tween_property('forced_visibility', self:get_visibility(), getTo, onTweenEnd)
+		else
+			onTweenEnd()
+		end
+	end)
+	self._flash_out_timer:kill()
+
+	---- Custom code start ----
+	self._proximity_state = {
         animating = false, -- Animation is currently running
         inside_threshold = false, -- Cursor within proximity threshold
         fading_in = false, -- Fading in or out
         current_speed = 1.0, -- Current animation speed multiplier
 		start_time = 0 -- Start time of current animation
     }
-    ---@type fun()[] Disposer functions called when element is destroyed.
-    self._disposers = {}
 
-	-- Proximity animation timer
-    self._animation_timer = mp.add_periodic_timer(1/60, function()
+	self._animation_timer = mp.add_periodic_timer(state.render_delay, function()
         if self._proximity_state.animating then
-            local base_duration = self._proximity_state.fading_in and proximity_fade_in_duration or proximity_fade_out_duration
+            local base_duration = self._proximity_state.fading_in and options.proximity_fade_in_duration or options.proximity_fade_out_duration
             
             -- Apply speed multiplier to duration
             local actual_duration = base_duration / self._proximity_state.current_speed
@@ -60,20 +71,7 @@ function Element:init(id, props)
         end
     end)
     self._animation_timer:kill() -- Start with timer stopped
-
-	-- Flash timer
-	self._flash_out_timer = mp.add_timeout(options.flash_duration / 1000, function()
-		local function getTo() return self.proximity end
-		local function onTweenEnd() self.forced_visibility = nil end
-		if self.enabled then
-			self:tween_property('forced_visibility', self:get_visibility(), getTo, onTweenEnd)
-		else
-			onTweenEnd()
-		end
-	end)
-	self._flash_out_timer:kill()
-	
-	if props then table_assign(self, props) end
+	---- Custom code end ----
 
 	Elements:add(self)
 end
@@ -81,19 +79,24 @@ end
 function Element:destroy()
 	for _, disposer in ipairs(self._disposers) do disposer() end
 	self.destroyed = true
-
 	Elements:remove(self)
 end
 
+--
 function Element:reset_proximity()
     self.proximity = 0
     self.proximity_raw = math.huge
+
+	---- Custom code start ----
     self._proximity_state.animating = false
     self._proximity_state.inside_threshold = false
     self._proximity_state.fading_in = false
     self._proximity_state.current_speed = 1.0
-    if self._animation_timer then self._animation_timer:kill() end
+	if self._animation_timer then self._animation_timer:kill() end
+    ---- Custom code end ----
+	
 end
+--
 
 ---@param ax number
 ---@param ay number
@@ -106,31 +109,37 @@ function Element:set_coordinates(ax, ay, bx, by)
 end
 
 function Element:update_proximity()
-    if cursor.hidden then
-        self:reset_proximity()
-        return
-    end
+	if cursor.hidden then
+		self:reset_proximity()
+	else
 
-    self.proximity_raw = get_point_to_rectangle_proximity(cursor, self)
+		-- local range = options.proximity_out - options.proximity_in
+		-- self.proximity_raw = get_point_to_rectangle_proximity(cursor, self)
+		-- self.proximity = 1 - (clamp(0, self.proximity_raw - options.proximity_in, range) / range)
+
+		---- Custom code start ----
+		self.proximity_raw = get_point_to_rectangle_proximity(cursor, self)
+
+    	-- Calculate speed based on where we are between proximity_out and proximity_in
+    	if self.proximity_raw <= options.proximity_out then
+    	    -- Get a speed multiplier based on how close we are to proximity_in
+        	-- Will be 1.0 at proximity_out and increase as we get closer to proximity_in
+        	local distance_from_in = math.max(0, self.proximity_raw - options.proximity_in)
+        	local total_range = options.proximity_out - options.proximity_in
+        	self._proximity_state.current_speed = total_range / math.max(distance_from_in, 1)
+    	end
     
-    -- Calculate speed based on where we are between proximity_out and proximity_in
-    if self.proximity_raw <= options.proximity_out then
-        -- Get a speed multiplier based on how close we are to proximity_in
-        -- Will be 1.0 at proximity_out and increase as we get closer to proximity_in
-        local distance_from_in = math.max(0, self.proximity_raw - options.proximity_in)
-        local total_range = options.proximity_out - options.proximity_in
-        self._proximity_state.current_speed = total_range / math.max(distance_from_in, 1)
-    end
-    
-    -- Detect entering/leaving threshold
-    local inside_threshold = self.proximity_raw <= options.proximity_out
-    if inside_threshold ~= self._proximity_state.inside_threshold then
-        self._proximity_state.inside_threshold = inside_threshold
-        self._proximity_state.animating = true
-        self._proximity_state.fading_in = inside_threshold
-        self._proximity_state.start_time = mp.get_time()
-        self._animation_timer:resume()
-    end
+    	-- Detect entering/leaving threshold
+    	local inside_threshold = self.proximity_raw <= options.proximity_out
+    	if inside_threshold ~= self._proximity_state.inside_threshold then
+        	self._proximity_state.inside_threshold = inside_threshold
+        	self._proximity_state.animating = true
+        	self._proximity_state.fading_in = inside_threshold
+        	self._proximity_state.start_time = mp.get_time()
+        	self._animation_timer:resume()
+    	end
+		---- Custom code end ----
+	end
 end
 
 function Element:is_persistent()
