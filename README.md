@@ -37,6 +37,7 @@ Btw, if you want any property added to the video settings menu, make an issue an
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Fade out animation continues when cursor outside window.
 - Only toggle shader if file exists.
+- Fix fade out starting from fully opaque.
 
 # Theme
 
