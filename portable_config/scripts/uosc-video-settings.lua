@@ -70,7 +70,7 @@ end
 local function observe_property_list(property_list, update_function)
     for _, prop in ipairs(property_list) do
         local name = type(prop) == "table" and prop.name or prop
-        mp.observe_property(name, "native", update_function)
+        mp.observe_property(name, "none", update_function)
     end
 end
 
