@@ -12,6 +12,7 @@ Go to the top of this page and click the green button "Code." Download ZIP and e
 ![image](https://github.com/user-attachments/assets/2713cccc-64c2-4d36-a429-925f187dc129)
 
 Basic binds are: RIGHT CLICK-play/pause, F-fullscreen, SPACE-pause, DOUBLE LEFT CLICK-toggle fullscreen, MOUSE WHEEL UP/DOWN-adjust volume, and a few more... (Edit keybinds in portable_config/input.conf).
+Using demanding shaders/upscalers for the first time (Anime4K/FSRCNNX) can delay/drop frames at first and even mess with audio (because of video-sync=display-resample). It gets much better when shader cache is made.
 
 In windows, clicking or focusing on another window can cause mpv to delay/mistime frames. For example, if you're streaming mpv on Discord and have mpv on one monitor, and Discord on the other, and typing in Discord. If switching between applications like this, turn on "Ontop" button. ![image](https://github.com/user-attachments/assets/84c9b6f4-ee98-409f-bad0-8322999ca8b1)
 
