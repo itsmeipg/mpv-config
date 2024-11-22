@@ -1,6 +1,6 @@
 # mpv-config
 ![Screenshot 2024-11-22 165355](https://github.com/user-attachments/assets/d47ad2fb-5c17-41be-9730-c7f616cbcc49)
-![Screenshot 2024-11-22 165526](https://github.com/user-attachments/assets/2f8cbfb0-a669-4dcc-a3e0-e3607df98fda)
+![Screenshot 2024-11-22 173819](https://github.com/user-attachments/assets/aebc3fcb-afd8-4cf9-ae93-caf8c8648e52)
 
 # How to use this config and mpv for new people + tips
 
