@@ -1,4 +1,11 @@
-local filepath = mp.command_native({"expand-path", "~~/cache/volume.log"})
+local options = {
+    filepath = "~~/volume.log"
+}
+
+mp.options = require "mp.options"
+mp.options.read_options(options, "remember-volume")
+
+local filepath = mp.command_native({"expand-path", options.filepath})
 local loadfile = io.open(filepath, "r")
 
 if loadfile then
@@ -7,8 +14,8 @@ if loadfile then
     mp.set_property_number("volume", set_volume)
 end
 
-mp.register_event("shutdown", function()
+mp.observe_property("volume", "string", function(name, volume)
     local savefile = io.open(filepath, "w+")
-    savefile:write("volume=" .. mp.get_property("volume"), "\n")
+    savefile:write("volume=" .. volume, "\n")
     savefile:close()
 end)
