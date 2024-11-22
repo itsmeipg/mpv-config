@@ -55,6 +55,7 @@ Minimal but fancy is the goal.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified title.
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
+- [remember-volume](https://gist.github.com/blackarcher21/162dc1bef708e90082c6c4f9500c1997) Saves volume between mpv instances.
 
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
