@@ -22,10 +22,6 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 
 Enable interpolation for anime it always looks better with it imo.
 
-# NEWS
-I got too excited and put too many shaders in.
-Btw, if you want any property added to the video settings menu, make an issue and I'll update it asap.
-
 # In progress
 - Add support to apply shader twice/thrice/etc. (Low priority).
 - Add footnote for action modifiers/keybinds. Normalize keybinds to match normal uosc action keybinds like ctrl+down/pgdown/end etc.
@@ -34,11 +30,11 @@ Btw, if you want any property added to the video settings menu, make an issue an
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu. Add crop/rotate.
 - Work on uosc-subtitle-settings.lua. Replace radio buttons with active state. Clean up code logic.
 - Test if audio-normalize-downmix has an effect on sofalizer.
-- Re-edit uosc proximity, video-quality script + change its FPS display.
+- Edit video-quality script's menu items.
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Fade out animation continues when cursor outside window.
 - Only toggle shader if file exists.
-- Fix fade out starting from fully opaque.
+- Add film grain strengths.
 
 # Theme
 
