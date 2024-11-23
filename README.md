@@ -2,6 +2,13 @@
 ![Screenshot 2024-11-22 165355](https://github.com/user-attachments/assets/d47ad2fb-5c17-41be-9730-c7f616cbcc49)
 ![Screenshot 2024-11-22 173819](https://github.com/user-attachments/assets/aebc3fcb-afd8-4cf9-ae93-caf8c8648e52)
 
+# Theme
+
+This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
+OSD text is removed as much as possible. (Currently, OSD text is 100% removed).
+
+Minimal but fancy is the goal.
+
 # How to use this config and mpv for new people + tips
 
 Everything I wrote below applies to Windows only (the config should still be usable in linux but I don't use/haven't tested it):
@@ -36,13 +43,6 @@ Enable interpolation for anime it always looks better with it imo.
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Only toggle shader if file exists.
 - Add film grain strengths.
-
-# Theme
-
-This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
-OSD text is removed as much as possible. (Currently, OSD text is 100% removed).
-
-Minimal but fancy is the goal.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
