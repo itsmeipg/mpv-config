@@ -1035,16 +1035,7 @@ local function toggle_menu(menu_type)
         return
     end
 
-    if current_url == nil then
-        if uosc_available then
-            if menu_type.is_video then
-                mp.commandv('script-binding', 'uosc/video')
-            else
-                mp.commandv('script-binding', 'uosc/audio')
-            end
-        end
-        return
-    end
+    if current_url == nil then return end
 
     menu_open(menu_type)
 end
