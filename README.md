@@ -30,6 +30,8 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
+- Test auto create playlist option instead of using autoload.lua.
+- Add autoload button (automatically plays next file).
 - Cache properties to reduce mp.get_property() calls.
 - Cache active shaders to reduce mp.get_property() calls.
 - Add support to apply shader twice/thrice/etc. (Low priority).
