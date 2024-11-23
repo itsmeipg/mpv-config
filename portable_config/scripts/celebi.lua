@@ -142,9 +142,9 @@ local function watch_changes()
     if not init then
         state_path, found = debug.getinfo(1, "S").source:gsub("^@", ""):gsub("([\\/])scripts[\\/][^\\/]+%.lua$", "%1")
         if found > 0 then
-            state_path = state_path .. "celebi.txt"
+            state_path = state_path .. "cache/celebi.log"
         else
-            state_path = mp.command_native({"expand-path", "~~/celebi.txt"})
+            state_path = mp.command_native({"expand-path", "~~/cache/celebi.log"})
         end
         read_options(state, "celebi", state_path)
         for property, enabled in pairs(options) do
