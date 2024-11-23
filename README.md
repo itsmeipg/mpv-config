@@ -50,7 +50,7 @@ Enable interpolation for anime it always looks better with it imo.
 - [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
 - [evafast](https://github.com/po5/evafast) Hold/click left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (the options were buggy).
 - [memo](https://github.com/po5/memo) Saves history (search feature is broken 😭). Modified title and page button text and added separator between items and next/prev buttons.
-- [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified title.
+- [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified titles. Removed code that opened uosc video menu if url is nil.
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
