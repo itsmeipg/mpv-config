@@ -23,6 +23,8 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
+- Cache properties to reduce mp.get_property() calls.
+- Cache active shaders to reduce mp.get_property() calls.
 - Add support to apply shader twice/thrice/etc. (Low priority).
 - Add footnote for action modifiers/keybinds. Normalize keybinds to match normal uosc action keybinds like ctrl+down/pgdown/end etc.
 - Optimize action handling. Don't rely on index. Use string keys that match var key/key combo to get corresponding action command.
