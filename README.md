@@ -46,8 +46,9 @@ Enable interpolation for anime it always looks better with it imo.
 - Only toggle shader if file exists.
 - Add film grain strengths.
 - Only show shader adjustment actions when #shaders > 1.
-- Make profile deserialization function.
-- Add po5 trackselect.lua script so signs/songs subs are not auto selected.
+- Make profile selection menu.
+- Make audio filter selection menu.
+- Replace context menu with a custom main menu, combining all my custom uosc scripts.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
@@ -130,5 +131,6 @@ Here are a few audio filters I kind of tested but didn't settle on.
 
 # Things that bother me
 
+- MBTN_FORWARD and MBTN_BACK do not work with evafast.
 - sub-margin-y can't be set to 49.5.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
