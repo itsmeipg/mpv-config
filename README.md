@@ -45,6 +45,7 @@ Enable interpolation for anime it always looks better with it imo.
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Only toggle shader if file exists.
 - Add film grain strengths.
+- Only show shader adjustment actions when #shaders > 1.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
