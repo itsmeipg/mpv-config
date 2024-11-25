@@ -131,4 +131,4 @@ Here are a few audio filters I kind of tested but didn't settle on.
 # Things that bother me
 
 - sub-margin-y can't be set to 49.5.
-- No option in uosc to disable OSD text.
+- No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
