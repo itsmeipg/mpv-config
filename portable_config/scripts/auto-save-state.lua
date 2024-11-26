@@ -34,16 +34,11 @@ end
 
 mp.register_event("file-loaded", function()
     loaded_file_path = mp.get_property("path")
-    if timer then
-        timer.timeout = options.auto_save_interval
-    end
-    print("loaded")
     save()
 end)
 
 mp.observe_property("pause", "bool", function(name, pause)
     if pause then
-        print("pause")
         save()
         timer_state(false)
     else
@@ -62,12 +57,18 @@ mp.observe_property("eof-reached", "bool", function(name, eof)
             mp.set_property("save-position-on-quit", "no")
         else
             save()
-            print("1")
         end
         timer_state(false)
     else
+        eof_reached = false
         mp.set_property("save-position-on-quit", "yes")
         timer_state(true)
+    end
+end)
+
+mp.add_hook("on_unload", 50, function()
+    if not eof_reached and not options.delete_unloaded then
+        save()
     end
 end)
 
@@ -77,11 +78,5 @@ mp.register_event("end-file", function(event)
             print("Deleting state (end-file " .. event["reason"] .. ").")
             mp.commandv("delete-watch-later-config", loaded_file_path)
         end
-    end
-end)
-
-mp.add_hook("on_unload", 50, function()
-    if not eof_reached and not options.delete_unloaded then
-        save()
     end
 end)
