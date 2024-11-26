@@ -34,6 +34,9 @@ end
 
 mp.register_event("file-loaded", function()
     loaded_file_path = mp.get_property("path")
+    if timer then
+        timer.timeout = options.auto_save_interval
+    end
     save()
 end)
 
@@ -41,7 +44,7 @@ mp.observe_property("pause", "bool", function(name, pause)
     if pause then
         save()
         timer_state(false)
-    else
+    elseif not eof_reached then
         timer_state(true)
     end
 end)
