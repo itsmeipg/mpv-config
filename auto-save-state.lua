@@ -1,5 +1,7 @@
+-- Save state in multiple scenarios and control deletion
+
 local options = {
-    auto_save_interval = 0, -- Set to 0 to disable
+    auto_save_interval = 1, -- Set to 0 to disable
     delete_finished = true,
     delete_unloaded = false
 }
@@ -15,10 +17,6 @@ end
 local loaded_file_path
 local timer
 
-if options.auto_save_interval > 0 then
-    timer = mp.add_periodic_timer(options.auto_save_interval, save)
-end
-
 local function timer_state(active)
     if timer then
         if active then
@@ -29,6 +27,14 @@ local function timer_state(active)
     end
 end
 
+mp.register_event("file-loaded", function()
+    save()
+    loaded_file_path = mp.get_property("path")
+    if options.auto_save_interval > 0 then
+        timer = mp.add_periodic_timer(options.auto_save_interval, save)
+    end
+end)
+
 mp.observe_property("pause", "bool", function(name, pause)
     if pause then
         save()
@@ -37,6 +43,8 @@ mp.observe_property("pause", "bool", function(name, pause)
         timer_state(true)
     end
 end)
+
+mp.register_event("seek", save)
 
 mp.observe_property("eof-reached", "bool", function(name, eof)
     if eof then
@@ -64,11 +72,8 @@ mp.register_event("end-file", function(event)
     end
 end)
 
-if not options.delete_unloaded then
-    mp.add_hook("on_unload", 50, save)
-end
-
-mp.register_event("file-loaded", function()
-    loaded_file_path = mp.get_property("path")
-    save()
+mp.add_hook("on_unload", 50, function()
+    if not options.delete_unloaded then
+        save()
+    end
 end)
