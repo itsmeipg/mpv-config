@@ -28,11 +28,11 @@ local function timer_state(active)
 end
 
 mp.register_event("file-loaded", function()
-    save()
     loaded_file_path = mp.get_property("path")
     if options.auto_save_interval > 0 then
         timer = mp.add_periodic_timer(options.auto_save_interval, save)
     end
+    save()
 end)
 
 mp.observe_property("pause", "bool", function(name, pause)
