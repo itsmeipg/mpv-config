@@ -1,4 +1,5 @@
 -- Save state in multiple scenarios and control deletion
+
 local options = {
     timer_enabled = true,
     auto_save_interval = 1,
