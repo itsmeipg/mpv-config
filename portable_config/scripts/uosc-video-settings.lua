@@ -833,7 +833,6 @@ local function list_shader_files(path, option_path)
     local function list_files_recursive(path, option_path)
         local _, current_dir = mp.utils.split_path(path)
         local dir_items = {}
-        local is_original_path = path == mp.command_native({"expand-path", options.shader_path})
 
         local subdirs = mp.utils.readdir(path, "dirs")
         if subdirs then
