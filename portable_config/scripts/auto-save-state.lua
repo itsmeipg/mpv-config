@@ -85,8 +85,8 @@ end)
 
 mp.observe_property("idle-active", "bool", function(name, idle)
     if idle then
-        timer_state(true)
-    else
         timer_state(false)
+    else
+        timer_state(true)
     end
 end)
