@@ -47,7 +47,7 @@ local options = {
     fingerprint = true,
 
     -- Override user's explicit track selection
-    force = false,
+    force = true,
 
     -- Try to re-select the last track if mpv cannot do it e.g. when fingerprint changes
     smart_keep = false
