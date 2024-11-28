@@ -60,7 +60,7 @@ Enable interpolation for anime it always looks better with it imo.
 - [memo](https://github.com/po5/memo) Saves history (search feature might be broken?). Modified title and page button text and added separator between items and next/prev buttons.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified titles. Removed code that opened uosc video menu if url is nil.
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
-- [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's.
+- [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
 - [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
 
