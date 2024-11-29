@@ -32,6 +32,13 @@ local function timer_state(active)
     end
 end
 
+mp.register_event("file-loaded", function()
+    loaded_file_path = mp.get_property("path")
+    timer.timeout = options.auto_save_interval
+    timer_state(true)
+    save()
+end)
+
 mp.observe_property("core-idle", "bool", function(name, pause)
     if pause then
         timer_state(false)
@@ -84,11 +91,4 @@ mp.observe_property("idle-active", "bool", function(name, idle)
         idle = false
         timer_state(true)
     end
-end)
-
-mp.register_event("file-loaded", function()
-    loaded_file_path = mp.get_property("path")
-    timer.timeout = options.auto_save_interval
-    timer_state(true)
-    save()
 end)
