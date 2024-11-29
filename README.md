@@ -47,7 +47,6 @@ Enable interpolation for anime it always looks better with it imo.
 - Make audio filter selection menu.
 - Replace context menu with a custom main menu, combining all my custom uosc scripts.
 - Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
-- Optimize move-shader function.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
