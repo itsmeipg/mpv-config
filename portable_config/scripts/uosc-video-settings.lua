@@ -772,7 +772,7 @@ mp.register_script_message("move-shader", function(shader, direction)
     if direction == "top" or direction == "bottom" then
         -- Remove shader from current position
         table.remove(activeShaders, targetIndex)
-        
+
         -- Reposition shader
         if direction == "top" then
             table.insert(activeShaders, 1, shader)
@@ -820,8 +820,7 @@ mp.register_script_message("move-shader", function(shader, direction)
         end
 
         -- Swap shaders
-        newShaders[shaderOriginalIndex], newShaders[swapIndex] = 
-            newShaders[swapIndex], newShaders[shaderOriginalIndex]
+        newShaders[shaderOriginalIndex], newShaders[swapIndex] = newShaders[swapIndex], newShaders[shaderOriginalIndex]
     end
 
     -- Apply new shader configuration
