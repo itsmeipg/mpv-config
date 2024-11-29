@@ -719,82 +719,113 @@ mp.register_script_message("toggle-shader", function(shader_path)
 end)
 
 mp.register_script_message("move-shader", function(shader, direction)
-    local current_shaders = current_property["glsl-shaders"]
-    local active_shaders = {}
-    local active_indices = {}
-
-    for i, shader_path in ipairs(current_shaders) do
-        if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
-            table.insert(active_shaders, shader_path)
-            active_indices[shader_path] = i
-        end
+    -- Made with AI. I'll go over it when I'm bored.
+    -- Validate input parameters
+    if not shader or not direction then
+        return current_property["glsl-shaders"]
     end
 
-    local target_index = -1
-    for i, active_shader in ipairs(active_shaders) do
-        if active_shader == shader then
-            target_index = i
+    -- Collect only existing shaders with their original indices
+    local function getActiveShaders(shaders)
+        local active = {}
+        local activeIndices = {}
+        local fileExistsCache = {}
+
+        for i, path in ipairs(shaders) do
+            -- Check file existence only once and cache the result
+            if fileExistsCache[path] == nil then
+                local expandedPath = mp.command_native({"expand-path", path})
+                fileExistsCache[path] = mp.utils.file_info(expandedPath)
+            end
+
+            if fileExistsCache[path] then
+                table.insert(active, path)
+                activeIndices[path] = i
+            end
+        end
+
+        return active, activeIndices, fileExistsCache
+    end
+
+    -- Get current shader list and active shaders
+    local currentShaders = current_property["glsl-shaders"]
+    local activeShaders, activeIndices, fileExistsCache = getActiveShaders(currentShaders)
+
+    -- Find target shader's position
+    local targetIndex = -1
+    for i, activePath in ipairs(activeShaders) do
+        if activePath == shader then
+            targetIndex = i
             break
         end
     end
-    if target_index == -1 then
-        return current_shaders
+
+    -- If shader not found, return original list
+    if targetIndex == -1 then
+        return currentShaders
     end
 
-    local new_shaders = {}
-    for i, str in ipairs(current_shaders) do
-        new_shaders[i] = str
-    end
+    -- Create a copy of the current shader list
+    local newShaders = {table.unpack(currentShaders)}
 
+    -- Movement logic
     if direction == "top" or direction == "bottom" then
-        table.remove(active_shaders, target_index)
-
+        -- Remove shader from current position
+        table.remove(activeShaders, targetIndex)
+        
+        -- Reposition shader
         if direction == "top" then
-            table.insert(active_shaders, 1, shader)
+            table.insert(activeShaders, 1, shader)
         else
-            table.insert(active_shaders, #active_shaders + 1, shader)
+            table.insert(activeShaders, #activeShaders + 1, shader)
         end
 
-        new_shaders = {}
-        local active_idx = 1
-        for i, current_shader in ipairs(current_shaders) do
-            if mp.utils.file_info(mp.command_native({"expand-path", current_shader})) then
-                new_shaders[i] = active_shaders[active_idx]
-                active_idx = active_idx + 1
+        -- Reconstruct shader list
+        newShaders = {}
+        local activeIdx = 1
+        for i, currentShader in ipairs(currentShaders) do
+            if fileExistsCache[currentShader] then
+                newShaders[i] = activeShaders[activeIdx]
+                activeIdx = activeIdx + 1
             else
-                new_shaders[i] = current_shader
+                newShaders[i] = currentShader
             end
         end
     else
-        local swap_index
+        -- Up/Down/Left/Right movement
+        local swapIndex = -1
+        local shaderOriginalIndex = activeIndices[shader]
+
         if direction == "up" or direction == "left" then
-            swap_index = -1
-            for i = active_indices[shader] - 1, 1, -1 do
-                if mp.utils.file_info(mp.command_native({"expand-path", current_shaders[i]})) then
-                    swap_index = i
+            -- Find previous active shader
+            for i = shaderOriginalIndex - 1, 1, -1 do
+                if fileExistsCache[currentShaders[i]] then
+                    swapIndex = i
                     break
                 end
-            end
-            if swap_index == -1 then
-                return current_shaders
             end
         elseif direction == "down" or direction == "right" then
-            swap_index = -1
-            for i = active_indices[shader] + 1, #current_shaders do
-                if mp.utils.file_info(mp.command_native({"expand-path", current_shaders[i]})) then
-                    swap_index = i
+            -- Find next active shader
+            for i = shaderOriginalIndex + 1, #currentShaders do
+                if fileExistsCache[currentShaders[i]] then
+                    swapIndex = i
                     break
                 end
             end
-            if swap_index == -1 then
-                return current_shaders
-            end
         end
-        new_shaders[active_indices[shader]], new_shaders[swap_index] = new_shaders[swap_index],
-            new_shaders[target_index]
+
+        -- If no swap possible, return original list
+        if swapIndex == -1 then
+            return currentShaders
+        end
+
+        -- Swap shaders
+        newShaders[shaderOriginalIndex], newShaders[swapIndex] = 
+            newShaders[swapIndex], newShaders[shaderOriginalIndex]
     end
 
-    mp.set_property_native("glsl-shaders", new_shaders)
+    -- Apply new shader configuration
+    mp.set_property_native("glsl-shaders", newShaders)
 end)
 
 local function compare_shaders(shaders1, shaders2)
