@@ -40,7 +40,6 @@ Enable interpolation for anime it always looks better with it imo.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Edit video-quality script's menu items.
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
-- Only toggle shader if file exists.
 - Add film grain strengths.
 - Only show shader adjustment actions when #shaders > 1.
 - Make profile selection menu.
