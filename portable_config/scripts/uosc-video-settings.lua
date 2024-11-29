@@ -710,12 +710,18 @@ end
 observe_property_list(properties.scale, create_scale_menu)
 
 -- Shaders
+local function file_exists(path)
+    return mp.utils.file_info(mp.command_native({"expand-path", path})).is_file
+end
+
 mp.register_script_message("clear-shaders", function()
     mp.set_property_native("glsl-shaders", {})
 end)
 
 mp.register_script_message("toggle-shader", function(shader_path)
-    mp.command_native({"change-list", "glsl-shaders", "toggle", shader_path})
+    if file_exists(shader_path) then
+        mp.command_native({"change-list", "glsl-shaders", "toggle", shader_path})
+    end
 end)
 
 mp.register_script_message("move-shader", function(shader, direction)
@@ -734,8 +740,7 @@ mp.register_script_message("move-shader", function(shader, direction)
         for i, path in ipairs(shaders) do
             -- Check file existence only once and cache the result
             if fileExistsCache[path] == nil then
-                local expandedPath = mp.command_native({"expand-path", path})
-                fileExistsCache[path] = mp.utils.file_info(expandedPath)
+                fileExistsCache[path] = file_exists(path)
             end
 
             if fileExistsCache[path] then
@@ -861,7 +866,7 @@ local function list_shader_files(path, option_path)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders = {}
     for i, shader_path in ipairs(current_shaders) do
-        if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
+        if file_exists(shader_path) then
             table.insert(active_shaders, shader_path)
         end
     end
@@ -921,9 +926,8 @@ end
 local function create_shader_menu()
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders = {}
-
     for i, shader_path in ipairs(current_shaders) do
-        if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
+        if file_exists(shader_path) then
             table.insert(active_shaders, shader_path)
         end
     end
