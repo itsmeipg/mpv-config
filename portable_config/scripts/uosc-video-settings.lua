@@ -235,8 +235,7 @@ observe_property_list(properties.extra, update_menu)
 
 -- Aspect override
 local function create_aspect_menu(value)
-    local current_aspect_value = current_property["video-aspect-override"]
-    current_aspect_value = tonumber(current_aspect_value)
+    local current_aspect_value = tonumber(current_property["video-aspect-override"])
 
     local aspect_items = {}
     local aspect_profiles = {}
