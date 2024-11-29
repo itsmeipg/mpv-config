@@ -39,25 +39,38 @@ local properties = {
 }
 
 local default_property = {}
+local current_property = {}
 local cached_property = {}
+
+local function get_property_info(prop)
+    if type(prop) == "table" then
+        return prop.name, prop.native
+    else
+        return prop, false
+    end
+end
 
 for _, property_list in pairs(properties) do
     for _, prop in ipairs(property_list) do
-        local name, use_native
-        if type(prop) == "table" then
-            name = prop.name
-            use_native = prop.native
-        else
-            name = prop
-            use_native = false
-        end
+        local name, use_native = get_property_info(prop)
 
         default_property[name] = use_native and mp.get_property_native(name) or mp.get_property(name)
+        current_property[name] = default_property[name]
         cached_property[name] = default_property[name]
     end
 end
 
--- General commands
+local function observe_property_list(property_list, update_function)
+    for _, prop in ipairs(property_list) do
+        local name, use_native = get_property_info(prop)
+
+        mp.observe_property(name, use_native and "native" or "string", function(name, value)
+            current_property[name] = value
+            update_function()
+        end)
+    end
+end
+
 local function command(...)
     local parts = {"script-message-to", string.format("%q", mp.get_script_name())}
     local args = {...}
@@ -65,13 +78,6 @@ local function command(...)
         parts[#parts + 1] = string.format("%q", args[i])
     end
     return table.concat(parts, " ")
-end
-
-local function observe_property_list(property_list, update_function)
-    for _, prop in ipairs(property_list) do
-        local name = type(prop) == "table" and prop.name or prop
-        mp.observe_property(name, "none", update_function)
-    end
 end
 
 local function serialize(tbl)
@@ -91,7 +97,7 @@ local function deserialize(str)
 end
 
 mp.register_script_message("toggle-property", function(property)
-    mp.set_property(property, not mp.get_property_bool(property) and "yes" or "no")
+    mp.set_property(property, current_property[property] == "yes" and "no" or "yes")
 end)
 
 mp.register_script_message("set-property", function(property, value)
@@ -108,7 +114,7 @@ mp.register_script_message("adjust-property-number", function(property, incremen
     max = tonumber(max) or math.huge
     local num_increment = tonumber(increment)
     if num_increment then
-        local current = mp.get_property_number(property)
+        local current = tonumber(current_property[property])
         local new_value = current + num_increment
         new_value = math.max(min, math.min(max, new_value))
         mp.set_property(property, new_value)
@@ -119,7 +125,7 @@ end)
 local function create_property_toggle(title, property)
     return {
         title = title,
-        icon = mp.get_property_bool(property) and "check_box" or "check_box_outline_blank",
+        icon = current_property[property] == "yes" and "check_box" or "check_box_outline_blank",
         value = command("toggle-property", property)
     }
 end
@@ -130,7 +136,7 @@ local function create_property_selection(title, property, options, off_or_defaul
     local option_match = false
 
     for _, item in ipairs(options) do
-        local is_active = mp.get_property(property) == item.value
+        local is_active = current_property[property] == item.value
 
         if is_active then
             option_match = true
@@ -182,7 +188,7 @@ local function create_property_number_adjustment(title, property, increment, lar
 
     return {
         title = title,
-        hint = string.format("%.3f", mp.get_property_number(property)):gsub("%.?0*$", ""),
+        hint = string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", ""),
         actions = create_adjustment_actions(),
         actions_place = "outside"
     }
@@ -229,7 +235,8 @@ observe_property_list(properties.extra, update_menu)
 
 -- Aspect override
 local function create_aspect_menu(value)
-    local current_aspect_value = mp.get_property_number("video-aspect-override")
+    local current_aspect_value = current_property["video-aspect-override"]
+    current_aspect_value = tonumber(current_aspect_value)
 
     local aspect_items = {}
     local aspect_profiles = {}
@@ -288,11 +295,11 @@ mp.register_script_message("apply-deband-profile",
     end)
 
 local function create_deband_menu()
-    local deband_enabled = mp.get_property_bool("deband")
-    local iterations = mp.get_property("deband-iterations")
-    local threshold = mp.get_property("deband-threshold")
-    local range = mp.get_property("deband-range")
-    local grain = mp.get_property("deband-grain")
+    local deband_enabled = current_property["deband"] == "yes" and true or false
+    local iterations = current_property["deband-iterations"]
+    local threshold = current_property["deband-threshold"]
+    local range = current_property["deband-range"]
+    local grain = current_property["deband-grain"]
 
     local deband_items = {}
     local deband_profile_items = {}
@@ -404,11 +411,11 @@ mp.register_script_message("apply-color-profile",
     end)
 
 local function create_color_menu()
-    local brightness = mp.get_property("brightness")
-    local contrast = mp.get_property("contrast")
-    local saturation = mp.get_property("saturation")
-    local gamma = mp.get_property("gamma")
-    local hue = mp.get_property("hue")
+    local brightness = current_property["brightness"]
+    local contrast = current_property["contrast"]
+    local saturation = current_property["saturation"]
+    local gamma = current_property["gamma"]
+    local hue = current_property["hue"]
 
     local color_items = {}
     local color_profile_items = {}
@@ -713,7 +720,7 @@ mp.register_script_message("toggle-shader", function(shader_path)
 end)
 
 mp.register_script_message("move-shader", function(shader, direction)
-    local current_shaders = mp.get_property_native("glsl-shaders")
+    local current_shaders = current_property["glsl-shaders"]
     local active_shaders = {}
     local active_indices = {}
 
@@ -822,7 +829,7 @@ local function create_shader_adjustment_actions(shader_path)
 end
 
 local function list_shader_files(path, option_path)
-    local current_shaders = mp.get_property_native("glsl-shaders")
+    local current_shaders = current_property["glsl-shaders"]
     local active_shaders = {}
     for i, shader_path in ipairs(current_shaders) do
         if mp.utils.file_info(mp.command_native({"expand-path", shader_path})) then
@@ -883,7 +890,7 @@ local function list_shader_files(path, option_path)
 end
 
 local function create_shader_menu()
-    local current_shaders = mp.get_property_native("glsl-shaders")
+    local current_shaders = current_property["glsl-shaders"]
     local active_shaders = {}
 
     for i, shader_path in ipairs(current_shaders) do
