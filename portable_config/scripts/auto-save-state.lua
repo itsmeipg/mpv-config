@@ -1,5 +1,4 @@
 -- Save state in multiple scenarios and control deletion
-
 local options = {
     timer_enabled = true,
     auto_save_interval = 1,
@@ -12,10 +11,11 @@ mp.options.read_options(options, "auto-save-state")
 mp.set_property("save-position-on-quit", "yes")
 
 local loaded_file_path
-local eof_reached = false
+local idle
+local eof_reached
 
 local function save()
-    if not eof_reached or eof_reached and not options.delete_finished then
+    if not idle and (not eof_reached or eof_reached and not options.delete_finished) then
         mp.command("write-watch-later-config")
     end
 end
@@ -32,14 +32,7 @@ local function timer_state(active)
     end
 end
 
-mp.register_event("file-loaded", function()
-    loaded_file_path = mp.get_property("path")
-    timer.timeout = options.auto_save_interval
-    timer_state(true)
-    save()
-end)
-
-mp.observe_property("pause", "bool", function(name, pause)
+mp.observe_property("core-idle", "bool", function(name, pause)
     if pause then
         timer_state(false)
         save()
@@ -85,8 +78,17 @@ end)
 
 mp.observe_property("idle-active", "bool", function(name, idle)
     if idle then
+        idle = true
         timer_state(false)
     else
+        idle = false
         timer_state(true)
     end
+end)
+
+mp.register_event("file-loaded", function()
+    loaded_file_path = mp.get_property("path")
+    timer.timeout = options.auto_save_interval
+    timer_state(true)
+    save()
 end)
