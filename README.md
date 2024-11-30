@@ -31,19 +31,20 @@ Enable interpolation for anime it always looks better with it imo.
 
 # In progress
 - Cache active shaders to reduce mp.get_property() calls.
-- Add support to apply shader twice/thrice/etc. (Low priority).
 - Add footnote for action modifiers/keybinds. Normalize keybinds to match normal uosc action keybinds like ctrl+down/pgdown/end etc.
 - Optimize action handling. Don't rely on index. Use string keys that match var key/key combo to get corresponding action command.
 - Add profile folders.
 - Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu. Add crop/rotate.
 - Work on uosc-subtitle-settings.lua. Clean up code logic.
-- Test if audio-normalize-downmix has an effect on sofalizer.
-- Edit video-quality script's menu items.
-- Filter shader items in active shader group to prevent duplicate item toggles when searching.
-- Add film grain strengths.
 - Only show shader adjustment actions when #shaders > 1.
 - Make profile selection menu.
+- -- Low priority --
+- Add support to apply shader twice/thrice/etc.
+- Filter shader items in active shader group to prevent duplicate item toggles when searching.
+- Test if audio-normalize-downmix has an effect on sofalizer.
+- Edit video-quality script's menu items.
 - Make audio filter selection menu.
+- Add film grain strengths.
 - Replace context menu with a custom main menu, combining all my custom uosc scripts.
 - Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
 
