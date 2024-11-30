@@ -55,18 +55,10 @@ for _, property_list in pairs(properties) do
         local name, use_native = get_property_info(prop)
 
         default_property[name] = use_native and mp.get_property_native(name) or mp.get_property(name)
-        current_property[name] = default_property[name]
         cached_property[name] = default_property[name]
-    end
-end
-
-local function observe_property_list(property_list, update_function)
-    for _, prop in ipairs(property_list) do
-        local name, use_native = get_property_info(prop)
 
         mp.observe_property(name, use_native and "native" or "string", function(name, value)
             current_property[name] = value
-            update_function()
         end)
     end
 end
@@ -194,45 +186,6 @@ local function create_property_number_adjustment(title, property, increment, lar
     }
 end
 
--- Menu data creation
-local aspect_menu, deband_menu, color_menu, scale_menu, shader_menu
-
-local function create_menu_data()
-    local menu_items = {}
-
-    if aspect_menu then
-        table.insert(menu_items, aspect_menu)
-    end
-    if deband_menu then
-        table.insert(menu_items, deband_menu)
-    end
-    if color_menu then
-        table.insert(menu_items, color_menu)
-    end
-    if scale_menu then
-        table.insert(menu_items, scale_menu)
-    end
-    if shader_menu then
-        table.insert(menu_items, shader_menu)
-    end
-
-    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
-
-    return {
-        type = "video_settings",
-        title = "Video settings",
-        items = menu_items,
-        search_submenus = true,
-        keep_open = true,
-        callback = {mp.get_script_name(), 'menu-event'}
-    }
-end
-
-local function update_menu()
-    mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
-end
-observe_property_list(properties.extra, update_menu)
-
 -- Aspect override
 local function create_aspect_menu(value)
     local current_aspect_value = tonumber(current_property["video-aspect-override"])
@@ -274,14 +227,11 @@ local function create_aspect_menu(value)
         table.insert(aspect_items, profile)
     end
 
-    aspect_menu = {
+    return {
         title = "Aspect override",
         items = aspect_items
     }
-
-    update_menu()
 end
-observe_property_list(properties.aspect, create_aspect_menu)
 
 -- Deband
 mp.register_script_message("apply-deband-profile",
@@ -382,14 +332,11 @@ local function create_deband_menu()
     table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 8, 1, 64))
     table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 8, 0, 4096))
 
-    deband_menu = {
+    return {
         title = "Deband",
         items = deband_items
     }
-
-    update_menu()
 end
-observe_property_list(properties.deband, create_deband_menu)
 
 -- Color
 mp.register_script_message("clear-color", function()
@@ -502,14 +449,11 @@ local function create_color_menu()
             create_property_number_adjustment(prop:gsub("^%l", string.upper), prop, .25, 1, -100, 100))
     end
 
-    color_menu = {
+    return {
         title = "Color",
         items = color_items
     }
-
-    update_menu()
 end
-observe_property_list(properties.color, create_color_menu)
 
 -- Scale
 local function create_filter_selection(property)
@@ -700,18 +644,27 @@ local function create_scale_menu()
     table.insert(scale_items, create_property_toggle("Linear downscaling", "linear-downscaling"))
     table.insert(scale_items, create_property_toggle("Sigmoid upscaling", "sigmoid-upscaling"))
 
-    scale_menu = {
+    return {
         title = "Scale",
         items = scale_items
     }
-
-    update_menu()
 end
-observe_property_list(properties.scale, create_scale_menu)
 
 -- Shaders
 local function file_exists(path)
     return mp.utils.file_info(mp.command_native({"expand-path", path})).is_file
+end
+
+local function get_active_shaders(current_shaders)
+    local active_shaders = {}
+    local active_indices = {}
+    for i, path in ipairs(current_shaders) do
+        if file_exists(path) then
+            table.insert(active_shaders, path)
+            active_indices[path] = i
+        end
+    end
+    return active_shaders, active_indices
 end
 
 mp.register_script_message("clear-shaders", function()
@@ -725,111 +678,75 @@ mp.register_script_message("toggle-shader", function(shader_path)
 end)
 
 mp.register_script_message("move-shader", function(shader, direction)
-    -- Made with AI. I'll go over it when I'm bored.
-    -- Validate input parameters
-    if not shader or not direction then
-        return current_property["glsl-shaders"]
-    end
-
-    -- Collect only existing shaders with their original indices
-    local function getActiveShaders(shaders)
-        local active = {}
-        local activeIndices = {}
-        local fileExistsCache = {}
-
-        for i, path in ipairs(shaders) do
-            -- Check file existence only once and cache the result
-            if fileExistsCache[path] == nil then
-                fileExistsCache[path] = file_exists(path)
+    local current_shaders = current_property["glsl-shaders"]
+    local active_shaders, active_indices = get_active_shaders(current_shaders)
+    setmetatable(active_shaders, {
+        __index = function(t, k)
+            for _, v in ipairs(t) do
+                if v == k then
+                    return true
+                end
             end
-
-            if fileExistsCache[path] then
-                table.insert(active, path)
-                activeIndices[path] = i
-            end
+            return false
         end
+    })
 
-        return active, activeIndices, fileExistsCache
-    end
-
-    -- Get current shader list and active shaders
-    local currentShaders = current_property["glsl-shaders"]
-    local activeShaders, activeIndices, fileExistsCache = getActiveShaders(currentShaders)
-
-    -- Find target shader's position
-    local targetIndex = -1
-    for i, activePath in ipairs(activeShaders) do
-        if activePath == shader then
-            targetIndex = i
+    local target_index = -1
+    for i, active_path in ipairs(active_shaders) do
+        if active_path == shader then
+            target_index = i
             break
         end
     end
 
-    -- If shader not found, return original list
-    if targetIndex == -1 then
-        return currentShaders
-    end
-
-    -- Create a copy of the current shader list
-    local newShaders = {table.unpack(currentShaders)}
-
-    -- Movement logic
+    local new_shaders = {table.unpack(current_shaders)}
     if direction == "top" or direction == "bottom" then
-        -- Remove shader from current position
-        table.remove(activeShaders, targetIndex)
+        table.remove(active_shaders, target_index)
 
-        -- Reposition shader
         if direction == "top" then
-            table.insert(activeShaders, 1, shader)
+            table.insert(active_shaders, 1, shader)
         else
-            table.insert(activeShaders, #activeShaders + 1, shader)
+            table.insert(active_shaders, #active_shaders + 1, shader)
         end
 
-        -- Reconstruct shader list
-        newShaders = {}
-        local activeIdx = 1
-        for i, currentShader in ipairs(currentShaders) do
-            if fileExistsCache[currentShader] then
-                newShaders[i] = activeShaders[activeIdx]
-                activeIdx = activeIdx + 1
+        new_shaders = {}
+        local active_idx = 1
+        for i, current_shader in ipairs(current_shaders) do
+            if active_shaders[current_shader] then
+                new_shaders[i] = active_shaders[active_idx]
+                active_idx = active_idx + 1
             else
-                newShaders[i] = currentShader
+                new_shaders[i] = current_shader
             end
         end
     else
-        -- Up/Down/Left/Right movement
-        local swapIndex = -1
-        local shaderOriginalIndex = activeIndices[shader]
-
-        if direction == "up" or direction == "left" then
-            -- Find previous active shader
-            for i = shaderOriginalIndex - 1, 1, -1 do
-                if fileExistsCache[currentShaders[i]] then
-                    swapIndex = i
+        local swap_index = -1
+        local shader_original_index = active_indices[shader]
+        if direction == "up" then
+            for i = shader_original_index - 1, 1, -1 do
+                if active_shaders[current_shaders[i]] then
+                    swap_index = i
                     break
                 end
             end
-        elseif direction == "down" or direction == "right" then
-            -- Find next active shader
-            for i = shaderOriginalIndex + 1, #currentShaders do
-                if fileExistsCache[currentShaders[i]] then
-                    swapIndex = i
+        elseif direction == "down" then
+            for i = shader_original_index + 1, #current_shaders do
+                if active_shaders[current_shaders[i]] then
+                    swap_index = i
                     break
                 end
             end
         end
 
-        -- If no swap possible, return original list
-        if swapIndex == -1 then
-            return currentShaders
+        if swap_index == -1 then
+            return
         end
 
-        -- Swap shaders
-        newShaders[shaderOriginalIndex], newShaders[swapIndex] = newShaders[swapIndex], newShaders[shaderOriginalIndex]
+        new_shaders[shader_original_index], new_shaders[swap_index] = new_shaders[swap_index],
+            new_shaders[shader_original_index]
     end
 
-    -- Apply new shader configuration
-    mp.set_property_native("glsl-shaders", newShaders)
+    mp.set_property_native("glsl-shaders", new_shaders)
 end)
 
 local function compare_shaders(shaders1, shaders2)
@@ -997,14 +914,14 @@ local function create_shader_menu()
         shader_items[#shader_items].separator = true
     end
 
-    local active_shader_items = {}
-
-    local is_active = {}
+    local active_shader_group = {
+        title = "Active",
+        items = {}
+    }
 
     for i, active_shader in ipairs(active_shaders) do
-        is_active[active_shader] = true
         local _, shader = mp.utils.split_path(active_shader)
-        table.insert(active_shader_items, {
+        table.insert(active_shader_group.items, {
             title = shader,
             hint = tostring(i),
             icon = "check_box",
@@ -1013,11 +930,6 @@ local function create_shader_menu()
             actions_place = "outside"
         })
     end
-
-    local active_shader_group = {
-        title = "Active",
-        items = active_shader_items
-    }
 
     local shader_files = list_shader_files(mp.command_native({"expand-path", options.shader_path}), options.shader_path)
 
@@ -1031,14 +943,36 @@ local function create_shader_menu()
         table.insert(shader_items, item)
     end
 
-    shader_menu = {
+    return {
         title = "Shaders",
         items = shader_items
     }
-
-    update_menu()
 end
-observe_property_list(properties.shaders, create_shader_menu)
+
+local function create_menu_data()
+    local menu_items = {}
+
+    table.insert(menu_items, create_aspect_menu())
+    table.insert(menu_items, create_deband_menu())
+    table.insert(menu_items, create_color_menu())
+    table.insert(menu_items, create_scale_menu())
+    table.insert(menu_items, create_shader_menu())
+    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
+
+    return {
+        type = "video_settings",
+        title = "Video settings",
+        items = menu_items,
+        search_submenus = true,
+        keep_open = true,
+        callback = {mp.get_script_name(), 'menu-event'}
+    }
+end
+
+local function update_menu()
+    mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
+end
+mp.register_idle(update_menu)
 
 mp.register_script_message("menu-event", function(json)
     local event = mp.utils.parse_json(json)
