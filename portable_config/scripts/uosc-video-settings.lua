@@ -39,8 +39,8 @@ local properties = {
 }
 
 local default_property = {}
-local current_property = {}
 local cached_property = {}
+local current_property = {}
 
 local function get_property_info(prop)
     if type(prop) == "table" then
