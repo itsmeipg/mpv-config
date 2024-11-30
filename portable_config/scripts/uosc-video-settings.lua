@@ -651,6 +651,18 @@ local function create_scale_menu()
 end
 
 -- Shaders
+local function compare_shaders(shaders1, shaders2)
+    if #shaders1 ~= #shaders2 then
+        return false
+    end
+    for i, shader in ipairs(shaders1) do
+        if shader ~= shaders2[i] then
+            return false
+        end
+    end
+    return true
+end
+
 local function file_exists(path)
     return mp.utils.file_info(mp.command_native({"expand-path", path})).is_file
 end
@@ -664,7 +676,91 @@ local function get_active_shaders(current_shaders)
             active_indices[path] = i
         end
     end
+    setmetatable(active_shaders, {
+        __index = function(t, k)
+            for _, v in ipairs(t) do
+                if v == k then
+                    return true
+                end
+            end
+            return false
+        end
+    })
     return active_shaders, active_indices
+end
+
+local function create_shader_adjustment_actions(shader_path)
+    local action_items = {}
+
+    table.insert(action_items, {
+        name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
+        icon = "arrow_upward",
+        label = "Position up."
+    })
+
+    table.insert(action_items, {
+        name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
+        icon = "arrow_downward",
+        label = "Position down."
+    })
+
+    return action_items
+end
+
+local function list_shader_files(path, option_path)
+    local current_shaders = current_property["glsl-shaders"]
+    local active_shaders = get_active_shaders(current_shaders)
+
+    local function list_files_recursive(path, option_path)
+        local _, current_dir = mp.utils.split_path(path)
+        local dir_items = {}
+
+        local subdirs = mp.utils.readdir(path, "dirs")
+        if subdirs then
+            for _, subdir in ipairs(subdirs) do
+                local subdir_items = list_files_recursive(mp.utils.join_path(path, subdir),
+                    mp.utils.join_path(option_path, subdir))
+                local subdir = {
+                    title = subdir,
+                    items = subdir_items
+                }
+                table.insert(dir_items, subdir)
+            end
+        end
+
+        local files = mp.utils.readdir(path, "files")
+        if files ~= nil then
+            local shader_file_paths = {}
+            for i, shader_file in ipairs(files) do
+                table.insert(shader_file_paths, mp.utils.join_path(option_path, shader_file))
+            end
+
+            for i, shader_file_path in ipairs(shader_file_paths) do
+                local _, shader = mp.utils.split_path(shader_file_path)
+                local active_shader_index = nil
+
+                for index, active_shader in ipairs(active_shaders) do
+                    if active_shader == shader_file_path then
+                        active_shader_index = index
+                        break
+                    end
+                end
+
+                table.insert(dir_items, {
+                    title = shader,
+                    hint = active_shader_index and tostring(active_shader_index),
+                    icon = active_shader_index and "check_box" or "check_box_outline_blank",
+                    value = command("toggle-shader", shader_file_path),
+                    actions = active_shader_index and create_shader_adjustment_actions(shader_file_path),
+                    actions_place = "outside"
+                })
+            end
+        end
+
+        return dir_items
+    end
+
+    return list_files_recursive(path, option_path)
 end
 
 mp.register_script_message("clear-shaders", function()
@@ -680,16 +776,6 @@ end)
 mp.register_script_message("move-shader", function(shader, direction)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders, active_indices = get_active_shaders(current_shaders)
-    setmetatable(active_shaders, {
-        __index = function(t, k)
-            for _, v in ipairs(t) do
-                if v == k then
-                    return true
-                end
-            end
-            return false
-        end
-    })
 
     local target_index = -1
     for i, active_path in ipairs(active_shaders) do
@@ -749,105 +835,9 @@ mp.register_script_message("move-shader", function(shader, direction)
     mp.set_property_native("glsl-shaders", new_shaders)
 end)
 
-local function compare_shaders(shaders1, shaders2)
-    if #shaders1 ~= #shaders2 then
-        return false
-    end
-    for i, shader in ipairs(shaders1) do
-        if shader ~= shaders2[i] then
-            return false
-        end
-    end
-    return true
-end
-
-local function create_shader_adjustment_actions(shader_path)
-    local action_items = {}
-
-    table.insert(action_items, {
-        name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
-        icon = "arrow_upward",
-        label = "Position up."
-    })
-
-    table.insert(action_items, {
-        name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
-        icon = "arrow_downward",
-        label = "Position down."
-    })
-
-    return action_items
-end
-
-local function list_shader_files(path, option_path)
-    local current_shaders = current_property["glsl-shaders"]
-    local active_shaders = {}
-    for i, shader_path in ipairs(current_shaders) do
-        if file_exists(shader_path) then
-            table.insert(active_shaders, shader_path)
-        end
-    end
-
-    local function list_files_recursive(path, option_path)
-        local _, current_dir = mp.utils.split_path(path)
-        local dir_items = {}
-
-        local subdirs = mp.utils.readdir(path, "dirs")
-        if subdirs then
-            for _, subdir in ipairs(subdirs) do
-                local subdir_items = list_files_recursive(mp.utils.join_path(path, subdir),
-                    mp.utils.join_path(option_path, subdir))
-                local subdir = {
-                    title = subdir,
-                    items = subdir_items
-                }
-                table.insert(dir_items, subdir)
-            end
-        end
-
-        local files = mp.utils.readdir(path, "files")
-        if files ~= nil then
-            local shader_file_paths = {}
-            for i, shader_file in ipairs(files) do
-                table.insert(shader_file_paths, mp.utils.join_path(option_path, shader_file))
-            end
-
-            for i, shader_file_path in ipairs(shader_file_paths) do
-                local _, shader = mp.utils.split_path(shader_file_path)
-                local active_shader_index = nil
-
-                for index, active_shader in ipairs(active_shaders) do
-                    if active_shader == shader_file_path then
-                        active_shader_index = index
-                        break
-                    end
-                end
-
-                table.insert(dir_items, {
-                    title = shader,
-                    hint = active_shader_index and tostring(active_shader_index),
-                    icon = active_shader_index and "check_box" or "check_box_outline_blank",
-                    value = command("toggle-shader", shader_file_path),
-                    actions = active_shader_index and create_shader_adjustment_actions(shader_file_path),
-                    actions_place = "outside"
-                })
-            end
-        end
-
-        return dir_items
-    end
-
-    return list_files_recursive(path, option_path)
-end
-
 local function create_shader_menu()
     local current_shaders = current_property["glsl-shaders"]
-    local active_shaders = {}
-    for i, shader_path in ipairs(current_shaders) do
-        if file_exists(shader_path) then
-            table.insert(active_shaders, shader_path)
-        end
-    end
+    local active_shaders = get_active_shaders(current_shaders)
 
     local shader_items = {}
     local shader_profile_items = {}
