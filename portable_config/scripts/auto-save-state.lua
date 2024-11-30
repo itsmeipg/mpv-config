@@ -21,6 +21,7 @@ local function save()
 end
 
 local timer = mp.add_periodic_timer(options.auto_save_interval, save)
+timer:kill()
 
 local function timer_state(active)
     if timer then
