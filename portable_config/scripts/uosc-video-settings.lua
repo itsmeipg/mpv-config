@@ -50,6 +50,10 @@ local function get_property_info(prop)
     end
 end
 
+local function update_current_property(name, value)
+    current_property[name] = value
+end
+
 for _, property_list in pairs(properties) do
     for _, prop in ipairs(property_list) do
         local name, use_native = get_property_info(prop)
@@ -57,9 +61,7 @@ for _, property_list in pairs(properties) do
         default_property[name] = use_native and mp.get_property_native(name) or mp.get_property(name)
         cached_property[name] = default_property[name]
 
-        mp.observe_property(name, use_native and "native" or "string", function(name, value)
-            current_property[name] = value
-        end)
+        mp.observe_property(name, use_native and "native" or "string", update_current_property)
     end
 end
 
