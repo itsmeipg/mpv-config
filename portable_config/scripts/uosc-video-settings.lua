@@ -50,20 +50,21 @@ local function get_property_info(prop)
     end
 end
 
-local function update_current_property(name, value)
-    current_property[name] = value
-end
-
-for _, property_list in pairs(properties) do
-    for _, prop in ipairs(property_list) do
-        local name, use_native = get_property_info(prop)
-
-        default_property[name] = use_native and mp.get_property_native(name) or mp.get_property(name)
-        cached_property[name] = default_property[name]
-
-        mp.observe_property(name, use_native and "native" or "string", update_current_property)
+local function loop_through_properties(properties, callback)
+    for _, property_list in pairs(properties) do
+        for _, prop in ipairs(property_list) do
+            local name, use_native = get_property_info(prop)
+            callback(name, use_native)
+        end
     end
 end
+
+loop_through_properties(properties, function(name, use_native)
+    local value = use_native and mp.get_property_native(name) or mp.get_property(name)
+    default_property[name] = value
+    current_property[name] = value
+    cached_property[name] = value
+end)
 
 local function command(...)
     local parts = {"script-message-to", string.format("%q", mp.get_script_name())}
@@ -961,10 +962,25 @@ local function create_menu_data()
     }
 end
 
+local debounce_timer = nil
 local function update_menu()
-    mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
+    if debounce_timer then
+        debounce_timer:kill()
+    end
+    debounce_timer = mp.add_timeout(0.001, function()
+        mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
+        debounce_timer = nil
+    end)
 end
-mp.register_idle(update_menu)
+
+local function update_property(name, value)
+    current_property[name] = value
+    update_menu()
+end
+
+loop_through_properties(properties, function(name, use_native)
+    mp.observe_property(name, use_native and "native" or "string", update_property)
+end)
 
 mp.register_script_message("menu-event", function(json)
     local event = mp.utils.parse_json(json)
