@@ -32,7 +32,7 @@ local properties = {
              "dscale-radius", "dscale-taper", "cscale", "cscale-window", "cscale-antiring", "cscale-blur",
              "cscale-clamp", "cscale-radius", "cscale-taper", "linear-upscaling", "correct-downscaling",
              "linear-downscaling", "sigmoid-upscaling"},
-    extra = {"interpolation"},
+    extra = {"deinterlace", "video-sync", "interpolation"},
     shaders = {{
         name = "glsl-shaders",
         native = true
@@ -1002,14 +1002,59 @@ local function create_shader_menu()
     }
 end
 
+-- Video sync
+local function create_video_sync_menu()
+    local video_sync_options = {{
+        name = "Audio",
+        value = "audio"
+    }, {
+        name = "Display resample",
+        value = "display-resample"
+    }, {
+        name = "Display resample (vdrop)",
+        value = "display-resample-vdrop"
+    }, {
+        name = "Display resample (desync)",
+        value = "display-resample-desync"
+    }, {
+        name = "Display tempo",
+        value = "display-tempo"
+    }, {
+        name = "Display (vdrop)",
+        value = "display-vdrop"
+    }, {
+        name = "Display (adrop)",
+        value = "display-adrop"
+    }, {
+        name = "Display desync",
+        value = "display-desync"
+    }, {
+        name = "Desync",
+        value = "desync"
+    }}
+
+    return create_property_selection("Video sync", "video-sync", video_sync_options)
+end
+
 local function create_menu_data()
     local menu_items = {}
 
     table.insert(menu_items, create_aspect_menu())
     table.insert(menu_items, create_deband_menu())
     table.insert(menu_items, create_color_menu())
+    table.insert(menu_items, create_property_selection("Deinterlace", "deinterlace", {{
+        name = "Off",
+        value = "no"
+    }, {
+        name = "On",
+        value = "yes"
+    }, {
+        name = "Auto",
+        value = "auto"
+    }}))
     table.insert(menu_items, create_scale_menu())
     table.insert(menu_items, create_shader_menu())
+    table.insert(menu_items, create_video_sync_menu())
     table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
 
     return {
