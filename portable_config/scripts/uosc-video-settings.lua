@@ -1017,7 +1017,7 @@ local function create_video_sync_menu()
         name = "Display resample (desync)",
         value = "display-resample-desync"
     }, {
-        name = "Display tempo",
+        name = "Display (tempo)",
         value = "display-tempo"
     }, {
         name = "Display (vdrop)",
