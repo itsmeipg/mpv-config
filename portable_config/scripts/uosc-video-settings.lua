@@ -19,17 +19,18 @@ local options = {
     include_custom_aspect_profile = true
 }
 
-mp.utils = require "mp.utils"
-mp.options = require "mp.options"
-mp.options.read_options(options, "uosc-video-settings", function()
-end)
+require("mp.options").read_options(options, "uosc-video-settings")
+mp.utils = require("mp.utils")
 
 local properties = {
     aspect = {"video-aspect-override"},
     deband = {"deband", "deband-iterations", "deband-threshold", "deband-range", "deband-grain"},
     color = {"brightness", "contrast", "saturation", "gamma", "hue"},
     scale = {"tscale", "tscale-window", "tscale-antiring", "tscale-blur", "tscale-clamp", "tscale-radius",
-             "tscale-taper", "scale", "dscale", "cscale", "linear-upscaling", "correct-downscaling",
+             "tscale-taper", "scale", "scale-window", "scale-antiring", "scale-blur", "scale-clamp", "scale-radius",
+             "scale-taper", "dscale", "dscale-window", "dscale-antiring", "dscale-blur", "dscale-clamp",
+             "dscale-radius", "dscale-taper", "cscale", "cscale-window", "cscale-antiring", "cscale-blur",
+             "cscale-clamp", "cscale-radius", "cscale-taper", "linear-upscaling", "correct-downscaling",
              "linear-downscaling", "sigmoid-upscaling"},
     extra = {"interpolation"},
     shaders = {{
@@ -38,9 +39,9 @@ local properties = {
     }}
 }
 
+local current_property = {}
 local default_property = {}
 local cached_property = {}
-local current_property = {}
 
 local function get_property_info(prop)
     if type(prop) == "table" then
@@ -61,8 +62,8 @@ end
 
 loop_through_properties(properties, function(name, use_native)
     local value = use_native and mp.get_property_native(name) or mp.get_property(name)
-    default_property[name] = value
     current_property[name] = value
+    default_property[name] = value
     cached_property[name] = value
 end)
 
@@ -117,19 +118,18 @@ mp.register_script_message("adjust-property-number", function(property, incremen
 end)
 
 -- Menu templates
-local function create_property_toggle(title, property)
+local function create_property_toggle(name, property)
     return {
-        title = title,
+        title = name,
         icon = current_property[property] == "yes" and "check_box" or "check_box_outline_blank",
         value = command("toggle-property", property)
     }
 end
 
-local function create_property_selection(title, property, options, off_or_default_option, include_custom_item)
+local function create_property_selection(name, property, options, off_or_default_option, include_custom_item)
     local property_items = {}
 
     local option_match = false
-
     for _, item in ipairs(options) do
         local is_active = current_property[property] == item.value
 
@@ -157,12 +157,12 @@ local function create_property_selection(title, property, options, off_or_defaul
     end
 
     return {
-        title = title,
+        title = name,
         items = property_items
     }
 end
 
-local function create_property_number_adjustment(title, property, increment, large_increment, min, max)
+local function create_property_number_adjustment(name, property, increment, large_increment, min, max)
     local function create_adjustment_actions()
         return {{
             name = {command("adjust-property-number", property, increment, min, max),
@@ -182,7 +182,7 @@ local function create_property_number_adjustment(title, property, increment, lar
     end
 
     return {
-        title = title,
+        title = name,
         hint = string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", ""),
         actions = create_adjustment_actions(),
         actions_place = "outside"
@@ -190,15 +190,14 @@ local function create_property_number_adjustment(title, property, increment, lar
 end
 
 -- Aspect override
-local function create_aspect_menu(value)
+local function create_aspect_menu()
     local current_aspect_value = tonumber(current_property["video-aspect-override"])
+    local is_original = current_aspect_value == -1
 
     local aspect_items = {}
     local aspect_profiles = {}
 
-    local is_original = current_aspect_value == -1
     local profile_match = false
-
     for aspect_profile in options.aspect_profiles:gmatch("([^,]+)") do
         local aspect = aspect_profile
         local w, h = aspect:match("([^:]+):([^:]+)")
@@ -257,7 +256,6 @@ local function create_deband_menu()
     local deband_profile_items = {}
 
     local profile_match = false
-
     local function create_deband_profile_item(name, profile_iterations, profile_threshold, profile_range, profile_grain)
         local is_active = (tonumber(profile_iterations) == tonumber(iterations) and tonumber(profile_threshold) ==
                               tonumber(threshold) and tonumber(profile_range) == tonumber(range) and
@@ -281,7 +279,6 @@ local function create_deband_menu()
     end
 
     local default_profile_override = false
-
     for deband_profile in options.deband_profiles:gmatch("([^;]+)") do
         local name, settings = deband_profile:match("(.+):(.+)")
 
@@ -365,14 +362,13 @@ local function create_color_menu()
     local saturation = current_property["saturation"]
     local gamma = current_property["gamma"]
     local hue = current_property["hue"]
+    local is_original = tonumber(brightness) == 0 and tonumber(contrast) == 0 and tonumber(saturation) == 0 and
+                            tonumber(gamma) == 0 and tonumber(hue) == 0
 
     local color_items = {}
     local color_profile_items = {}
 
-    local is_original = tonumber(brightness) == 0 and tonumber(contrast) == 0 and tonumber(saturation) == 0 and
-                            tonumber(gamma) == 0 and tonumber(hue) == 0
     local profile_match = false
-
     local function create_color_profile_item(name, profile_brightness, profile_contrast, profile_saturation,
         profile_gamma, profile_hue)
         local is_active = (tonumber(profile_brightness) == tonumber(brightness) and tonumber(profile_contrast) ==
@@ -398,7 +394,6 @@ local function create_color_menu()
     end
 
     local default_profile_override = false
-
     for color_profile in options.color_profiles:gmatch("([^;]+)") do
         local name, settings = color_profile:match("(.+):(.+)")
         if name and settings then
@@ -459,110 +454,199 @@ local function create_color_menu()
 end
 
 -- Scale
-local function create_filter_selection(property)
-    local fixed_scale = {{
-        name = "Bilinear",
-        value = "bilinear"
-    }, {
-        name = "Bicubic fast",
-        value = "bicubic_fast"
-    }, {
+local fixed_scale = {{
+    name = "Bilinear",
+    value = "bilinear"
+}, {
+    name = "Bicubic fast",
+    value = "bicubic_fast"
+}, {
+    name = "Oversample",
+    value = "oversample"
+}}
+
+local non_polar_filter = {{
+    name = "Spline16",
+    value = "spline16"
+}, {
+    name = "Spline36",
+    value = "spline36"
+}, {
+    name = "Spline64",
+    value = "spline64"
+}, {
+    name = "Sinc",
+    value = "sinc"
+}, {
+    name = "Lanczos",
+    value = "lanczos"
+}, {
+    name = "Ginseng",
+    value = "ginseng"
+}, {
+    name = "Bicubic",
+    value = "bicubic"
+}, {
+    name = "Hermite",
+    value = "hermite"
+}, {
+    name = "Catmull rom",
+    value = "catmull_rom"
+}, {
+    name = "Mitchell",
+    value = "mitchell"
+}, {
+    name = "Robidoux",
+    value = "robidoux"
+}, {
+    name = "Robidoux sharp",
+    value = "robidouxsharp"
+}, {
+    name = "Box",
+    value = "box"
+}, {
+    name = "Nearest",
+    value = "nearest"
+}, {
+    name = "Triangle",
+    value = "triangle"
+}, {
+    name = "Gaussian",
+    value = "gaussian"
+}}
+
+local polar_filter = {{
+    name = "Jinc",
+    value = "jinc"
+}, {
+    name = "EWA lanczos",
+    value = "ewa_lanczos"
+}, {
+    name = "EWA hanning",
+    value = "ewa_hanning"
+}, {
+    name = "EWA ginseng",
+    value = "ewa_ginseng"
+}, {
+    name = "EWA lanczos sharp",
+    value = "ewa_lanczossharp"
+}, {
+    name = "EWA lanczos 4 sharpest",
+    value = "ewa_lanczos4sharpest"
+}, {
+    name = "EWA lanczos soft",
+    value = "ewa_lanczossoft"
+}, {
+    name = "Haasnsoft",
+    value = "haasnsoft"
+}, {
+    name = "EWA robidoux",
+    value = "ewa_robidoux"
+}, {
+    name = "EWA robidoux sharp",
+    value = "ewa_robidouxsharp"
+}}
+
+local filter_windows = {{
+    name = "Bartlett",
+    value = "bartlett"
+}, {
+    name = "Cosine",
+    value = "cosine"
+}, {
+    name = "Hanning",
+    value = "hanning"
+}, {
+    name = "Tukey",
+    value = "tukey"
+}, {
+    name = "Hamming",
+    value = "hamming"
+}, {
+    name = "Quadric",
+    value = "quadric"
+}, {
+    name = "Welch",
+    value = "welch"
+}, {
+    name = "Kaiser",
+    value = "kaiser"
+}, {
+    name = "Blackman",
+    value = "blackman"
+}, {
+    name = "Sphinx",
+    value = "sphinx"
+}}
+
+local function get_scale_filters()
+    local scale_filters = {}
+
+    for _, list in ipairs({fixed_scale, non_polar_filter, polar_filter, filter_windows}) do
+        for _, value in ipairs(list) do
+            table.insert(scale_filters, value)
+        end
+    end
+
+    return scale_filters
+end
+
+local function get_tscale_filters()
+    local tscale_filters = {}
+
+    table.insert(tscale_filters, {
         name = "Oversample",
         value = "oversample"
-    }}
+    })
 
-    local non_polar_filter = {{
-        name = "Spline16",
-        value = "spline16"
-    }, {
-        name = "Spline36",
-        value = "spline36"
-    }, {
-        name = "Spline64",
-        value = "spline64"
-    }, {
-        name = "Sinc",
-        value = "sinc"
-    }, {
-        name = "Lanczos",
-        value = "lanczos"
-    }, {
-        name = "Ginseng",
-        value = "ginseng"
-    }, {
-        name = "Bicubic",
-        value = "bicubic"
-    }, {
-        name = "Hermite",
-        value = "hermite"
-    }, {
-        name = "Catmull rom",
-        value = "catmull_rom"
-    }, {
-        name = "Mitchell",
-        value = "mitchell"
-    }, {
-        name = "Robidoux",
-        value = "robidoux"
-    }, {
-        name = "Robidoux sharp",
-        value = "robidouxsharp"
-    }, {
-        name = "Box",
-        value = "box"
-    }, {
-        name = "Nearest",
-        value = "nearest"
-    }, {
-        name = "Triangle",
-        value = "triangle"
-    }, {
-        name = "Gaussian",
-        value = "gaussian"
-    }}
+    table.insert(tscale_filters, {
+        name = "Linear",
+        value = "linear"
+    })
 
-    local polar_filter = {{
+    for _, list in ipairs({non_polar_filter, filter_windows}) do
+        for _, value in ipairs(list) do
+            table.insert(tscale_filters, value)
+        end
+    end
+
+    table.insert(tscale_filters, {
         name = "Jinc",
         value = "jinc"
-    }, {
-        name = "EWA lanczos",
-        value = "ewa_lanczos"
-    }, {
-        name = "EWA hanning",
-        value = "ewa_hanning"
-    }, {
-        name = "EWA ginseng",
-        value = "ewa_ginseng"
-    }, {
-        name = "EWA lanczos sharp",
-        value = "ewa_lanczossharp"
-    }, {
-        name = "EWA lanczos 4 sharpest",
-        value = "ewa_lanczos4sharpest"
-    }, {
-        name = "EWA lanczos soft",
-        value = "ewa_lanczossoft"
-    }, {
-        name = "Haasnsoft",
-        value = "haasnsoft"
-    }, {
-        name = "EWA robidoux",
-        value = "ewa_robidoux"
-    }, {
-        name = "EWA robidoux sharp",
-        value = "ewa_robidouxsharp"
-    }}
+    })
 
-    local filter_items = {}
+    return tscale_filters
+end
 
-    table.insert(filter_items, create_property_selection("Fixed scale", property, fixed_scale))
-    table.insert(filter_items, create_property_selection("Non-polar", property, non_polar_filter))
-    table.insert(filter_items, create_property_selection("Polar", property, polar_filter))
+local function get_extended_filter_windows()
+    local extended_filter_windows = {}
 
-    return {
-        title = "Filters",
-        items = filter_items
-    }
+    for _, value in ipairs(filter_windows) do
+        table.insert(extended_filter_windows, value)
+    end
+
+    table.insert(extended_filter_windows, {
+        name = "Jinc",
+        value = "jinc"
+    })
+
+    return extended_filter_windows
+end
+
+local function create_scale_number_adjustments(property)
+    local scale_number_adjustments = {}
+
+    table.insert(scale_number_adjustments,
+        create_property_number_adjustment("Antiring", property .. "-antiring", .005, .25, 0, 1))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005, .25, 0))
+    table.insert(scale_number_adjustments,
+        create_property_number_adjustment("Clamp", property .. "-clamp", .005, .25, 0, 1))
+    table.insert(scale_number_adjustments,
+        create_property_number_adjustment("Radius", property .. "-radius", .005, .25, .5, 16))
+    table.insert(scale_number_adjustments,
+        create_property_number_adjustment("Taper", property .. "-taper", .005, .25, 0, 1))
+
+    return scale_number_adjustments
 end
 
 local function create_scale_menu()
@@ -573,7 +657,12 @@ local function create_scale_menu()
         items = {}
     }
 
-    table.insert(upscale.items, create_filter_selection("scale"))
+    table.insert(upscale.items, create_property_selection("Filters", "scale", get_scale_filters()))
+    table.insert(upscale.items,
+        create_property_selection("Filters (window)", "scale-window", get_extended_filter_windows(), ""))
+    for _, value in ipairs(create_scale_number_adjustments("scale")) do
+        table.insert(upscale.items, value)
+    end
     table.insert(scale_items, upscale)
 
     local downscale = {
@@ -581,7 +670,12 @@ local function create_scale_menu()
         items = {}
     }
 
-    table.insert(downscale.items, create_filter_selection("dscale"))
+    table.insert(downscale.items, create_property_selection("Filters", "dscale", get_scale_filters(), ""))
+    table.insert(downscale.items,
+        create_property_selection("Filters (window)", "dscale-window", get_extended_filter_windows(), ""))
+    for _, value in ipairs(create_scale_number_adjustments("dscale")) do
+        table.insert(downscale.items, value)
+    end
     table.insert(scale_items, downscale)
 
     local chromascale = {
@@ -589,7 +683,12 @@ local function create_scale_menu()
         items = {}
     }
 
-    table.insert(chromascale.items, create_filter_selection("cscale"))
+    table.insert(chromascale.items, create_property_selection("Filters", "cscale", get_scale_filters(), ""))
+    table.insert(chromascale.items,
+        create_property_selection("Filters (window)", "cscale-window", get_extended_filter_windows(), ""))
+    for _, value in ipairs(create_scale_number_adjustments("cscale")) do
+        table.insert(chromascale.items, value)
+    end
     table.insert(scale_items, chromascale)
 
     local temporalscale = {
@@ -597,49 +696,12 @@ local function create_scale_menu()
         items = {}
     }
 
-    local filter_windows = {{
-        name = "Bartlett",
-        value = "bartlett"
-    }, {
-        name = "Cosine",
-        value = "cosine"
-    }, {
-        name = "Hanning",
-        value = "hanning"
-    }, {
-        name = "Tukey",
-        value = "tukey"
-    }, {
-        name = "Hamming",
-        value = "hamming"
-    }, {
-        name = "Quadric",
-        value = "quadric"
-    }, {
-        name = "Welch",
-        value = "welch"
-    }, {
-        name = "Kaiser",
-        value = "kaiser"
-    }, {
-        name = "Blackman",
-        value = "blackman"
-    }, {
-        name = "Sphinx",
-        value = "sphinx"
-    }, {
-        name = "Jinc",
-        value = "jinc"
-    }}
-
-    table.insert(temporalscale.items, create_property_selection("Filters", "tscale", filter_windows))
-    table.insert(temporalscale.items, create_property_selection("Filters (window)", "tscale-window", filter_windows, ""))
-
-    table.insert(temporalscale.items, create_property_number_adjustment("Antiring", "tscale-antiring", .005, .25, 0, 1))
-    table.insert(temporalscale.items, create_property_number_adjustment("Blur", "tscale-blur", .005, .25, 0))
-    table.insert(temporalscale.items, create_property_number_adjustment("Clamp", "tscale-clamp", .005, .25, 0, 1))
-    table.insert(temporalscale.items, create_property_number_adjustment("Radius", "tscale-radius", .005, .25, .5, 16))
-    table.insert(temporalscale.items, create_property_number_adjustment("Taper", "tscale-taper", .005, .25, 0, 1))
+    table.insert(temporalscale.items, create_property_selection("Filters", "tscale", get_tscale_filters()))
+    table.insert(temporalscale.items,
+        create_property_selection("Filters (window)", "tscale-window", get_extended_filter_windows(), ""))
+    for _, value in ipairs(create_scale_number_adjustments("tscale")) do
+        table.insert(temporalscale.items, value)
+    end
     table.insert(scale_items, temporalscale)
 
     table.insert(scale_items, create_property_toggle("Linear upscaling", "linear-upscaling"))
@@ -732,7 +794,7 @@ local function list_shader_files(path, option_path)
         end
 
         local files = mp.utils.readdir(path, "files")
-        if files ~= nil then
+        if files then
             local shader_file_paths = {}
             for i, shader_file in ipairs(files) do
                 table.insert(shader_file_paths, mp.utils.join_path(option_path, shader_file))
@@ -846,7 +908,6 @@ local function create_shader_menu()
     local shader_profile_items = {}
 
     local profile_match = false
-
     local function create_shader_profile_item(name, profile_shader_list)
         local is_active = compare_shaders(active_shaders, profile_shader_list)
 
@@ -863,7 +924,6 @@ local function create_shader_menu()
     end
 
     local default_profile_override = false
-
     for shader_profile in options.shader_profiles:gmatch("([^;]+)") do
         local name, shaders = shader_profile:match("(.+):(.+)")
 
@@ -997,7 +1057,6 @@ mp.register_script_message("menu-event", function(json)
     end
 end)
 
--- Keybind/Script message to open menu
 mp.add_key_binding(nil, "open-menu", function()
     mp.commandv("script-message-to", "uosc", "open-menu", mp.utils.format_json(create_menu_data()))
 end)
