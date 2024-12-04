@@ -1026,7 +1026,7 @@ local function create_video_sync_menu()
         name = "Display (adrop)",
         value = "display-adrop"
     }, {
-        name = "Display desync",
+        name = "Display (desync)",
         value = "display-desync"
     }, {
         name = "Desync",
