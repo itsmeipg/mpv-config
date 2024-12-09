@@ -5,7 +5,7 @@
 # Theme
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
-OSD text is removed as much as possible. (Currently, OSD text is 100% removed).
+OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc. It's fine imo.
 
 Minimal but fancy is the goal.
 
