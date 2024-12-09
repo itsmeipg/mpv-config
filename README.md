@@ -6,7 +6,7 @@
 
 This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
 OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc. It's fine imo.
-
+If you want OSD completely removed, put video-osd=no in mpv.conf, but console and stats won't work.
 Minimal but fancy is the goal.
 
 # How to use this config and mpv for new people + tips
