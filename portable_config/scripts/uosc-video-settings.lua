@@ -838,11 +838,24 @@ mp.register_script_message("toggle-shader", function(shader_path)
     end
 end)
 
-mp.register_script_message("move-shader", function(shader, direction)
+
+local function move_shader(shader, direction)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders, active_indices = get_active_shaders(current_shaders)
 
     local target_index = -1
+
+        
+
+    if type(shader) == "number" then
+        for i, current_shader in ipairs(current_shaders) do
+            if active_shaders[shader] == current_shader then
+                shader = current_shader
+                break
+            end
+        end
+    end
+
     for i, active_path in ipairs(active_shaders) do
         if active_path == shader then
             target_index = i
@@ -850,55 +863,36 @@ mp.register_script_message("move-shader", function(shader, direction)
         end
     end
 
-    local new_shaders = {table.unpack(current_shaders)}
-    if direction == "top" or direction == "bottom" then
-        table.remove(active_shaders, target_index)
+    table.remove(active_shaders, target_index)
+    local new_position
+    if direction == "top" then
+        new_position = 1
+    elseif direction == "bottom" then
+        new_position = #active_shaders + 1
+    elseif direction == "up" then
+        new_position = target_index - 1
+    elseif direction == "down" then
+        new_position = target_index + 1
+    elseif tonumber(direction) then
+        new_position = tonumber(direction)
+    end
 
-        if direction == "top" then
-            table.insert(active_shaders, 1, shader)
+    table.insert(active_shaders, math.max(1, math.min(new_position, #active_shaders + 1)), shader)
+
+    local new_shaders = {}
+    local active_idx = 1
+    for i, current_shader in ipairs(current_shaders) do
+        if active_shaders[current_shader] then
+            new_shaders[i] = active_shaders[active_idx]
+            active_idx = active_idx + 1
         else
-            table.insert(active_shaders, #active_shaders + 1, shader)
+            new_shaders[i] = current_shader
         end
-
-        new_shaders = {}
-        local active_idx = 1
-        for i, current_shader in ipairs(current_shaders) do
-            if active_shaders[current_shader] then
-                new_shaders[i] = active_shaders[active_idx]
-                active_idx = active_idx + 1
-            else
-                new_shaders[i] = current_shader
-            end
-        end
-    else
-        local swap_index = -1
-        local shader_original_index = active_indices[shader]
-        if direction == "up" then
-            for i = shader_original_index - 1, 1, -1 do
-                if active_shaders[current_shaders[i]] then
-                    swap_index = i
-                    break
-                end
-            end
-        elseif direction == "down" then
-            for i = shader_original_index + 1, #current_shaders do
-                if active_shaders[current_shaders[i]] then
-                    swap_index = i
-                    break
-                end
-            end
-        end
-
-        if swap_index == -1 then
-            return
-        end
-
-        new_shaders[shader_original_index], new_shaders[swap_index] = new_shaders[swap_index],
-            new_shaders[shader_original_index]
     end
 
     mp.set_property_native("glsl-shaders", new_shaders)
-end)
+end
+mp.register_script_message("move-shader", move_shader)
 
 local function create_shader_menu()
     local current_shaders = current_property["glsl-shaders"]
@@ -1063,7 +1057,8 @@ local function create_menu_data()
         items = menu_items,
         search_submenus = true,
         keep_open = true,
-        callback = {mp.get_script_name(), 'menu-event'}
+        callback = {mp.get_script_name(), 'menu-event'},
+        on_move = "callback"
     }
 end
 
@@ -1099,6 +1094,13 @@ mp.register_script_message("menu-event", function(json)
         elseif event.value ~= nil then
             mp.command(event.value)
         end
+    end
+    print(event.menu_id)
+    if event.menu_id == "Shaders > Active" then
+        if event.type == "move" then
+            move_shader(event.from_index, event.to_index)
+        end
+        print("awa")
     end
 end)
 
