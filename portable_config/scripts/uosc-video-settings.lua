@@ -838,14 +838,11 @@ mp.register_script_message("toggle-shader", function(shader_path)
     end
 end)
 
-
 local function move_shader(shader, direction)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders, active_indices = get_active_shaders(current_shaders)
 
     local target_index = -1
-
-        
 
     if type(shader) == "number" then
         for i, current_shader in ipairs(current_shaders) do
@@ -963,7 +960,9 @@ local function create_shader_menu()
 
     local active_shader_group = {
         title = "Active",
-        items = {}
+        items = {},
+        footnote = "ctrl+up/down/pgup/pgdn/home/end to reorder.",
+        on_move = "callback"
     }
 
     for i, active_shader in ipairs(active_shaders) do
@@ -1057,8 +1056,8 @@ local function create_menu_data()
         items = menu_items,
         search_submenus = true,
         keep_open = true,
-        callback = {mp.get_script_name(), 'menu-event'},
-        on_move = "callback"
+        callback = {mp.get_script_name(), 'menu-event'}
+
     }
 end
 
@@ -1095,12 +1094,10 @@ mp.register_script_message("menu-event", function(json)
             mp.command(event.value)
         end
     end
-    print(event.menu_id)
     if event.menu_id == "Shaders > Active" then
         if event.type == "move" then
             move_shader(event.from_index, event.to_index)
         end
-        print("awa")
     end
 end)
 
