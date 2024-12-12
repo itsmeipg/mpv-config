@@ -106,15 +106,15 @@ mp.register_script_message("set-property-list", function(property, value)
     mp.set_property_native(property, value)
 end)
 
-mp.register_script_message("adjust-property-number", function(property, increment, min, max, str_num_conversions)
+mp.register_script_message("adjust-property-number", function(property, increment, min, max, string_number_conversions)
     min = tonumber(min) or -math.huge
     max = tonumber(max) or math.huge
     increment = tonumber(increment)
 
     local current = tonumber(current_property[property])
-    if not current and str_num_conversions then
-        for str_num_conversion in str_num_conversions:gmatch("([^,]+)") do
-            local name, value = str_num_conversion:match("([^:]+):([^:]+)")
+    if not current and string_number_conversions then
+        for string_number_conversion in string_number_conversions:gmatch("([^,]+)") do
+            local name, value = string_number_conversion:match("([^:]+):([^:]+)")
 
             if name == current_property[property] then
                 current = tonumber(value)
@@ -125,7 +125,6 @@ mp.register_script_message("adjust-property-number", function(property, incremen
     local new_value = current + increment
     new_value = math.max(min, math.min(max, new_value))
     mp.set_property(property, new_value)
-
 end)
 
 -- Menu templates
@@ -174,16 +173,16 @@ local function create_property_selection(name, property, options, off_or_default
 end
 
 local function create_property_number_adjustment(name, property, increment, large_increment, min, max,
-    str_num_conversions)
+    string_number_conversions, value_name_conversions)
     local function create_adjustment_actions()
         return {{
-            name = {command("adjust-property-number", property, increment, min, max, str_num_conversions),
-                    command("adjust-property-number", property, large_increment, min, max, str_num_conversions)},
+            name = {command("adjust-property-number", property, increment, min, max, string_number_conversions),
+                    command("adjust-property-number", property, large_increment, min, max, string_number_conversions)},
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = {command("adjust-property-number", property, -increment, min, max, str_num_conversions),
-                    command("adjust-property-number", property, -large_increment, min, max, str_num_conversions)},
+            name = {command("adjust-property-number", property, -increment, min, max, string_number_conversions),
+                    command("adjust-property-number", property, -large_increment, min, max, string_number_conversions)},
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
@@ -193,10 +192,25 @@ local function create_property_number_adjustment(name, property, increment, larg
         } or nil}
     end
 
+    local function create_hint()
+        if value_name_conversions then
+            for value_name_conversion in value_name_conversions:gmatch("([^,]+)") do
+                local value, name = value_name_conversion:match("([^:]+):([^:]+)")
+    
+                if value == current_property[property] then
+                    return name
+                end
+            end
+        end
+        
+        return tonumber(current_property[property]) and
+                   string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or
+                   current_property[property]
+    end
+
     return {
         title = name,
-        hint = tonumber(current_property[property]) and
-            string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or current_property[property],
+        hint = create_hint(),
         actions = create_adjustment_actions(),
         actions_place = "outside"
     }
@@ -486,7 +500,8 @@ end
 local function create_dither_menu()
     local dither_items = {}
 
-    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 1, 4, -1, 16, "no:-1,auto:0"))
+    table.insert(dither_items,
+        create_property_number_adjustment("Dither depth", "dither-depth", 1, 4, -1, 16, "no:-1,auto:0", "no:Off,auto:Auto"))
 
     return {
         title = "Dither",
