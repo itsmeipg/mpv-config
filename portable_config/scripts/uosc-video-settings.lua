@@ -729,7 +729,7 @@ local function compare_shaders(shaders1, shaders2)
 end
 
 local function file_exists(path)
-    return mp.utils.file_info(mp.command_native({"expand-path", path})).is_file
+    return mp.utils.file_info(mp.command_native({"expand-path", path}))
 end
 
 local function get_active_shaders(current_shaders)
@@ -832,18 +832,18 @@ mp.register_script_message("clear-shaders", function()
     mp.set_property_native("glsl-shaders", {})
 end)
 
-mp.register_script_message("toggle-shader", function(shader_path)
+local function toggle_shader(shader_path)
     if file_exists(shader_path) then
         mp.command_native({"change-list", "glsl-shaders", "toggle", shader_path})
     end
-end)
+end
+mp.register_script_message("toggle-shader", toggle_shader)
 
 local function move_shader(shader, direction)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders, active_indices = get_active_shaders(current_shaders)
 
     local target_index = -1
-
     if type(shader) == "number" then
         for i, current_shader in ipairs(current_shaders) do
             if active_shaders[shader] == current_shader then
@@ -962,7 +962,9 @@ local function create_shader_menu()
         title = "Active",
         items = {},
         footnote = "ctrl+up/down/pgup/pgdn/home/end to reorder.",
-        on_move = "callback"
+        search_submenus = false,
+        on_move = "callback",
+        on_paste = "callback"
     }
 
     for i, active_shader in ipairs(active_shaders) do
@@ -1083,20 +1085,26 @@ end)
 
 mp.register_script_message("menu-event", function(json)
     local event = mp.utils.parse_json(json)
+
     if event.type == "activate" then
-        if event.action ~= nil then
+        if event.action then
             if event.shift and event.action[2] then
                 mp.command(event.action[2])
             else
                 mp.command(event.action[1])
             end
-        elseif event.value ~= nil then
+        elseif event.value then
             mp.command(event.value)
         end
     end
+
     if event.menu_id == "Shaders > Active" then
         if event.type == "move" then
             move_shader(event.from_index, event.to_index)
+        end
+        if event.type == "paste" then
+            toggle_shader(event.value:sub(1, 1) == "~" and event.value or
+                              event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
         end
     end
 end)
