@@ -32,7 +32,8 @@ local properties = {
              "dscale-radius", "dscale-taper", "cscale", "cscale-window", "cscale-antiring", "cscale-blur",
              "cscale-clamp", "cscale-radius", "cscale-taper", "linear-upscaling", "correct-downscaling",
              "linear-downscaling", "sigmoid-upscaling"},
-    extra = {"deinterlace", "video-sync", "interpolation"},
+    dither = {"dither-depth"},
+    extra = {"deinterlace", "hwdec", "vo", "video-sync", "interpolation"},
     shaders = {{
         name = "glsl-shaders",
         native = true
@@ -105,16 +106,26 @@ mp.register_script_message("set-property-list", function(property, value)
     mp.set_property_native(property, value)
 end)
 
-mp.register_script_message("adjust-property-number", function(property, increment, min, max)
+mp.register_script_message("adjust-property-number", function(property, increment, min, max, str_num_conversions)
     min = tonumber(min) or -math.huge
     max = tonumber(max) or math.huge
-    local num_increment = tonumber(increment)
-    if num_increment then
-        local current = tonumber(current_property[property])
-        local new_value = current + num_increment
-        new_value = math.max(min, math.min(max, new_value))
-        mp.set_property(property, new_value)
+    increment = tonumber(increment)
+
+    local current = tonumber(current_property[property])
+    if not current and str_num_conversions then
+        for str_num_conversion in str_num_conversions:gmatch("([^,]+)") do
+            local name, value = str_num_conversion:match("([^:]+):([^:]+)")
+
+            if name == current_property[property] then
+                current = tonumber(value)
+            end
+        end
     end
+
+    local new_value = current + increment
+    new_value = math.max(min, math.min(max, new_value))
+    mp.set_property(property, new_value)
+
 end)
 
 -- Menu templates
@@ -162,16 +173,17 @@ local function create_property_selection(name, property, options, off_or_default
     }
 end
 
-local function create_property_number_adjustment(name, property, increment, large_increment, min, max)
+local function create_property_number_adjustment(name, property, increment, large_increment, min, max,
+    str_num_conversions)
     local function create_adjustment_actions()
         return {{
-            name = {command("adjust-property-number", property, increment, min, max),
-                    command("adjust-property-number", property, large_increment, min, max)},
+            name = {command("adjust-property-number", property, increment, min, max, str_num_conversions),
+                    command("adjust-property-number", property, large_increment, min, max, str_num_conversions)},
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = {command("adjust-property-number", property, -increment, min, max),
-                    command("adjust-property-number", property, -large_increment, min, max)},
+            name = {command("adjust-property-number", property, -increment, min, max, str_num_conversions),
+                    command("adjust-property-number", property, -large_increment, min, max, str_num_conversions)},
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
@@ -183,7 +195,8 @@ local function create_property_number_adjustment(name, property, increment, larg
 
     return {
         title = name,
-        hint = string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", ""),
+        hint = tonumber(current_property[property]) and
+            string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or current_property[property],
         actions = create_adjustment_actions(),
         actions_place = "outside"
     }
@@ -467,6 +480,103 @@ local deinterlace_options = {{
 
 local function create_deinterlace_menu()
     return create_property_selection("Deinterlace", "deinterlace", deinterlace_options)
+end
+
+-- Dither
+local function create_dither_menu()
+    local dither_items = {}
+
+    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 1, 4, -1, 16, "no:-1,auto:0"))
+
+    return {
+        title = "Dither",
+        items = dither_items
+    }
+end
+
+-- Hardware decoding
+local hwdec_options = {{
+    name = "Off",
+    value = "no"
+}, {
+    name = "Auto",
+    value = "auto"
+}, {
+    name = "Auto (safe)",
+    value = "auto-safe"
+}, {
+    name = "Auto (copy)",
+    value = "auto-copy"
+}, {
+    name = "Direct3D 11",
+    value = "d3d11va"
+}, {
+    name = "Direct3D 11 (copy)",
+    value = "d3d11va-copy"
+}, {
+    name = "Video toolbox",
+    value = "videotoolbox"
+}, {
+    name = "Video toolbox (copy)",
+    value = "videotoolbox-copy"
+}, {
+    name = "VA-API",
+    value = "vaapi"
+}, {
+    name = "VA-API (copy)",
+    value = "vaapi-copy"
+}, {
+    name = "NVDEC",
+    value = "nvdec"
+}, {
+    name = "NVDEC (copy)",
+    value = "nvdec-copy"
+}, {
+    name = "DRM",
+    value = "drm"
+}, {
+    name = "DRM (copy)",
+    value = "drm-copy"
+}, {
+    name = "Vulkan",
+    value = "vulkan"
+}, {
+    name = "Vulkan (copy)",
+    value = "vulkan-copy"
+}, {
+    name = "DX-VA 2",
+    value = "dxva2"
+}, {
+    name = "DX-VA 2 (copy)",
+    value = "dxva2-copy"
+}, {
+    name = "VDPAU",
+    value = "vdpau"
+}, {
+    name = "VDPAU (copy)",
+    value = "vdpau-copy"
+}, {
+    name = "Media codec",
+    value = "mediacodec"
+}, {
+    name = "Media codec (copy)",
+    value = "mediacodec-copy"
+}, {
+    name = "CUDA",
+    value = "cuda"
+}, {
+    name = "CUDA (copy)",
+    value = "cuda-copy"
+}, {
+    name = "Crystal HD",
+    value = "crystalhd"
+}, {
+    name = "RKMPP",
+    value = "rkmpp"
+}}
+
+local function create_hwdec_menu()
+    return create_property_selection("Hardware decoding", "hwdec", hwdec_options)
 end
 
 -- Scale
@@ -1012,6 +1122,19 @@ local function create_shader_menu()
     }
 end
 
+-- Video output
+local video_output_options = {{
+    name = "GPU",
+    value = "gpu"
+}, {
+    name = "GPU Next",
+    value = "gpu-next"
+}}
+
+local function create_video_output_menu()
+    return create_property_selection("Video output", "vo", video_output_options)
+end
+
 -- Video sync
 local video_sync_options = {{
     name = "Audio",
@@ -1054,8 +1177,11 @@ local function create_menu_data()
     table.insert(menu_items, create_deband_menu())
     table.insert(menu_items, create_color_menu())
     table.insert(menu_items, create_deinterlace_menu())
+    table.insert(menu_items, create_dither_menu())
+    table.insert(menu_items, create_hwdec_menu())
     table.insert(menu_items, create_scale_menu())
     table.insert(menu_items, create_shader_menu())
+    table.insert(menu_items, create_video_output_menu())
     table.insert(menu_items, create_video_sync_menu())
     table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
 
@@ -1066,7 +1192,6 @@ local function create_menu_data()
         search_submenus = true,
         keep_open = true,
         callback = {mp.get_script_name(), 'menu-event'}
-
     }
 end
 
@@ -1123,7 +1248,6 @@ mp.register_script_message("menu-event", function(json)
         print(event.selected_item.index)
         print(event.selected_item.value)
     end
-
 end)
 
 mp.add_key_binding(nil, "open-menu", function()
