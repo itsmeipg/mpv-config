@@ -453,6 +453,22 @@ local function create_color_menu()
     }
 end
 
+-- Deinterlace
+local deinterlace_options = {{
+    name = "Off",
+    value = "no"
+}, {
+    name = "On",
+    value = "yes"
+}, {
+    name = "Auto",
+    value = "auto"
+}}
+
+local function create_deinterlace_menu()
+    return create_property_selection("Deinterlace", "deinterlace", deinterlace_options)
+end
+
 -- Scale
 local fixed_scale = {{
     name = "Bilinear",
@@ -760,13 +776,13 @@ local function create_shader_adjustment_actions(shader_path)
     table.insert(action_items, {
         name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
         icon = "arrow_upward",
-        label = "Position up."
+        label = "Move up (ctrl+up/pgup/home)"
     })
 
     table.insert(action_items, {
         name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
         icon = "arrow_downward",
-        label = "Position down."
+        label = "Move down (ctrl+down/pgdn/end)"
     })
 
     return action_items
@@ -997,55 +1013,47 @@ local function create_shader_menu()
 end
 
 -- Video sync
-local function create_video_sync_menu()
-    local video_sync_options = {{
-        name = "Audio",
-        value = "audio"
-    }, {
-        name = "Display resample",
-        value = "display-resample"
-    }, {
-        name = "Display resample (vdrop)",
-        value = "display-resample-vdrop"
-    }, {
-        name = "Display resample (desync)",
-        value = "display-resample-desync"
-    }, {
-        name = "Display (tempo)",
-        value = "display-tempo"
-    }, {
-        name = "Display (vdrop)",
-        value = "display-vdrop"
-    }, {
-        name = "Display (adrop)",
-        value = "display-adrop"
-    }, {
-        name = "Display (desync)",
-        value = "display-desync"
-    }, {
-        name = "Desync",
-        value = "desync"
-    }}
+local video_sync_options = {{
+    name = "Audio",
+    value = "audio"
+}, {
+    name = "Display resample",
+    value = "display-resample"
+}, {
+    name = "Display resample (vdrop)",
+    value = "display-resample-vdrop"
+}, {
+    name = "Display resample (desync)",
+    value = "display-resample-desync"
+}, {
+    name = "Display (tempo)",
+    value = "display-tempo"
+}, {
+    name = "Display (vdrop)",
+    value = "display-vdrop"
+}, {
+    name = "Display (adrop)",
+    value = "display-adrop"
+}, {
+    name = "Display (desync)",
+    value = "display-desync"
+}, {
+    name = "Desync",
+    value = "desync"
+}}
 
+local function create_video_sync_menu()
     return create_property_selection("Video sync", "video-sync", video_sync_options)
 end
 
+local menu_data
 local function create_menu_data()
     local menu_items = {}
 
     table.insert(menu_items, create_aspect_menu())
     table.insert(menu_items, create_deband_menu())
     table.insert(menu_items, create_color_menu())
-    table.insert(menu_items, create_property_selection("Deinterlace", "deinterlace", {{
-        name = "Off",
-        value = "no"
-    }, {
-        name = "On",
-        value = "yes"
-    }, {
-        name = "Auto",
-        value = "auto"
-    }}))
+    table.insert(menu_items, create_deinterlace_menu())
     table.insert(menu_items, create_scale_menu())
     table.insert(menu_items, create_shader_menu())
     table.insert(menu_items, create_video_sync_menu())
@@ -1068,7 +1076,8 @@ local function update_menu()
         debounce_timer:kill()
     end
     debounce_timer = mp.add_timeout(0.001, function()
-        mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
+        menu_data = mp.utils.format_json(create_menu_data())
+        mp.commandv("script-message-to", "uosc", "update-menu", menu_data)
         debounce_timer = nil
     end)
 end
@@ -1106,8 +1115,17 @@ mp.register_script_message("menu-event", function(json)
                               event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
         end
     end
+
+    if event.type == "key" then
+        print(event.key)
+        print(event.id)
+        print(event.modifiers)
+        print(event.selected_item.index)
+        print(event.selected_item.value)
+    end
+
 end)
 
 mp.add_key_binding(nil, "open-menu", function()
-    mp.commandv("script-message-to", "uosc", "open-menu", mp.utils.format_json(create_menu_data()))
+    mp.commandv("script-message-to", "uosc", "open-menu", menu_data)
 end)
