@@ -1110,7 +1110,7 @@ local function create_shader_menu()
 
     local profile_match = false
     local function create_shader_profile_item(name, profile_shader_list)
-        local is_active = compare_shaders(active_shaders, profile_shader_list)
+        local is_active = compare_shaders(active_shaders, get_active_shaders(profile_shader_list))
 
         if is_active then
             profile_match = true
