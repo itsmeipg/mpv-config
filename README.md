@@ -30,7 +30,6 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
-- From above 0 current num property into auto/off fix to prevent skip.
 - Differentiate item actions between active shaders group submenu and listed shader files.
 ----------------------------
 - Add profile folders.
