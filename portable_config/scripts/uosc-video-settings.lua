@@ -961,8 +961,7 @@ local function create_shader_menu()
     local active_shader_group = {
         title = "Active",
         items = {},
-        footnote = "ctrl+up/down/pgup/pgdn/home/end to reorder.",
-        search_submenus = false,
+        footnote = "Paste path to toggle. ctrl+up/down/pgup/pgdn/home/end to reorder.",
         on_move = "callback",
         on_paste = "callback"
     }
