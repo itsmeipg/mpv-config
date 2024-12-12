@@ -225,6 +225,9 @@ local function create_property_number_adjustment(name, property, increment, larg
         title = name,
         hint = create_hint(),
         actions = create_adjustment_actions(),
+        value = {command("adjust-property-number", property, increment, min, max, string_number_conversions),
+                 command("adjust-property-number", property, -increment, min, max, string_number_conversions),
+                 command("set-property", property, cached_property[property])},
         actions_place = "outside"
     }
 end
@@ -1305,7 +1308,7 @@ mp.register_script_message("menu-event", function(json)
             else
                 mp.command(event.action[1])
             end
-        elseif event.value then
+        elseif event.value and type(event.value) ~= "table" then
             mp.command(event.value)
         end
     end
@@ -1321,11 +1324,12 @@ mp.register_script_message("menu-event", function(json)
     end
 
     if event.type == "key" then
-        print(event.key)
-        print(event.id)
-        print(event.modifiers)
-        print(event.selected_item.index)
-        print(event.selected_item.value)
+        if event.id == "ctrl+left" then
+            mp.command(event.selected_item.value[2])
+        end
+        if event.id == "ctrl+right" then
+            mp.command(event.selected_item.value[1])
+        end
     end
 end)
 
