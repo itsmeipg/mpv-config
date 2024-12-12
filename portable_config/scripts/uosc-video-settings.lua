@@ -191,8 +191,8 @@ local function create_property_selection(name, property, options, off_or_default
     }
 end
 
-local function create_property_number_adjustment(name, property, increment, min, max,
-    string_number_conversions, value_name_conversions)
+local function create_property_number_adjustment(name, property, increment, min, max, string_number_conversions,
+    value_name_conversions)
     local function create_adjustment_actions()
         return {{
             name = command("adjust-property-number", property, increment, min, max, string_number_conversions),
@@ -851,12 +851,10 @@ local function create_scale_number_adjustments(property)
     table.insert(scale_number_adjustments,
         create_property_number_adjustment("Antiring", property .. "-antiring", .005, 0, 1))
     table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005))
-    table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Clamp", property .. "-clamp", .005, 0, 1))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Clamp", property .. "-clamp", .005, 0, 1))
     table.insert(scale_number_adjustments,
         create_property_number_adjustment("Radius", property .. "-radius", .005, .5, 16))
-    table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Taper", property .. "-taper", .005, 0, 1))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Taper", property .. "-taper", .005, 0, 1))
 
     return scale_number_adjustments
 end
