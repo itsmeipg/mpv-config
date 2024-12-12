@@ -30,12 +30,13 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
-- Add footnote for action modifiers/keybinds. Normalize keybinds to match normal uosc action keybinds like ctrl+down/pgdown/end etc.
-- Optimize action handling. Don't rely on index. Use string keys that match var key/key combo to get corresponding action command.
+- From above 0 current num property into auto/off fix to prevent skip.
+- Differentiate item actions between active shaders group submenu and listed shader files.
+----------------------------
 - Add profile folders.
-- Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu. Add crop/rotate.
+- Add gpu-api/context.
+- Add crop/rotate.
 - Work on uosc-subtitle-settings.lua. Clean up code logic.
-- Only show shader adjustment actions when #shaders > 1.
 - Make profile selection menu.
 - -- Low priority --
 - Add support to apply shader twice/thrice/etc.
