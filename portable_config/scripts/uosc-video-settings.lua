@@ -1312,12 +1312,13 @@ mp.register_script_message("menu-event", function(json)
     end
 
     if event.type == "key" then
-        if event.id == "ctrl+right" then
-            mp.command(event.selected_item.value[1])
-        elseif event.id == "ctrl+left" then
-            mp.command(event.selected_item.value[2])
+        if type(event.selected_item.value) == "table" then
+            if event.id == "ctrl+right" then
+                mp.command(event.selected_item.value[1])
+            elseif event.id == "ctrl+left" then
+                mp.command(event.selected_item.value[2])
+            end
         end
-
     end
 
     if event.menu_id == "Shaders > Active" then
