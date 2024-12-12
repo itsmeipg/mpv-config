@@ -30,12 +30,13 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
+- Clean up profile code
+- Fix dither 16+ val
 - Differentiate item actions between active shaders group submenu and listed shader files.
 ----------------------------
 - Add profile folders.
 - Add gpu-api/context.
 - Add crop/rotate.
-- Work on uosc-subtitle-settings.lua. Clean up code logic.
 - Make profile selection menu.
 - -- Low priority --
 - Add support to apply shader twice/thrice/etc.
