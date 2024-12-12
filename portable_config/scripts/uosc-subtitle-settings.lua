@@ -245,14 +245,14 @@ local menu_data
 local function create_menu_data()
     local menu_items = {}
 
+    table.insert(menu_items, create_ass_override_menu())
+    table.insert(menu_items, create_blend_menu())
+    table.insert(menu_items, create_property_toggle("Fix timing", "sub-fix-timing"))
     table.insert(menu_items, create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100))
     table.insert(menu_items,
         create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100))
     table.insert(menu_items, create_property_number_adjustment("Scale", "sub-scale", 0.05, 0, 100))
     table.insert(menu_items, create_property_number_adjustment("Delay", "sub-delay", 0.05))
-    table.insert(menu_items, create_ass_override_menu())
-    table.insert(menu_items, create_blend_menu())
-    table.insert(menu_items, create_property_toggle("Fix timing", "sub-fix-timing"))
 
     return {
         type = "subtitle_settings",
@@ -297,12 +297,13 @@ mp.register_script_message("menu-event", function(json)
     end
 
     if event.type == "key" then
-        if event.id == "ctrl+right" then
-            mp.command(event.selected_item.value[1])
-        elseif event.id == "ctrl+left" then
-            mp.command(event.selected_item.value[2])
+        if type(event.selected_item.value) == "table" then
+            if event.id == "ctrl+right" then
+                mp.command(event.selected_item.value[1])
+            elseif event.id == "ctrl+left" then
+                mp.command(event.selected_item.value[2])
+            end
         end
-
     end
 end)
 
