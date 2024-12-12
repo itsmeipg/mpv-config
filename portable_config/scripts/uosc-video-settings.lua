@@ -32,7 +32,8 @@ local properties = {
              "dscale-radius", "dscale-taper", "cscale", "cscale-window", "cscale-antiring", "cscale-blur",
              "cscale-clamp", "cscale-radius", "cscale-taper", "linear-upscaling", "correct-downscaling",
              "linear-downscaling", "sigmoid-upscaling"},
-    dither = {"dither-depth"},
+    dither = {"dither", "error-diffusion", "temporal-dither", "dither-depth", "dither-size-fruit",
+              "temporal-dither-period"},
     extra = {"deinterlace", "hwdec", "vo", "video-sync", "interpolation"},
     shaders = {{
         name = "glsl-shaders",
@@ -118,6 +119,18 @@ mp.register_script_message("adjust-property-number", function(property, incremen
 
             if name == current_property[property] then
                 current = tonumber(value)
+                if current < 0 then
+                    if increment > 0 then
+                        increment = 1
+                    else
+                        increment = -1
+                    end
+                elseif current == 0 then
+                    if increment < 0 then
+                        increment = -1
+                    end
+                end
+
             end
         end
     end
@@ -196,13 +209,13 @@ local function create_property_number_adjustment(name, property, increment, larg
         if value_name_conversions then
             for value_name_conversion in value_name_conversions:gmatch("([^,]+)") do
                 local value, name = value_name_conversion:match("([^:]+):([^:]+)")
-    
+
                 if value == current_property[property] then
                     return name
                 end
             end
         end
-        
+
         return tonumber(current_property[property]) and
                    string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or
                    current_property[property]
@@ -497,12 +510,63 @@ local function create_deinterlace_menu()
 end
 
 -- Dither
+local dither_options = {{
+    name = "Off",
+    value = "no"
+}, {
+    name = "Fruit",
+    value = "fruit"
+}, {
+    name = "Ordered",
+    value = "ordered"
+}, {
+    name = "Error diffusion",
+    value = "error-diffusion"
+}}
+
+local error_diffusion_options = {{
+    name = "Simple",
+    value = "simple"
+}, {
+    name = "False FS",
+    value = "false-fs"
+}, {
+    name = "Sierra (lite)",
+    value = "sierra-lite"
+}, {
+    name = "Floyd-Steinberg",
+    value = "floyd-steinberg"
+}, {
+    name = "Atkinson",
+    value = "atkinson"
+}, {
+    name = "Jarvis judice ninke",
+    value = "jarvis-judice-ninke"
+}, {
+    name = "Stucki",
+    value = "stucki"
+}, {
+    name = "Burkes",
+    value = "burkes"
+}, {
+    name = "Sierra 3",
+    value = "sierra-3"
+}, {
+    name = "Sierra 2",
+    value = "sierra-2"
+}}
+
 local function create_dither_menu()
     local dither_items = {}
 
+    table.insert(dither_items, create_property_selection("Dither", "dither", dither_options))
+    table.insert(dither_items, create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options))
+    table.insert(dither_items, create_property_toggle("Temporal dither", "temporal-dither"))
+    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, 4, -1, 16,
+        "no:-1,auto:0", "no:Off,auto:Auto"))
+    table.insert(dither_items, create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 2, 8))
     table.insert(dither_items,
-        create_property_number_adjustment("Dither depth", "dither-depth", 1, 4, -1, 16, "no:-1,auto:0", "no:Off,auto:Auto"))
-
+        create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 8, 1, 128))
     return {
         title = "Dither",
         items = dither_items
@@ -523,10 +587,10 @@ local hwdec_options = {{
     name = "Auto (copy)",
     value = "auto-copy"
 }, {
-    name = "Direct3D 11",
+    name = "Direct3D11",
     value = "d3d11va"
 }, {
-    name = "Direct3D 11 (copy)",
+    name = "Direct3D11 (copy)",
     value = "d3d11va-copy"
 }, {
     name = "Video toolbox",
@@ -559,10 +623,10 @@ local hwdec_options = {{
     name = "Vulkan (copy)",
     value = "vulkan-copy"
 }, {
-    name = "DX-VA 2",
+    name = "DX-VA2",
     value = "dxva2"
 }, {
-    name = "DX-VA 2 (copy)",
+    name = "DX-VA2 (copy)",
     value = "dxva2-copy"
 }, {
     name = "VDPAU",
