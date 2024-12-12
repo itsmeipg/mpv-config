@@ -32,7 +32,9 @@ local properties = {
              "dscale-radius", "dscale-taper", "cscale", "cscale-window", "cscale-antiring", "cscale-blur",
              "cscale-clamp", "cscale-radius", "cscale-taper", "linear-upscaling", "correct-downscaling",
              "linear-downscaling", "sigmoid-upscaling"},
-    extra = {"deinterlace", "video-sync", "interpolation"},
+    dither = {"dither", "error-diffusion", "temporal-dither", "dither-depth", "dither-size-fruit",
+              "temporal-dither-period"},
+    extra = {"deinterlace", "hwdec", "vo", "video-sync", "interpolation"},
     shaders = {{
         name = "glsl-shaders",
         native = true
@@ -105,16 +107,43 @@ mp.register_script_message("set-property-list", function(property, value)
     mp.set_property_native(property, value)
 end)
 
-mp.register_script_message("adjust-property-number", function(property, increment, min, max)
+mp.register_script_message("adjust-property-number", function(property, increment, min, max, string_number_conversions)
     min = tonumber(min) or -math.huge
     max = tonumber(max) or math.huge
-    local num_increment = tonumber(increment)
-    if num_increment then
-        local current = tonumber(current_property[property])
-        local new_value = current + num_increment
-        new_value = math.max(min, math.min(max, new_value))
-        mp.set_property(property, new_value)
+    increment = tonumber(increment)
+
+    local current = tonumber(current_property[property])
+    if not current and string_number_conversions then
+        for string_number_conversion in string_number_conversions:gmatch("([^,]+)") do
+            local name, value = string_number_conversion:match("([^:]+):([^:]+)")
+
+            if name == current_property[property] then
+                current = tonumber(value)
+                if current < 0 then
+                    if increment > 0 then
+                        increment = 1
+                    else
+                        increment = -1
+                    end
+                elseif current == 0 then
+                    if increment < 0 then
+                        increment = -1
+                    end
+                end
+            end
+        end
     end
+
+    local new_value = current + increment
+    if string_number_conversions and tonumber(current_property[property]) then
+        if new_value < 0 then
+            new_value = 0
+        end
+    else
+        new_value = math.max(min, math.min(max, new_value))
+    end
+
+    mp.set_property(property, new_value)
 end)
 
 -- Menu templates
@@ -162,29 +191,47 @@ local function create_property_selection(name, property, options, off_or_default
     }
 end
 
-local function create_property_number_adjustment(name, property, increment, large_increment, min, max)
+local function create_property_number_adjustment(name, property, increment, min, max, string_number_conversions,
+    value_name_conversions)
     local function create_adjustment_actions()
         return {{
-            name = {command("adjust-property-number", property, increment, min, max),
-                    command("adjust-property-number", property, large_increment, min, max)},
+            name = command("adjust-property-number", property, increment, min, max, string_number_conversions),
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = {command("adjust-property-number", property, -increment, min, max),
-                    command("adjust-property-number", property, -large_increment, min, max)},
+            name = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
-            name = {command("set-property", property, cached_property[property])},
+            name = command("set-property", property, cached_property[property]),
             icon = "cached",
             label = "Reset."
         } or nil}
     end
 
+    local function create_hint()
+        if value_name_conversions then
+            for value_name_conversion in value_name_conversions:gmatch("([^,]+)") do
+                local value, name = value_name_conversion:match("([^:]+):([^:]+)")
+
+                if value == current_property[property] then
+                    return name
+                end
+            end
+        end
+
+        return tonumber(current_property[property]) and
+                   string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or
+                   current_property[property]
+    end
+
     return {
         title = name,
-        hint = string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", ""),
+        hint = create_hint(),
         actions = create_adjustment_actions(),
+        value = {command("adjust-property-number", property, increment, min, max, string_number_conversions),
+                 command("adjust-property-number", property, -increment, min, max, string_number_conversions),
+                 command("set-property", property, cached_property[property])},
         actions_place = "outside"
     }
 end
@@ -327,10 +374,10 @@ local function create_deband_menu()
     end
 
     table.insert(deband_items, create_property_toggle("Enabled", "deband"))
-    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 8, 0, 16))
-    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 8, 0, 4096))
-    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 8, 1, 64))
-    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 8, 0, 4096))
+    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 0, 16))
+    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 0, 4096))
+    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 1, 64))
+    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 0, 4096))
 
     return {
         title = "Deband",
@@ -444,13 +491,178 @@ local function create_color_menu()
 
     for _, prop in ipairs({"brightness", "contrast", "saturation", "gamma", "hue"}) do
         table.insert(color_items,
-            create_property_number_adjustment(prop:gsub("^%l", string.upper), prop, .25, 1, -100, 100))
+            create_property_number_adjustment(prop:gsub("^%l", string.upper), prop, 0.25, -100, 100))
     end
 
     return {
         title = "Color",
         items = color_items
     }
+end
+
+-- Deinterlace
+local deinterlace_options = {{
+    name = "Off",
+    value = "no"
+}, {
+    name = "On",
+    value = "yes"
+}, {
+    name = "Auto",
+    value = "auto"
+}}
+
+local function create_deinterlace_menu()
+    return create_property_selection("Deinterlace", "deinterlace", deinterlace_options)
+end
+
+-- Dither
+local dither_options = {{
+    name = "Off",
+    value = "no"
+}, {
+    name = "Fruit",
+    value = "fruit"
+}, {
+    name = "Ordered",
+    value = "ordered"
+}, {
+    name = "Error diffusion",
+    value = "error-diffusion"
+}}
+
+local error_diffusion_options = {{
+    name = "Simple",
+    value = "simple"
+}, {
+    name = "False FS",
+    value = "false-fs"
+}, {
+    name = "Sierra (lite)",
+    value = "sierra-lite"
+}, {
+    name = "Floyd-Steinberg",
+    value = "floyd-steinberg"
+}, {
+    name = "Atkinson",
+    value = "atkinson"
+}, {
+    name = "Jarvis judice ninke",
+    value = "jarvis-judice-ninke"
+}, {
+    name = "Stucki",
+    value = "stucki"
+}, {
+    name = "Burkes",
+    value = "burkes"
+}, {
+    name = "Sierra 3",
+    value = "sierra-3"
+}, {
+    name = "Sierra 2",
+    value = "sierra-2"
+}}
+
+local function create_dither_menu()
+    local dither_items = {}
+
+    table.insert(dither_items, create_property_selection("Dither", "dither", dither_options))
+    table.insert(dither_items, create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options))
+    table.insert(dither_items, create_property_toggle("Temporal dither", "temporal-dither"))
+    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16,
+        "no:-1,auto:0", "no:Off,auto:Auto"))
+    table.insert(dither_items, create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8))
+    table.insert(dither_items,
+        create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1, 128))
+    return {
+        title = "Dither",
+        items = dither_items
+    }
+end
+
+-- Hardware decoding
+local hwdec_options = {{
+    name = "Off",
+    value = "no"
+}, {
+    name = "Auto",
+    value = "auto"
+}, {
+    name = "Auto (safe)",
+    value = "auto-safe"
+}, {
+    name = "Auto (copy)",
+    value = "auto-copy"
+}, {
+    name = "Direct3D11",
+    value = "d3d11va"
+}, {
+    name = "Direct3D11 (copy)",
+    value = "d3d11va-copy"
+}, {
+    name = "Video toolbox",
+    value = "videotoolbox"
+}, {
+    name = "Video toolbox (copy)",
+    value = "videotoolbox-copy"
+}, {
+    name = "VA-API",
+    value = "vaapi"
+}, {
+    name = "VA-API (copy)",
+    value = "vaapi-copy"
+}, {
+    name = "NVDEC",
+    value = "nvdec"
+}, {
+    name = "NVDEC (copy)",
+    value = "nvdec-copy"
+}, {
+    name = "DRM",
+    value = "drm"
+}, {
+    name = "DRM (copy)",
+    value = "drm-copy"
+}, {
+    name = "Vulkan",
+    value = "vulkan"
+}, {
+    name = "Vulkan (copy)",
+    value = "vulkan-copy"
+}, {
+    name = "DX-VA2",
+    value = "dxva2"
+}, {
+    name = "DX-VA2 (copy)",
+    value = "dxva2-copy"
+}, {
+    name = "VDPAU",
+    value = "vdpau"
+}, {
+    name = "VDPAU (copy)",
+    value = "vdpau-copy"
+}, {
+    name = "Media codec",
+    value = "mediacodec"
+}, {
+    name = "Media codec (copy)",
+    value = "mediacodec-copy"
+}, {
+    name = "CUDA",
+    value = "cuda"
+}, {
+    name = "CUDA (copy)",
+    value = "cuda-copy"
+}, {
+    name = "Crystal HD",
+    value = "crystalhd"
+}, {
+    name = "RKMPP",
+    value = "rkmpp"
+}}
+
+local function create_hwdec_menu()
+    return create_property_selection("Hardware decoding", "hwdec", hwdec_options)
 end
 
 -- Scale
@@ -637,14 +849,12 @@ local function create_scale_number_adjustments(property)
     local scale_number_adjustments = {}
 
     table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Antiring", property .. "-antiring", .005, .25, 0, 1))
-    table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005, .25, 0))
+        create_property_number_adjustment("Antiring", property .. "-antiring", .005, 0, 1))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Clamp", property .. "-clamp", .005, 0, 1))
     table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Clamp", property .. "-clamp", .005, .25, 0, 1))
-    table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Radius", property .. "-radius", .005, .25, .5, 16))
-    table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Taper", property .. "-taper", .005, .25, 0, 1))
+        create_property_number_adjustment("Radius", property .. "-radius", .005, .5, 16))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Taper", property .. "-taper", .005, 0, 1))
 
     return scale_number_adjustments
 end
@@ -729,7 +939,7 @@ local function compare_shaders(shaders1, shaders2)
 end
 
 local function file_exists(path)
-    return mp.utils.file_info(mp.command_native({"expand-path", path})).is_file
+    return mp.utils.file_info(mp.command_native({"expand-path", path}))
 end
 
 local function get_active_shaders(current_shaders)
@@ -758,15 +968,15 @@ local function create_shader_adjustment_actions(shader_path)
     local action_items = {}
 
     table.insert(action_items, {
-        name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
+        name = command("move-shader", shader_path, "up"),
         icon = "arrow_upward",
-        label = "Position up."
+        label = "Move up (ctrl+up/pgup/home)"
     })
 
     table.insert(action_items, {
-        name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
+        name = command("move-shader", shader_path, "down"),
         icon = "arrow_downward",
-        label = "Position down."
+        label = "Move down (ctrl+down/pgdn/end)"
     })
 
     return action_items
@@ -832,17 +1042,27 @@ mp.register_script_message("clear-shaders", function()
     mp.set_property_native("glsl-shaders", {})
 end)
 
-mp.register_script_message("toggle-shader", function(shader_path)
+local function toggle_shader(shader_path)
     if file_exists(shader_path) then
         mp.command_native({"change-list", "glsl-shaders", "toggle", shader_path})
     end
-end)
+end
+mp.register_script_message("toggle-shader", toggle_shader)
 
-mp.register_script_message("move-shader", function(shader, direction)
+local function move_shader(shader, direction)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders, active_indices = get_active_shaders(current_shaders)
 
     local target_index = -1
+    if type(shader) == "number" then
+        for i, current_shader in ipairs(current_shaders) do
+            if active_shaders[shader] == current_shader then
+                shader = current_shader
+                break
+            end
+        end
+    end
+
     for i, active_path in ipairs(active_shaders) do
         if active_path == shader then
             target_index = i
@@ -850,55 +1070,36 @@ mp.register_script_message("move-shader", function(shader, direction)
         end
     end
 
-    local new_shaders = {table.unpack(current_shaders)}
-    if direction == "top" or direction == "bottom" then
-        table.remove(active_shaders, target_index)
+    table.remove(active_shaders, target_index)
+    local new_position
+    if direction == "top" then
+        new_position = 1
+    elseif direction == "bottom" then
+        new_position = #active_shaders + 1
+    elseif direction == "up" then
+        new_position = target_index - 1
+    elseif direction == "down" then
+        new_position = target_index + 1
+    elseif tonumber(direction) then
+        new_position = tonumber(direction)
+    end
 
-        if direction == "top" then
-            table.insert(active_shaders, 1, shader)
+    table.insert(active_shaders, math.max(1, math.min(new_position, #active_shaders + 1)), shader)
+
+    local new_shaders = {}
+    local active_idx = 1
+    for i, current_shader in ipairs(current_shaders) do
+        if active_shaders[current_shader] then
+            new_shaders[i] = active_shaders[active_idx]
+            active_idx = active_idx + 1
         else
-            table.insert(active_shaders, #active_shaders + 1, shader)
+            new_shaders[i] = current_shader
         end
-
-        new_shaders = {}
-        local active_idx = 1
-        for i, current_shader in ipairs(current_shaders) do
-            if active_shaders[current_shader] then
-                new_shaders[i] = active_shaders[active_idx]
-                active_idx = active_idx + 1
-            else
-                new_shaders[i] = current_shader
-            end
-        end
-    else
-        local swap_index = -1
-        local shader_original_index = active_indices[shader]
-        if direction == "up" then
-            for i = shader_original_index - 1, 1, -1 do
-                if active_shaders[current_shaders[i]] then
-                    swap_index = i
-                    break
-                end
-            end
-        elseif direction == "down" then
-            for i = shader_original_index + 1, #current_shaders do
-                if active_shaders[current_shaders[i]] then
-                    swap_index = i
-                    break
-                end
-            end
-        end
-
-        if swap_index == -1 then
-            return
-        end
-
-        new_shaders[shader_original_index], new_shaders[swap_index] = new_shaders[swap_index],
-            new_shaders[shader_original_index]
     end
 
     mp.set_property_native("glsl-shaders", new_shaders)
-end)
+end
+mp.register_script_message("move-shader", move_shader)
 
 local function create_shader_menu()
     local current_shaders = current_property["glsl-shaders"]
@@ -909,7 +1110,7 @@ local function create_shader_menu()
 
     local profile_match = false
     local function create_shader_profile_item(name, profile_shader_list)
-        local is_active = compare_shaders(active_shaders, profile_shader_list)
+        local is_active = compare_shaders(active_shaders, get_active_shaders(profile_shader_list))
 
         if is_active then
             profile_match = true
@@ -969,7 +1170,10 @@ local function create_shader_menu()
 
     local active_shader_group = {
         title = "Active",
-        items = {}
+        items = {},
+        footnote = "Paste path to toggle. ctrl+up/down/pgup/pgdn/home/end to reorder.",
+        on_move = "callback",
+        on_paste = "callback"
     }
 
     for i, active_shader in ipairs(active_shaders) do
@@ -1002,58 +1206,66 @@ local function create_shader_menu()
     }
 end
 
--- Video sync
-local function create_video_sync_menu()
-    local video_sync_options = {{
-        name = "Audio",
-        value = "audio"
-    }, {
-        name = "Display resample",
-        value = "display-resample"
-    }, {
-        name = "Display resample (vdrop)",
-        value = "display-resample-vdrop"
-    }, {
-        name = "Display resample (desync)",
-        value = "display-resample-desync"
-    }, {
-        name = "Display (tempo)",
-        value = "display-tempo"
-    }, {
-        name = "Display (vdrop)",
-        value = "display-vdrop"
-    }, {
-        name = "Display (adrop)",
-        value = "display-adrop"
-    }, {
-        name = "Display (desync)",
-        value = "display-desync"
-    }, {
-        name = "Desync",
-        value = "desync"
-    }}
+-- Video output
+local video_output_options = {{
+    name = "GPU",
+    value = "gpu"
+}, {
+    name = "GPU Next",
+    value = "gpu-next"
+}}
 
+local function create_video_output_menu()
+    return create_property_selection("Video output", "vo", video_output_options)
+end
+
+-- Video sync
+local video_sync_options = {{
+    name = "Audio",
+    value = "audio"
+}, {
+    name = "Display resample",
+    value = "display-resample"
+}, {
+    name = "Display resample (vdrop)",
+    value = "display-resample-vdrop"
+}, {
+    name = "Display resample (desync)",
+    value = "display-resample-desync"
+}, {
+    name = "Display (tempo)",
+    value = "display-tempo"
+}, {
+    name = "Display (vdrop)",
+    value = "display-vdrop"
+}, {
+    name = "Display (adrop)",
+    value = "display-adrop"
+}, {
+    name = "Display (desync)",
+    value = "display-desync"
+}, {
+    name = "Desync",
+    value = "desync"
+}}
+
+local function create_video_sync_menu()
     return create_property_selection("Video sync", "video-sync", video_sync_options)
 end
 
+local menu_data
 local function create_menu_data()
     local menu_items = {}
 
     table.insert(menu_items, create_aspect_menu())
     table.insert(menu_items, create_deband_menu())
     table.insert(menu_items, create_color_menu())
-    table.insert(menu_items, create_property_selection("Deinterlace", "deinterlace", {{
-        name = "Off",
-        value = "no"
-    }, {
-        name = "On",
-        value = "yes"
-    }, {
-        name = "Auto",
-        value = "auto"
-    }}))
+    table.insert(menu_items, create_deinterlace_menu())
+    table.insert(menu_items, create_dither_menu())
+    table.insert(menu_items, create_hwdec_menu())
     table.insert(menu_items, create_scale_menu())
     table.insert(menu_items, create_shader_menu())
+    table.insert(menu_items, create_video_output_menu())
     table.insert(menu_items, create_video_sync_menu())
     table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
 
@@ -1073,7 +1285,8 @@ local function update_menu()
         debounce_timer:kill()
     end
     debounce_timer = mp.add_timeout(0.001, function()
-        mp.commandv("script-message-to", "uosc", "update-menu", mp.utils.format_json(create_menu_data()))
+        menu_data = mp.utils.format_json(create_menu_data())
+        mp.commandv("script-message-to", "uosc", "update-menu", menu_data)
         debounce_timer = nil
     end)
 end
@@ -1089,19 +1302,36 @@ end)
 
 mp.register_script_message("menu-event", function(json)
     local event = mp.utils.parse_json(json)
+
     if event.type == "activate" then
-        if event.action ~= nil then
-            if event.shift and event.action[2] then
-                mp.command(event.action[2])
-            else
-                mp.command(event.action[1])
-            end
-        elseif event.value ~= nil then
+        if event.action then
+            mp.command(event.action)
+        elseif event.value and type(event.value) ~= "table" then
             mp.command(event.value)
+        end
+    end
+
+    if event.type == "key" then
+        if type(event.selected_item.value) == "table" then
+            if event.id == "ctrl+right" then
+                mp.command(event.selected_item.value[1])
+            elseif event.id == "ctrl+left" then
+                mp.command(event.selected_item.value[2])
+            end
+        end
+    end
+
+    if event.menu_id == "Shaders > Active" then
+        if event.type == "move" then
+            move_shader(event.from_index, event.to_index)
+        end
+        if event.type == "paste" then
+            toggle_shader(event.value:sub(1, 1) == "~" and event.value or
+                              event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
         end
     end
 end)
 
 mp.add_key_binding(nil, "open-menu", function()
-    mp.commandv("script-message-to", "uosc", "open-menu", mp.utils.format_json(create_menu_data()))
+    mp.commandv("script-message-to", "uosc", "open-menu", menu_data)
 end)
