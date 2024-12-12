@@ -1,23 +1,4 @@
-local options = {
-    shader_path = "~~/shaders",
-    shader_profiles = "",
-    include_default_shader_profile = true,
-    default_shader_profile_name = "Default",
-    include_custom_shader_profile = true,
-
-    deband_profiles = "",
-    include_default_deband_profile = true,
-    default_deband_profile_name = "Default",
-    include_custom_deband_profile = true,
-
-    color_profiles = "",
-    include_default_color_profile = true,
-    default_color_profile_name = "Default",
-    include_custom_color_profile = true,
-
-    aspect_profiles = "16:9,4:3,2.35:1",
-    include_custom_aspect_profile = true
-}
+local options = {}
 
 require("mp.options").read_options(options, "uosc-subtitle-settings")
 mp.utils = require("mp.utils")
