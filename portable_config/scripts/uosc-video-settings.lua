@@ -130,13 +130,19 @@ mp.register_script_message("adjust-property-number", function(property, incremen
                         increment = -1
                     end
                 end
-
             end
         end
     end
 
     local new_value = current + increment
-    new_value = math.max(min, math.min(max, new_value))
+    if string_number_conversions and tonumber(current_property[property]) then
+        if new_value < 0 then
+            new_value = 0
+        end
+    else
+        new_value = math.max(min, math.min(max, new_value))
+    end
+
     mp.set_property(property, new_value)
 end)
 
@@ -185,7 +191,7 @@ local function create_property_selection(name, property, options, off_or_default
     }
 end
 
-local function create_property_number_adjustment(name, property, increment, large_increment, min, max,
+local function create_property_number_adjustment(name, property, increment, min, max,
     string_number_conversions, value_name_conversions)
     local function create_adjustment_actions()
         return {{
@@ -368,10 +374,10 @@ local function create_deband_menu()
     end
 
     table.insert(deband_items, create_property_toggle("Enabled", "deband"))
-    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 8, 0, 16))
-    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 8, 0, 4096))
-    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 8, 1, 64))
-    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 8, 0, 4096))
+    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 0, 16))
+    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 0, 4096))
+    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 1, 64))
+    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 0, 4096))
 
     return {
         title = "Deband",
@@ -485,7 +491,7 @@ local function create_color_menu()
 
     for _, prop in ipairs({"brightness", "contrast", "saturation", "gamma", "hue"}) do
         table.insert(color_items,
-            create_property_number_adjustment(prop:gsub("^%l", string.upper), prop, .25, 1, -100, 100))
+            create_property_number_adjustment(prop:gsub("^%l", string.upper), prop, 0.25, -100, 100))
     end
 
     return {
@@ -563,11 +569,11 @@ local function create_dither_menu()
     table.insert(dither_items, create_property_selection("Dither", "dither", dither_options))
     table.insert(dither_items, create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options))
     table.insert(dither_items, create_property_toggle("Temporal dither", "temporal-dither"))
-    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, 4, -1, 16,
+    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16,
         "no:-1,auto:0", "no:Off,auto:Auto"))
-    table.insert(dither_items, create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 2, 8))
+    table.insert(dither_items, create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8))
     table.insert(dither_items,
-        create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 8, 1, 128))
+        create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1, 128))
     return {
         title = "Dither",
         items = dither_items
@@ -843,14 +849,14 @@ local function create_scale_number_adjustments(property)
     local scale_number_adjustments = {}
 
     table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Antiring", property .. "-antiring", .005, .25, 0, 1))
-    table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005, .25, 0))
+        create_property_number_adjustment("Antiring", property .. "-antiring", .005, 0, 1))
+    table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005))
     table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Clamp", property .. "-clamp", .005, .25, 0, 1))
+        create_property_number_adjustment("Clamp", property .. "-clamp", .005, 0, 1))
     table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Radius", property .. "-radius", .005, .25, .5, 16))
+        create_property_number_adjustment("Radius", property .. "-radius", .005, .5, 16))
     table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Taper", property .. "-taper", .005, .25, 0, 1))
+        create_property_number_adjustment("Taper", property .. "-taper", .005, 0, 1))
 
     return scale_number_adjustments
 end
