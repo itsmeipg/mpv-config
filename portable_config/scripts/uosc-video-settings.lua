@@ -189,17 +189,15 @@ local function create_property_number_adjustment(name, property, increment, larg
     string_number_conversions, value_name_conversions)
     local function create_adjustment_actions()
         return {{
-            name = {command("adjust-property-number", property, increment, min, max, string_number_conversions),
-                    command("adjust-property-number", property, large_increment, min, max, string_number_conversions)},
+            name = command("adjust-property-number", property, increment, min, max, string_number_conversions),
             icon = "add",
             label = "Increase by " .. increment .. "."
         }, {
-            name = {command("adjust-property-number", property, -increment, min, max, string_number_conversions),
-                    command("adjust-property-number", property, -large_increment, min, max, string_number_conversions)},
+            name = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
             icon = "remove",
             label = "Decrease by " .. increment .. "."
         }, cached_property[property] and {
-            name = {command("set-property", property, cached_property[property])},
+            name = command("set-property", property, cached_property[property]),
             icon = "cached",
             label = "Reset."
         } or nil}
@@ -966,13 +964,13 @@ local function create_shader_adjustment_actions(shader_path)
     local action_items = {}
 
     table.insert(action_items, {
-        name = {command("move-shader", shader_path, "up"), command("move-shader", shader_path, "top")},
+        name = command("move-shader", shader_path, "up"),
         icon = "arrow_upward",
         label = "Move up (ctrl+up/pgup/home)"
     })
 
     table.insert(action_items, {
-        name = {command("move-shader", shader_path, "down"), command("move-shader", shader_path, "bottom")},
+        name = command("move-shader", shader_path, "down"),
         icon = "arrow_downward",
         label = "Move down (ctrl+down/pgdn/end)"
     })
@@ -1303,14 +1301,19 @@ mp.register_script_message("menu-event", function(json)
 
     if event.type == "activate" then
         if event.action then
-            if event.shift and event.action[2] then
-                mp.command(event.action[2])
-            else
-                mp.command(event.action[1])
-            end
+            mp.command(event.action)
         elseif event.value and type(event.value) ~= "table" then
             mp.command(event.value)
         end
+    end
+
+    if event.type == "key" then
+        if event.id == "ctrl+right" then
+            mp.command(event.selected_item.value[1])
+        elseif event.id == "ctrl+left" then
+            mp.command(event.selected_item.value[2])
+        end
+
     end
 
     if event.menu_id == "Shaders > Active" then
@@ -1320,15 +1323,6 @@ mp.register_script_message("menu-event", function(json)
         if event.type == "paste" then
             toggle_shader(event.value:sub(1, 1) == "~" and event.value or
                               event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
-        end
-    end
-
-    if event.type == "key" then
-        if event.id == "ctrl+left" then
-            mp.command(event.selected_item.value[2])
-        end
-        if event.id == "ctrl+right" then
-            mp.command(event.selected_item.value[1])
         end
     end
 end)
