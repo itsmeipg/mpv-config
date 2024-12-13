@@ -139,10 +139,8 @@ mp.register_script_message("adjust-property-number", function(property, incremen
         if new_value < 0 then
             new_value = 0
         end
-    else
-        new_value = math.max(min, math.min(max, new_value))
     end
-
+    new_value = math.max(min, math.min(max, new_value))
     mp.set_property(property, new_value)
 end)
 
