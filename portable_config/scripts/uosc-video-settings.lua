@@ -1064,7 +1064,6 @@ local function move_shader(shader, direction_or_index)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders = get_active_shaders(current_shaders)
 
-    local target_index = -1
     if type(shader) == "number" then
         for i, current_shader in ipairs(current_shaders) do
             if active_shaders[shader] == current_shader then
@@ -1074,11 +1073,15 @@ local function move_shader(shader, direction_or_index)
         end
     end
 
+    local target_index
     for i, active_path in ipairs(active_shaders) do
         if active_path == shader then
             target_index = i
             break
         end
+    end
+    if not target_index then
+        return
     end
 
     table.remove(active_shaders, target_index)
@@ -1168,9 +1171,12 @@ local function create_shader_menu()
         shader_items[#shader_items].separator = true
     end
 
+    local shader_files = list_shader_files(options.shader_path)
+
     local active_shader_group = {
         title = "Active",
         items = {},
+        separator = #shader_files > 0 and true or false,
         footnote = "Paste path to toggle. ctrl+up/down/pgup/pgdn/home/end to reorder.",
         on_move = "callback",
         on_paste = "callback"
@@ -1186,12 +1192,6 @@ local function create_shader_menu()
             },
             actions = create_shader_adjustment_actions(active_shader, true)
         })
-    end
-
-    local shader_files = list_shader_files(options.shader_path)
-
-    if #shader_files > 0 then
-        active_shader_group.separator = true
     end
 
     table.insert(shader_items, active_shader_group)
@@ -1319,22 +1319,16 @@ mp.register_script_message("menu-event", function(json)
     if event.type == "activate" then
         if event.action then
             mp.command(event.action)
-        elseif type(event.value) == "table" then
-            local bind_value = get_bind_value(event.value, "activate")
-            if bind_value then
-                mp.command(bind_value)
-            end
-        elseif type(event.value) == "string" then
+        elseif event.value["activate"] then
+            mp.command(event.value["activate"])
+        else
             mp.command(event.value)
         end
     end
 
     if event.type == "key" then
-        if type(event.selected_item.value) == "table" then
-            local bind_value = get_bind_value(event.selected_item.value, event.id)
-            if bind_value then
-                mp.command(bind_value)
-            end
+        if event.selected_item.value[event.id] then
+            mp.command(event.selected_item.value[event.id])
         end
     end
 
