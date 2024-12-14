@@ -37,6 +37,7 @@ Enable interpolation for anime it always looks better with it imo.
 - Make profile selection menu.
 - Update uosc-subtitle-settings to match updates in uosc-video-settings and add subtitle profiles.
 - Update readme shaders list, scripts list, screenshots + general cleanup.
+- Consider modifiers when getting value from menu-event/callback.
 - -- Low priority --
 - Update uosc-screenshot and add more more property options + option to reset options when menu closed.
 - Add profile folders.
