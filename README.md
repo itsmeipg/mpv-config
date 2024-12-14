@@ -1,6 +1,4 @@
 # mpv-config
-![Screenshot 2024-11-22 165355](https://github.com/user-attachments/assets/d47ad2fb-5c17-41be-9730-c7f616cbcc49)
-![Screenshot 2024-11-22 173819](https://github.com/user-attachments/assets/aebc3fcb-afd8-4cf9-ae93-caf8c8648e52)
 
 # Theme
 
@@ -30,14 +28,12 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
-- Change command var name in menu event, clean up paste, put advanced below interpolation toggle.
 - Clean up shaders and scale code.
 - Fix scale-radius.
 - Add crop/rotate.
 - Make profile selection menu.
 - Update uosc-subtitle-settings to match updates in uosc-video-settings and add subtitle profiles.
 - Update readme shaders list, scripts list, screenshots + general cleanup.
-- Consider modifiers when getting value from menu-event/callback.
 - -- Low priority --
 - Update uosc-screenshot and add more more property options + option to reset options when menu closed.
 - Add profile folders.
