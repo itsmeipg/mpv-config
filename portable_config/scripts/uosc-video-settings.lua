@@ -102,36 +102,25 @@ mp.register_script_message("adjust-property-number", function(property, incremen
     local new_value
 
     if property == "video-aspect-override" then
-        if current < 0 then
-            if increment > 0 then
-                new_value = 0 + increment
-            end
+        if current < 0 and increment > 0 then
+            new_value = 0 + increment
         elseif current + increment <= 0 then
             new_value = -1
         end
     elseif property == "dither-depth" then
         if current_property[property] == "no" then
-            if increment > 0 then
-                new_value = 0
-            else
-                new_value = -1
-            end
+            new_value = increment > 0 and 0 or -1
         elseif current_property[property] == "auto" then
-            if increment < 0 then
-                new_value = -1
-            else
-                new_value = 0 + increment
-            end
+            new_value = increment < 0 and -1 or 0 + increment
         elseif current + increment < 0 then
             new_value = 0
         end
     end
 
     if not new_value then
-        new_value = current + increment
+        new_value = math.max(min, math.min(max, current + increment))
     end
 
-    new_value = math.max(min, math.min(max, new_value))
     mp.set_property(property, new_value)
 end)
 
@@ -199,7 +188,7 @@ local function create_property_number_adjustment(name, property, increment, min,
 
     local function create_hint()
         if property == "video-aspect-override" then
-            if tonumber(current_property[property]) == -1 then
+            if tonumber(current_property[property]) <= 0 then
                 return "Original"
             end
         elseif property == "dither-depth" then
@@ -220,8 +209,8 @@ local function create_property_number_adjustment(name, property, increment, min,
         hint = create_hint(),
         actions = create_adjustment_actions(),
         value = {
-            ["ctrl+left"] = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
-            ["ctrl+right"] = command("adjust-property-number", property, increment, min, max, string_number_conversions),
+            ["ctrl+left"] = command("adjust-property-number", property, -increment, min, max),
+            ["ctrl+right"] = command("adjust-property-number", property, increment, min, max),
             ["del"] = command("set-property", property, cached_property[property])
         },
         actions_place = "outside"
@@ -1080,7 +1069,7 @@ local function toggle_shader(shader_path)
 end
 mp.register_script_message("toggle-shader", toggle_shader)
 
-local function move_shader(shader, direction)
+local function move_shader(shader, direction_or_index)
     local current_shaders = current_property["glsl-shaders"]
     local active_shaders, active_indices = get_active_shaders(current_shaders)
 
@@ -1103,16 +1092,12 @@ local function move_shader(shader, direction)
 
     table.remove(active_shaders, target_index)
     local new_position
-    if direction == "top" then
-        new_position = 1
-    elseif direction == "bottom" then
-        new_position = #active_shaders + 1
-    elseif direction == "up" then
+    if direction_or_index == "up" then
         new_position = target_index - 1
-    elseif direction == "down" then
+    elseif direction_or_index == "down" then
         new_position = target_index + 1
-    elseif tonumber(direction) then
-        new_position = tonumber(direction)
+    elseif tonumber(direction_or_index) then
+        new_position = tonumber(direction_or_index)
     end
 
     table.insert(active_shaders, math.max(1, math.min(new_position, #active_shaders + 1)), shader)
@@ -1166,7 +1151,8 @@ local function create_shader_menu()
                 table.insert(profile_shader_list, shader)
             end
 
-            local is_default = compare_shaders(profile_shader_list, default_property["glsl-shaders"])
+            local is_default = compare_shaders(get_active_shaders(profile_shader_list),
+                get_active_shaders(default_property["glsl-shaders"]))
 
             if is_default then
                 default_profile_override = true
@@ -1292,12 +1278,18 @@ local function create_menu_data()
     table.insert(menu_items, create_deband_menu())
     table.insert(menu_items, create_color_menu())
     table.insert(menu_items, create_shader_menu())
-    table.insert(menu_items, {
+    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
+
+    local advanced_items = {
         title = "Advanced",
         items = {create_deinterlace_menu(), create_dither_menu(), create_hwdec_menu(), create_scale_menu(),
                  create_video_output_menu(), create_video_sync_menu()}
-    })
-    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
+    }
+
+    if #menu_items > 0 and #advanced_items.items > 0 then
+        menu_items[#menu_items].separator = true
+        table.insert(menu_items, advanced_items)
+    end
 
     return {
         type = "video_settings",
@@ -1344,23 +1336,21 @@ mp.register_script_message("menu-event", function(json)
     if event.type == "activate" then
         if event.action then
             mp.command(event.action)
-        elseif event.value then
-            if type(event.value) == "table" then
-                local command = get_bind_value(event.value, "activate")
-                if command then
-                    mp.command(command)
-                end
-            else
-                mp.command(event.value)
+        elseif type(event.value) == "table" then
+            local bind_value = get_bind_value(event.value, "activate")
+            if bind_value then
+                mp.command(bind_value)
             end
+        elseif type(event.value) == "string" then
+            mp.command(event.value)
         end
     end
 
     if event.type == "key" then
         if type(event.selected_item.value) == "table" then
-            local command = get_bind_value(event.selected_item.value, event.id)
-            if command then
-                mp.command(command)
+            local bind_value = get_bind_value(event.selected_item.value, event.id)
+            if bind_value then
+                mp.command(bind_value)
             end
         end
     end
@@ -1370,8 +1360,7 @@ mp.register_script_message("menu-event", function(json)
             move_shader(event.from_index, event.to_index)
         end
         if event.type == "paste" then
-            toggle_shader(event.value:sub(1, 1) == "~" and event.value or
-                              event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
+            toggle_shader(event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
         end
     end
 end)
