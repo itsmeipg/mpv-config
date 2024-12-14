@@ -231,6 +231,7 @@ local function create_aspect_menu()
 
         if is_active then
             profile_match = true
+            cached_property["video-aspect-override"] = profile_aspect_value
         end
 
         return {
