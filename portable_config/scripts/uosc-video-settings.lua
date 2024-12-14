@@ -284,7 +284,7 @@ local function create_aspect_menu()
     end
 
     table.insert(aspect_items,
-        create_property_number_adjustment("Video aspect override", "video-aspect-override", 0.05, -1))
+        create_property_number_adjustment("Video aspect override", "video-aspect-override", 0.05, -1, 10))
     return {
         title = "Aspect override",
         items = aspect_items
