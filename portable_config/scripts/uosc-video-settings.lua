@@ -1306,14 +1306,6 @@ loop_through_properties(properties, function(name, use_native)
     mp.observe_property(name, use_native and "native" or "string", update_property)
 end)
 
-local function get_bind_value(table, target_bind)
-    for bind, value in pairs(table) do
-        if bind == target_bind then
-            return value
-        end
-    end
-end
-
 mp.register_script_message("menu-event", function(json)
     local event = mp.utils.parse_json(json)
 
