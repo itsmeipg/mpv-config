@@ -30,15 +30,17 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
-- Clean up profile code
-- Fix dither 16+ val
-- Differentiate item actions between active shaders group submenu and listed shader files.
-----------------------------
-- Add profile folders.
-- Add gpu-api/context.
+- Change command var name in menu event, clean up paste, put advanced below interpolation toggle.
+- Clean up shaders and scale code.
+- Fix scale-radius.
 - Add crop/rotate.
 - Make profile selection menu.
+- Update uosc-subtitle-settings to match updates in uosc-video-settings and add subtitle profiles.
+- Update uosc-screenshot and add more options + more property options and option to reset options when menu closed.
+- Update readme shaders list, scripts list, screenshots + general cleanup.
 - -- Low priority --
+- Add profile folders.
+- Add gpu-api/context.
 - Add support to apply shader twice/thrice/etc.
 - Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Test if audio-normalize-downmix has an effect on sofalizer.
@@ -47,6 +49,8 @@ Enable interpolation for anime it always looks better with it imo.
 - Add film grain strengths.
 - Replace context menu with a custom main menu, combining all my custom uosc scripts.
 - Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
+- Experiment with auto-save-state script stuff and maybe add more options
+- Experiment with making a yt-dlp.conf
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
