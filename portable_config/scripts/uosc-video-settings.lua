@@ -78,33 +78,17 @@ local function command(...)
     return table.concat(parts, " ")
 end
 
-local function serialize(tbl)
-    local result = "{"
-    for i, v in ipairs(tbl) do
-        result = result .. string.format("%q", v)
-        if i < #tbl then
-            result = result .. ","
-        end
-    end
-    return result .. "}"
-end
-
-local function deserialize(str)
-    local fn = load("return " .. str)
-    return fn and fn() or {}
-end
-
 mp.register_script_message("toggle-property", function(property)
     mp.set_property(property, current_property[property] == "yes" and "no" or "yes")
 end)
 
-mp.register_script_message("set-property", function(property, value)
-    mp.set_property(property, value)
-end)
-
-mp.register_script_message("set-property-list", function(property, value)
-    value = deserialize(value)
-    mp.set_property_native(property, value)
+mp.register_script_message("set-property", function(property, ...)
+    local args = {...}
+    if #args == 1 then
+        mp.set_property(property, args[1])
+    else
+        mp.set_property_native(property, args)
+    end
 end)
 
 mp.register_script_message("adjust-property-number", function(property, increment, min, max, string_number_conversions)
@@ -195,15 +179,15 @@ local function create_property_number_adjustment(name, property, increment, min,
         return {{
             name = command("adjust-property-number", property, increment, min, max, string_number_conversions),
             icon = "add",
-            label = "Increase by " .. increment .. "."
+            label = "Increase (ctrl+right)"
         }, {
             name = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
             icon = "remove",
-            label = "Decrease by " .. increment .. "."
+            label = "Decrease (ctrl+left)"
         }, cached_property[property] and {
             name = command("set-property", property, cached_property[property]),
             icon = "cached",
-            label = "Reset."
+            label = "Reset (del)"
         } or nil}
     end
 
@@ -227,9 +211,11 @@ local function create_property_number_adjustment(name, property, increment, min,
         title = name,
         hint = create_hint(),
         actions = create_adjustment_actions(),
-        value = {command("adjust-property-number", property, increment, min, max, string_number_conversions),
-                 command("adjust-property-number", property, -increment, min, max, string_number_conversions),
-                 command("set-property", property, cached_property[property])},
+        value = {
+            ["ctrl+left"] = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
+            ["ctrl+right"] = command("adjust-property-number", property, increment, min, max, string_number_conversions),
+            ["del"] = command("set-property", property, cached_property[property])
+        },
         actions_place = "outside"
     }
 end
@@ -962,21 +948,30 @@ local function get_active_shaders(current_shaders)
     return active_shaders, active_indices
 end
 
-local function create_shader_adjustment_actions(shader_path)
+local function create_shader_adjustment_actions(shader_path, active_shader_group)
     local action_items = {}
 
     table.insert(action_items, {
         name = command("move-shader", shader_path, "up"),
         icon = "arrow_upward",
-        label = "Move up (ctrl+up/pgup/home)"
+        label = active_shader_group and "Move up (ctrl+up/pgup/home)" or "Move up (ctrl+left)",
+        filter_hidden = active_shader_group and true or false
     })
 
     table.insert(action_items, {
         name = command("move-shader", shader_path, "down"),
         icon = "arrow_downward",
-        label = "Move down (ctrl+down/pgdn/end)"
+        label = active_shader_group and "Move down (ctrl+down/pgdn/end)" or "Move down (ctrl+right)",
+        filter_hidden = active_shader_group and true or false
     })
 
+    if active_shader_group then
+        table.insert(action_items, {
+            name = command("toggle-shader", shader_path),
+            icon = "delete",
+            label = "Remove (del)"
+        })
+    end
     return action_items
 end
 
@@ -1023,7 +1018,11 @@ local function list_shader_files(path, option_path)
                     title = shader,
                     hint = active_shader_index and tostring(active_shader_index),
                     icon = active_shader_index and "check_box" or "check_box_outline_blank",
-                    value = command("toggle-shader", shader_file_path),
+                    value = {
+                        ["activate"] = command("toggle-shader", shader_file_path),
+                        ["ctrl+left"] = command("move-shader", shader_file_path, "up"),
+                        ["ctrl+right"] = command("move-shader", shader_file_path, "down")
+                    },
                     actions = active_shader_index and create_shader_adjustment_actions(shader_file_path),
                     actions_place = "outside"
                 })
@@ -1118,7 +1117,7 @@ local function create_shader_menu()
             title = name,
             active = is_active,
             value = is_active and command("clear-shaders") or
-                command("set-property-list", "glsl-shaders", serialize(profile_shader_list))
+                command("set-property", "glsl-shaders", table.unpack(profile_shader_list))
         }
     end
 
@@ -1179,10 +1178,10 @@ local function create_shader_menu()
         table.insert(active_shader_group.items, {
             title = shader,
             hint = tostring(i),
-            icon = "check_box",
-            value = command("toggle-shader", active_shader),
-            actions = create_shader_adjustment_actions(active_shader),
-            actions_place = "outside"
+            value = {
+                ["del"] = command("toggle-shader", active_shader)
+            },
+            actions = create_shader_adjustment_actions(active_shader, true)
         })
     end
 
@@ -1301,22 +1300,37 @@ end)
 mp.register_script_message("menu-event", function(json)
     local event = mp.utils.parse_json(json)
 
+    local function get_bind_value(table, target_bind)
+        for bind, value in pairs(table) do
+            if bind == target_bind then
+                return value
+            end
+        end
+    end
+
     if event.type == "activate" then
         if event.action then
             mp.command(event.action)
-        elseif event.value and type(event.value) ~= "table" then
-            mp.command(event.value)
+        elseif event.value then
+            if type(event.value) == "table" then
+                local command = get_bind_value(event.value, "activate")
+                if command then
+                    mp.command(command)
+                end
+            else
+                mp.command(event.value)
+            end
         end
     end
 
     if event.type == "key" then
         if type(event.selected_item.value) == "table" then
-            if event.id == "ctrl+right" then
-                mp.command(event.selected_item.value[1])
-            elseif event.id == "ctrl+left" then
-                mp.command(event.selected_item.value[2])
+            local command = get_bind_value(event.selected_item.value, event.id)
+            if command then
+                mp.command(command)
             end
         end
+        print(event.id)
     end
 
     if event.menu_id == "Shaders > Active" then
