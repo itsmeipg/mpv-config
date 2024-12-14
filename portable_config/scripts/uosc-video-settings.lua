@@ -16,6 +16,8 @@ local options = {
     include_custom_color_profile = true,
 
     aspect_profiles = "16:9,4:3,2.35:1",
+    include_default_aspect_profile = true,
+    default_aspect_profile_name = "Default",
     include_custom_aspect_profile = true
 }
 
@@ -91,39 +93,44 @@ mp.register_script_message("set-property", function(property, ...)
     end
 end)
 
-mp.register_script_message("adjust-property-number", function(property, increment, min, max, string_number_conversions)
+mp.register_script_message("adjust-property-number", function(property, increment, min, max)
     min = tonumber(min) or -math.huge
     max = tonumber(max) or math.huge
     increment = tonumber(increment)
 
     local current = tonumber(current_property[property])
-    if not current and string_number_conversions then
-        for string_number_conversion in string_number_conversions:gmatch("([^,]+)") do
-            local name, value = string_number_conversion:match("([^:]+):([^:]+)")
+    local new_value
 
-            if name == current_property[property] then
-                current = tonumber(value)
-                if current < 0 then
-                    if increment > 0 then
-                        increment = 1
-                    else
-                        increment = -1
-                    end
-                elseif current == 0 then
-                    if increment < 0 then
-                        increment = -1
-                    end
-                end
+    if property == "video-aspect-override" then
+        if current < 0 then
+            if increment > 0 then
+                new_value = 0 + increment
             end
+        elseif current + increment <= 0 then
+            new_value = -1
         end
-    end
-
-    local new_value = current + increment
-    if string_number_conversions and tonumber(current_property[property]) then
-        if new_value < 0 then
+    elseif property == "dither-depth" then
+        if current_property[property] == "no" then
+            if increment > 0 then
+                new_value = 0
+            else
+                new_value = -1
+            end
+        elseif current_property[property] == "auto" then
+            if increment < 0 then
+                new_value = -1
+            else
+                new_value = 0 + increment
+            end
+        elseif current + increment < 0 then
             new_value = 0
         end
     end
+
+    if not new_value then
+        new_value = current + increment
+    end
+
     new_value = math.max(min, math.min(max, new_value))
     mp.set_property(property, new_value)
 end)
@@ -173,17 +180,16 @@ local function create_property_selection(name, property, options, off_or_default
     }
 end
 
-local function create_property_number_adjustment(name, property, increment, min, max, string_number_conversions,
-    value_name_conversions)
+local function create_property_number_adjustment(name, property, increment, min, max)
     local function create_adjustment_actions()
         return {{
-            name = command("adjust-property-number", property, increment, min, max, string_number_conversions),
-            icon = "add",
-            label = "Increase (ctrl+right)"
-        }, {
-            name = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
+            name = command("adjust-property-number", property, -increment, min, max),
             icon = "remove",
             label = "Decrease (ctrl+left)"
+        }, {
+            name = command("adjust-property-number", property, increment, min, max),
+            icon = "add",
+            label = "Increase (ctrl+right)"
         }, cached_property[property] and {
             name = command("set-property", property, cached_property[property]),
             icon = "cached",
@@ -192,13 +198,15 @@ local function create_property_number_adjustment(name, property, increment, min,
     end
 
     local function create_hint()
-        if value_name_conversions then
-            for value_name_conversion in value_name_conversions:gmatch("([^,]+)") do
-                local value, name = value_name_conversion:match("([^:]+):([^:]+)")
-
-                if value == current_property[property] then
-                    return name
-                end
+        if property == "video-aspect-override" then
+            if tonumber(current_property[property]) == -1 then
+                return "Original"
+            end
+        elseif property == "dither-depth" then
+            if current_property[property] == "no" then
+                return "Off"
+            elseif current_property[property] == "auto" then
+                return "Auto"
             end
         end
 
@@ -229,24 +237,45 @@ local function create_aspect_menu()
     local aspect_profiles = {}
 
     local profile_match = false
-    for aspect_profile in options.aspect_profiles:gmatch("([^,]+)") do
-        local aspect = aspect_profile
-        local w, h = aspect:match("([^:]+):([^:]+)")
-        local is_active = w and h and math.abs(current_aspect_value - (tonumber(w) / tonumber(h))) < 0.001
-
-        table.insert(aspect_profiles, {
-            title = aspect,
-            active = is_active,
-            value = is_active and command("set-property", "video-aspect-override", "-1") or
-                command("set-property", "video-aspect-override", aspect)
-        })
+    local function create_aspect_profile_item(name, profile_aspect_value)
+        local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
 
         if is_active then
             profile_match = true
         end
+
+        return {
+            title = name,
+            active = is_active,
+            value = is_active and command("set-property", "video-aspect-override", "-1") or
+                command("set-property", "video-aspect-override", tostring(profile_aspect_value))
+        }
+
     end
 
-    if options.include_custom_aspect_profile then
+    local default_profile_override = false
+    for aspect_profile in options.aspect_profiles:gmatch("([^,]+)") do
+        local profile_width, profile_height = aspect_profile:match("([^:]+):([^:]+)")
+        local profile_aspect_value = tonumber(profile_width) / tonumber(profile_height)
+
+        if profile_width and profile_height then
+            local is_default = math.abs(tonumber(default_property["video-aspect-override"]) - profile_aspect_value) <
+                                   0.001
+
+            if is_default then
+                default_profile_override = true
+            end
+
+            table.insert(aspect_profiles, create_aspect_profile_item(aspect_profile, profile_aspect_value))
+        end
+    end
+
+    if not default_profile_override and options.include_default_aspect_profile then
+        table.insert(aspect_profiles, 1, create_aspect_profile_item(options.default_aspect_profile_name,
+            tonumber(default_property["video-aspect-override"])))
+    end
+
+    if not default_profile_override and options.include_custom_aspect_profile then
         table.insert(aspect_profiles, {
             title = "Custom",
             active = not is_original and not profile_match,
@@ -260,6 +289,12 @@ local function create_aspect_menu()
         table.insert(aspect_items, profile)
     end
 
+    if #aspect_items > 0 then
+        aspect_items[#aspect_items].separator = true
+    end
+
+    table.insert(aspect_items,
+        create_property_number_adjustment("Video aspect override", "video-aspect-override", 0.05, -1))
     return {
         title = "Aspect override",
         items = aspect_items
@@ -553,8 +588,7 @@ local function create_dither_menu()
     table.insert(dither_items, create_property_selection("Dither", "dither", dither_options))
     table.insert(dither_items, create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options))
     table.insert(dither_items, create_property_toggle("Temporal dither", "temporal-dither"))
-    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16,
-        "no:-1,auto:0", "no:Off,auto:Auto"))
+    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16))
     table.insert(dither_items, create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8))
     table.insert(dither_items,
         create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1, 128))
@@ -1257,13 +1291,12 @@ local function create_menu_data()
     table.insert(menu_items, create_aspect_menu())
     table.insert(menu_items, create_deband_menu())
     table.insert(menu_items, create_color_menu())
-    table.insert(menu_items, create_deinterlace_menu())
-    table.insert(menu_items, create_dither_menu())
-    table.insert(menu_items, create_hwdec_menu())
-    table.insert(menu_items, create_scale_menu())
     table.insert(menu_items, create_shader_menu())
-    table.insert(menu_items, create_video_output_menu())
-    table.insert(menu_items, create_video_sync_menu())
+    table.insert(menu_items, {
+        title = "Advanced",
+        items = {create_deinterlace_menu(), create_dither_menu(), create_hwdec_menu(), create_scale_menu(),
+                 create_video_output_menu(), create_video_sync_menu()}
+    })
     table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
 
     return {
@@ -1297,16 +1330,16 @@ loop_through_properties(properties, function(name, use_native)
     mp.observe_property(name, use_native and "native" or "string", update_property)
 end)
 
-mp.register_script_message("menu-event", function(json)
-    local event = mp.utils.parse_json(json)
-
-    local function get_bind_value(table, target_bind)
-        for bind, value in pairs(table) do
-            if bind == target_bind then
-                return value
-            end
+local function get_bind_value(table, target_bind)
+    for bind, value in pairs(table) do
+        if bind == target_bind then
+            return value
         end
     end
+end
+
+mp.register_script_message("menu-event", function(json)
+    local event = mp.utils.parse_json(json)
 
     if event.type == "activate" then
         if event.action then
@@ -1330,7 +1363,6 @@ mp.register_script_message("menu-event", function(json)
                 mp.command(command)
             end
         end
-        print(event.id)
     end
 
     if event.menu_id == "Shaders > Active" then
