@@ -1321,7 +1321,7 @@ mp.register_script_message("menu-event", function(json)
             mp.command(event.action)
         elseif event.value["activate"] then
             mp.command(event.value["activate"])
-        else
+        elseif type(event.value) == "string" then
             mp.command(event.value)
         end
     end
@@ -1335,8 +1335,7 @@ mp.register_script_message("menu-event", function(json)
     if event.menu_id == "Shaders > Active" then
         if event.type == "move" then
             move_shader(event.from_index, event.to_index)
-        end
-        if event.type == "paste" then
+        elseif event.type == "paste" then
             toggle_shader(event.value:gsub('^[\'"]', ''):gsub('[\'"]$', ''))
         end
     end
