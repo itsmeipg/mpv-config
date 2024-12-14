@@ -36,9 +36,9 @@ Enable interpolation for anime it always looks better with it imo.
 - Add crop/rotate.
 - Make profile selection menu.
 - Update uosc-subtitle-settings to match updates in uosc-video-settings and add subtitle profiles.
-- Update uosc-screenshot and add more options + more property options and option to reset options when menu closed.
 - Update readme shaders list, scripts list, screenshots + general cleanup.
 - -- Low priority --
+- Update uosc-screenshot and add more more property options + option to reset options when menu closed.
 - Add profile folders.
 - Add gpu-api/context.
 - Add support to apply shader twice/thrice/etc.
