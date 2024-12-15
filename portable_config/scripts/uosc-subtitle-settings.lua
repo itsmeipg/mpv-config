@@ -1,7 +1,7 @@
 local options = {}
 
 require("mp.options").read_options(options, "uosc-subtitle-settings")
-mp.utils = require("mp.utils")
+local utils = require("mp.utils")
 
 local properties = {
     position = {"sub-pos", "secondary-sub-pos"},
@@ -45,69 +45,29 @@ local function command(...)
     return table.concat(parts, " ")
 end
 
-local function serialize(tbl)
-    local result = "{"
-    for i, v in ipairs(tbl) do
-        result = result .. string.format("%q", v)
-        if i < #tbl then
-            result = result .. ","
-        end
-    end
-    return result .. "}"
-end
-
-local function deserialize(str)
-    local fn = load("return " .. str)
-    return fn and fn() or {}
-end
-
 mp.register_script_message("toggle-property", function(property)
     mp.set_property(property, current_property[property] == "yes" and "no" or "yes")
 end)
 
-mp.register_script_message("set-property", function(property, value)
-    mp.set_property(property, value)
+mp.register_script_message("set-property", function(property, ...)
+    local args = {...}
+    if #args == 1 then
+        mp.set_property(property, args[1])
+    else
+        mp.set_property_native(property, args)
+    end
 end)
 
-mp.register_script_message("set-property-list", function(property, value)
-    value = deserialize(value)
-    mp.set_property_native(property, value)
-end)
-
-mp.register_script_message("adjust-property-number", function(property, increment, min, max, string_number_conversions)
+mp.register_script_message("adjust-property-number", function(property, increment, min, max)
     min = tonumber(min) or -math.huge
     max = tonumber(max) or math.huge
     increment = tonumber(increment)
 
     local current = tonumber(current_property[property])
-    if not current and string_number_conversions then
-        for string_number_conversion in string_number_conversions:gmatch("([^,]+)") do
-            local name, value = string_number_conversion:match("([^:]+):([^:]+)")
+    local new_value
 
-            if name == current_property[property] then
-                current = tonumber(value)
-                if current < 0 then
-                    if increment > 0 then
-                        increment = 1
-                    else
-                        increment = -1
-                    end
-                elseif current == 0 then
-                    if increment < 0 then
-                        increment = -1
-                    end
-                end
-            end
-        end
-    end
-
-    local new_value = current + increment
-    if string_number_conversions and tonumber(current_property[property]) then
-        if new_value < 0 then
-            new_value = 0
-        end
-    else
-        new_value = math.max(min, math.min(max, new_value))
+    if not new_value then
+        new_value = math.max(min, math.min(max, current + increment))
     end
 
     mp.set_property(property, new_value)
@@ -158,35 +118,24 @@ local function create_property_selection(name, property, options, off_or_default
     }
 end
 
-local function create_property_number_adjustment(name, property, increment, min, max, string_number_conversions,
-    value_name_conversions)
+local function create_property_number_adjustment(name, property, increment, min, max)
     local function create_adjustment_actions()
         return {{
-            name = command("adjust-property-number", property, increment, min, max, string_number_conversions),
-            icon = "add",
-            label = "Increase by " .. increment .. "."
-        }, {
-            name = command("adjust-property-number", property, -increment, min, max, string_number_conversions),
+            name = command("adjust-property-number", property, -increment, min, max),
             icon = "remove",
-            label = "Decrease by " .. increment .. "."
-        }, cached_property[property] and {
+            label = "Decrease (ctrl+left)"
+        }, {
+            name = command("adjust-property-number", property, increment, min, max),
+            icon = "add",
+            label = "Increase (ctrl+right)"
+        }, {
             name = command("set-property", property, cached_property[property]),
             icon = "cached",
-            label = "Reset."
-        } or nil}
+            label = "Reset (del)"
+        }}
     end
 
     local function create_hint()
-        if value_name_conversions then
-            for value_name_conversion in value_name_conversions:gmatch("([^,]+)") do
-                local value, name = value_name_conversion:match("([^:]+):([^:]+)")
-
-                if value == current_property[property] then
-                    return name
-                end
-            end
-        end
-
         return tonumber(current_property[property]) and
                    string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or
                    current_property[property]
@@ -196,9 +145,11 @@ local function create_property_number_adjustment(name, property, increment, min,
         title = name,
         hint = create_hint(),
         actions = create_adjustment_actions(),
-        value = {command("adjust-property-number", property, increment, min, max, string_number_conversions),
-                 command("adjust-property-number", property, -increment, min, max, string_number_conversions),
-                 command("set-property", property, cached_property[property])},
+        value = {
+            ["ctrl+left"] = command("adjust-property-number", property, -increment, min, max),
+            ["ctrl+right"] = command("adjust-property-number", property, increment, min, max),
+            ["del"] = command("set-property", property, cached_property[property])
+        },
         actions_place = "outside"
     }
 end
@@ -221,10 +172,6 @@ local ass_override_options = {{
     value = "strip"
 }}
 
-local function create_ass_override_menu()
-    return create_property_selection("ASS override", "sub-ass-override", ass_override_options)
-end
-
 -- Blend
 local blend_options = {{
     name = "Off",
@@ -237,22 +184,15 @@ local blend_options = {{
     value = "video"
 }}
 
-local function create_blend_menu()
-    return create_property_selection("Blend", "blend-subtitles", blend_options)
-end
-
 local menu_data
 local function create_menu_data()
-    local menu_items = {}
-
-    table.insert(menu_items, create_ass_override_menu())
-    table.insert(menu_items, create_blend_menu())
-    table.insert(menu_items, create_property_toggle("Fix timing", "sub-fix-timing"))
-    table.insert(menu_items, create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100))
-    table.insert(menu_items,
-        create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100))
-    table.insert(menu_items, create_property_number_adjustment("Scale", "sub-scale", 0.05, 0, 100))
-    table.insert(menu_items, create_property_number_adjustment("Delay", "sub-delay", 0.05))
+    local menu_items = {create_property_selection("ASS override", "sub-ass-override", ass_override_options),
+                        create_property_selection("Blend", "blend-subtitles", blend_options),
+                        create_property_toggle("Fix timing", "sub-fix-timing"),
+                        create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
+                        create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
+                        create_property_number_adjustment("Scale", "sub-scale", 0.05, 0, 100),
+                        create_property_number_adjustment("Delay", "sub-delay", 0.05)}
 
     return {
         type = "subtitle_settings",
@@ -270,7 +210,7 @@ local function update_menu()
         debounce_timer:kill()
     end
     debounce_timer = mp.add_timeout(0.001, function()
-        menu_data = mp.utils.format_json(create_menu_data())
+        menu_data = utils.format_json(create_menu_data())
         mp.commandv("script-message-to", "uosc", "update-menu", menu_data)
         debounce_timer = nil
     end)
@@ -286,23 +226,21 @@ loop_through_properties(properties, function(name, use_native)
 end)
 
 mp.register_script_message("menu-event", function(json)
-    local event = mp.utils.parse_json(json)
+    local event = utils.parse_json(json)
 
     if event.type == "activate" then
         if event.action then
             mp.command(event.action)
-        elseif event.value and type(event.value) ~= "table" then
+        elseif event.value["activate"] then
+            mp.command(event.value["activate"])
+        elseif type(event.value) == "string" then
             mp.command(event.value)
         end
     end
 
     if event.type == "key" then
-        if type(event.selected_item.value) == "table" then
-            if event.id == "ctrl+right" then
-                mp.command(event.selected_item.value[1])
-            elseif event.id == "ctrl+left" then
-                mp.command(event.selected_item.value[2])
-            end
+        if event.selected_item.value[event.id] then
+            mp.command(event.selected_item.value[event.id])
         end
     end
 end)
@@ -310,3 +248,4 @@ end)
 mp.add_key_binding(nil, "open-menu", function()
     mp.commandv("script-message-to", "uosc", "open-menu", menu_data)
 end)
+
