@@ -512,10 +512,6 @@ local deinterlace_options = {{
     value = "auto"
 }}
 
-local function create_deinterlace_menu()
-    return create_property_selection("Deinterlace", "deinterlace", deinterlace_options)
-end
-
 -- Dither
 local dither_options = {{
     name = "Off",
@@ -655,10 +651,6 @@ local hwdec_options = {{
     name = "RKMPP",
     value = "rkmpp"
 }}
-
-local function create_hwdec_menu()
-    return create_property_selection("Hardware decoding", "hwdec", hwdec_options)
-end
 
 -- Scale
 local fixed_scale = {{
@@ -1171,10 +1163,6 @@ local video_output_options = {{
     value = "gpu-next"
 }}
 
-local function create_video_output_menu()
-    return create_property_selection("Video output", "vo", video_output_options)
-end
-
 -- Video sync
 local video_sync_options = {{
     name = "Audio",
@@ -1205,10 +1193,6 @@ local video_sync_options = {{
     value = "desync"
 }}
 
-local function create_video_sync_menu()
-    return create_property_selection("Video sync", "video-sync", video_sync_options)
-end
-
 local menu_data
 local function create_menu_data()
     local menu_items = {create_aspect_menu(), create_deband_menu(), create_color_menu(), create_shader_menu(),
@@ -1216,8 +1200,10 @@ local function create_menu_data()
 
     local advanced_items = {
         title = "Advanced",
-        items = {create_deinterlace_menu(), create_dither_menu(), create_hwdec_menu(), create_scale_menu(),
-                 create_video_output_menu(), create_video_sync_menu()}
+        items = {create_property_selection("Deinterlace", "deinterlace", deinterlace_options), create_dither_menu(),
+                 create_property_selection("Hardware decoding", "hwdec", hwdec_options), create_scale_menu(),
+                 create_property_selection("Video output", "vo", video_output_options),
+                 create_property_selection("Video sync", "video-sync", video_sync_options)}
     }
 
     if #menu_items > 0 and #advanced_items.items > 0 then
