@@ -282,6 +282,7 @@ local function create_aspect_menu()
 
     table.insert(aspect_items,
         create_property_number_adjustment("Video aspect override", "video-aspect-override", 0.05, -1, 10))
+
     return {
         title = "Aspect override",
         items = aspect_items
@@ -472,6 +473,7 @@ local function create_color_menu()
         local is_original = tonumber(current_property["brightness"]) == 0 and tonumber(current_property["contrast"]) ==
                                 0 and tonumber(current_property["saturation"]) == 0 and
                                 tonumber(current_property["gamma"]) == 0 and tonumber(current_property["hue"]) == 0
+
         table.insert(color_profile_items, {
             title = "Custom",
             active = not is_original and not profile_match,
@@ -888,11 +890,13 @@ local function compare_shaders(shaders1, shaders2)
     if #shaders1 ~= #shaders2 then
         return false
     end
+
     for i, shader in ipairs(shaders1) do
         if shader ~= shaders2[i] then
             return false
         end
     end
+
     return true
 end
 
@@ -900,10 +904,10 @@ local function file_exists(path)
     return utils.file_info(mp.command_native({"expand-path", path}))
 end
 
-local function get_active_shaders(shader_list)
+local function get_active_shaders(shaders)
     local active_shaders = {}
 
-    for i, path in ipairs(shader_list) do
+    for i, path in ipairs(shaders) do
         if file_exists(path) then
             table.insert(active_shaders, path)
         end
@@ -916,6 +920,7 @@ local function get_active_shaders(shader_list)
                     return i
                 end
             end
+
             return false
         end
     })
@@ -947,6 +952,7 @@ local function create_shader_adjustment_actions(shader_path, active_shader_group
             label = "Remove (del)"
         })
     end
+
     return action_items
 end
 
@@ -954,9 +960,11 @@ local function list_shader_files(path)
     local active_shaders = get_active_shaders(current_property["glsl-shaders"])
 
     local function list_files_recursive(path)
+        local subdirs = utils.readdir(mp.command_native({"expand-path", path}), "dirs")
+        local files = utils.readdir(mp.command_native({"expand-path", path}), "files")
+
         local dir_items = {}
 
-        local subdirs = utils.readdir(mp.command_native({"expand-path", path}), "dirs")
         if subdirs then
             for _, subdir in ipairs(subdirs) do
                 local subdir_items = list_files_recursive(utils.join_path(path, subdir))
@@ -968,7 +976,6 @@ local function list_shader_files(path)
             end
         end
 
-        local files = utils.readdir(mp.command_native({"expand-path", path}), "files")
         if files then
             local shader_file_paths = {}
             for i, shader_file in ipairs(files) do
@@ -1029,6 +1036,7 @@ local function move_shader(shader, direction_or_index)
             break
         end
     end
+
     if not target_index then
         return
     end
@@ -1040,11 +1048,11 @@ local function move_shader(shader, direction_or_index)
     table.insert(active_shaders, math.max(1, math.min(new_position, #active_shaders + 1)), shader)
 
     local new_shaders = {}
-    local active_idx = 1
+    local active_index = 1
     for i, current_shader in ipairs(current_property["glsl-shaders"]) do
         if active_shaders[current_shader] then
-            new_shaders[i] = active_shaders[active_idx]
-            active_idx = active_idx + 1
+            new_shaders[i] = active_shaders[active_index]
+            active_index = active_index + 1
         else
             new_shaders[i] = current_shader
         end
