@@ -382,11 +382,13 @@ local function create_deband_menu()
         deband_items[#deband_items].separator = true
     end
 
-    table.insert(deband_items, create_property_toggle("Enabled", "deband"))
-    table.insert(deband_items, create_property_number_adjustment("Iterations", "deband-iterations", 1, 0, 16))
-    table.insert(deband_items, create_property_number_adjustment("Threshold", "deband-threshold", 1, 0, 4096))
-    table.insert(deband_items, create_property_number_adjustment("Range", "deband-range", 1, 1, 64))
-    table.insert(deband_items, create_property_number_adjustment("Grain", "deband-grain", 1, 0, 4096))
+    for _, item in ipairs({create_property_toggle("Enabled", "deband"),
+                           create_property_number_adjustment("Iterations", "deband-iterations", 1, 0, 16),
+                           create_property_number_adjustment("Threshold", "deband-threshold", 1, 0, 4096),
+                           create_property_number_adjustment("Range", "deband-range", 1, 1, 64),
+                           create_property_number_adjustment("Grain", "deband-grain", 1, 0, 4096)}) do
+        table.insert(deband_items, item)
+    end
 
     return {
         title = "Deband",
@@ -573,18 +575,14 @@ local error_diffusion_options = {{
 }}
 
 local function create_dither_menu()
-    local dither_items = {}
-
-    table.insert(dither_items, create_property_selection("Dither", "dither", dither_options))
-    table.insert(dither_items, create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options))
-    table.insert(dither_items, create_property_toggle("Temporal dither", "temporal-dither"))
-    table.insert(dither_items, create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16))
-    table.insert(dither_items, create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8))
-    table.insert(dither_items,
-        create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1, 128))
     return {
         title = "Dither",
-        items = dither_items
+        items = {create_property_selection("Dither", "dither", dither_options),
+                 create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options),
+                 create_property_toggle("Temporal dither", "temporal-dither"),
+                 create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16),
+                 create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8),
+                 create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1, 128)}
     }
 end
 
@@ -854,78 +852,47 @@ local function get_extended_filter_windows()
 end
 
 local function create_scale_number_adjustments(property)
-    local scale_number_adjustments = {}
-
-    table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Antiring", property .. "-antiring", .005, 0, 1))
-    table.insert(scale_number_adjustments, create_property_number_adjustment("Blur", property .. "-blur", .005))
-    table.insert(scale_number_adjustments, create_property_number_adjustment("Clamp", property .. "-clamp", .005, 0, 1))
-    table.insert(scale_number_adjustments,
-        create_property_number_adjustment("Radius", property .. "-radius", .005, .5, 16))
-    table.insert(scale_number_adjustments, create_property_number_adjustment("Taper", property .. "-taper", .005, 0, 1))
-
-    return scale_number_adjustments
+    return create_property_number_adjustment("Antiring", property .. "-antiring", .005, 0, 1),
+        create_property_number_adjustment("Blur", property .. "-blur", .005),
+        create_property_number_adjustment("Clamp", property .. "-clamp", .005, 0, 1),
+        create_property_number_adjustment("Radius", property .. "-radius", .005, .5, 16),
+        create_property_number_adjustment("Taper", property .. "-taper", .005, 0, 1)
 end
 
 local function create_scale_menu()
     local scale_items = {}
 
-    local upscale = {
+    table.insert(scale_items, {
         title = "Upscale",
-        items = {}
-    }
+        items = {create_property_selection("Filters", "scale", get_scale_filters()),
+                 create_property_selection("Filters (window)", "scale-window", get_extended_filter_windows(), ""),
+                 create_scale_number_adjustments("scale")}
+    })
 
-    table.insert(upscale.items, create_property_selection("Filters", "scale", get_scale_filters()))
-    table.insert(upscale.items,
-        create_property_selection("Filters (window)", "scale-window", get_extended_filter_windows(), ""))
-    for _, value in ipairs(create_scale_number_adjustments("scale")) do
-        table.insert(upscale.items, value)
-    end
-    table.insert(scale_items, upscale)
-
-    local downscale = {
+    table.insert(scale_items, {
         title = "Downscale",
-        items = {}
-    }
+        items = {create_property_selection("Filters", "dscale", get_scale_filters(), ""),
+                 create_property_selection("Filters (window)", "dscale-window", get_extended_filter_windows(), ""),
+                 create_scale_number_adjustments("dscale")}
+    })
 
-    table.insert(downscale.items, create_property_selection("Filters", "dscale", get_scale_filters(), ""))
-    table.insert(downscale.items,
-        create_property_selection("Filters (window)", "dscale-window", get_extended_filter_windows(), ""))
-    for _, value in ipairs(create_scale_number_adjustments("dscale")) do
-        table.insert(downscale.items, value)
-    end
-    table.insert(scale_items, downscale)
-
-    local chromascale = {
+    table.insert(scale_items, {
         title = "Chromascale",
-        items = {}
-    }
-
-    table.insert(chromascale.items, create_property_selection("Filters", "cscale", get_scale_filters(), ""))
-    table.insert(chromascale.items,
-        create_property_selection("Filters (window)", "cscale-window", get_extended_filter_windows(), ""))
-    for _, value in ipairs(create_scale_number_adjustments("cscale")) do
-        table.insert(chromascale.items, value)
-    end
-    table.insert(scale_items, chromascale)
-
-    local temporalscale = {
+        items = {create_property_selection("Filters", "cscale", get_scale_filters(), ""),
+                 create_property_selection("Filters (window)", "cscale-window", get_extended_filter_windows(), ""),
+                 create_scale_number_adjustments("cscale")}
+    })
+    table.insert(scale_items, {
         title = "Temporalscale",
-        items = {}
-    }
+        items = {create_property_selection("Filters", "tscale", get_tscale_filters()),
+                 create_property_selection("Filters (window)", "tscale-window", get_extended_filter_windows(), ""),
+                 create_scale_number_adjustments("tscale")}
+    })
 
-    table.insert(temporalscale.items, create_property_selection("Filters", "tscale", get_tscale_filters()))
-    table.insert(temporalscale.items,
-        create_property_selection("Filters (window)", "tscale-window", get_extended_filter_windows(), ""))
-    for _, value in ipairs(create_scale_number_adjustments("tscale")) do
-        table.insert(temporalscale.items, value)
-    end
-    table.insert(scale_items, temporalscale)
-
-    table.insert(scale_items, create_property_toggle("Linear upscaling", "linear-upscaling"))
-    table.insert(scale_items, create_property_toggle("Correct downscaling", "correct-downscaling"))
-    table.insert(scale_items, create_property_toggle("Linear downscaling", "linear-downscaling"))
-    table.insert(scale_items, create_property_toggle("Sigmoid upscaling", "sigmoid-upscaling"))
+    table.insert(scale_items, {create_property_toggle("Linear upscaling", "linear-upscaling"),
+                               create_property_toggle("Correct downscaling", "correct-downscaling"),
+                               create_property_toggle("Linear downscaling", "linear-downscaling"),
+                               create_property_toggle("Sigmoid upscaling", "sigmoid-upscaling")})
 
     return {
         title = "Scale",
@@ -1256,13 +1223,8 @@ end
 
 local menu_data
 local function create_menu_data()
-    local menu_items = {}
-
-    table.insert(menu_items, create_aspect_menu())
-    table.insert(menu_items, create_deband_menu())
-    table.insert(menu_items, create_color_menu())
-    table.insert(menu_items, create_shader_menu())
-    table.insert(menu_items, create_property_toggle("Interpolation", "interpolation"))
+    local menu_items = {create_aspect_menu(), create_deband_menu(), create_color_menu(), create_shader_menu(),
+                        create_property_toggle("Interpolation", "interpolation")}
 
     local advanced_items = {
         title = "Advanced",
