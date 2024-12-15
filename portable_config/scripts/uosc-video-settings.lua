@@ -55,7 +55,7 @@ local function get_property_info(prop)
     end
 end
 
-local function loop_through_properties(properties, callback)
+local function loop_through_properties(callback)
     for _, property_list in pairs(properties) do
         for _, prop in ipairs(property_list) do
             local name, use_native = get_property_info(prop)
@@ -64,7 +64,7 @@ local function loop_through_properties(properties, callback)
     end
 end
 
-loop_through_properties(properties, function(name, use_native)
+loop_through_properties(function(name, use_native)
     local value = use_native and mp.get_property_native(name) or mp.get_property(name)
     current_property[name] = value
     default_property[name] = value
@@ -1246,7 +1246,7 @@ local function update_property(name, value)
     update_menu()
 end
 
-loop_through_properties(properties, function(name, use_native)
+loop_through_properties(function(name, use_native)
     mp.observe_property(name, use_native and "native" or "string", update_property)
 end)
 
