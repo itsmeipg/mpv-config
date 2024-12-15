@@ -889,10 +889,12 @@ local function create_scale_menu()
                  create_scale_number_adjustments("tscale")}
     })
 
-    table.insert(scale_items, {create_property_toggle("Linear upscaling", "linear-upscaling"),
-                               create_property_toggle("Correct downscaling", "correct-downscaling"),
-                               create_property_toggle("Linear downscaling", "linear-downscaling"),
-                               create_property_toggle("Sigmoid upscaling", "sigmoid-upscaling")})
+    for _, item in ipairs({create_property_toggle("Linear upscaling", "linear-upscaling"),
+                           create_property_toggle("Correct downscaling", "correct-downscaling"),
+                           create_property_toggle("Linear downscaling", "linear-downscaling"),
+                           create_property_toggle("Sigmoid upscaling", "sigmoid-upscaling")}) do
+        table.insert(scale_items, item)
+    end
 
     return {
         title = "Scale",
