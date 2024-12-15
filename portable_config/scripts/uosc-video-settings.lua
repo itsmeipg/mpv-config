@@ -22,7 +22,7 @@ local options = {
 }
 
 require("mp.options").read_options(options, "uosc-video-settings")
-mp.utils = require("mp.utils")
+local utils = require("mp.utils")
 
 local properties = {
     aspect = {"video-aspect-override"},
@@ -240,7 +240,6 @@ local function create_aspect_menu()
             value = is_active and command("set-property", "video-aspect-override", "-1") or
                 command("set-property", "video-aspect-override", tostring(profile_aspect_value))
         }
-
     end
 
     local default_profile_override = false
@@ -916,7 +915,7 @@ local function compare_shaders(shaders1, shaders2)
 end
 
 local function file_exists(path)
-    return mp.utils.file_info(mp.command_native({"expand-path", path}))
+    return utils.file_info(mp.command_native({"expand-path", path}))
 end
 
 local function get_active_shaders(current_shaders)
@@ -976,10 +975,10 @@ local function list_shader_files(path)
     local function list_files_recursive(path)
         local dir_items = {}
 
-        local subdirs = mp.utils.readdir(mp.command_native({"expand-path", path}), "dirs")
+        local subdirs = utils.readdir(mp.command_native({"expand-path", path}), "dirs")
         if subdirs then
             for _, subdir in ipairs(subdirs) do
-                local subdir_items = list_files_recursive(mp.utils.join_path(path, subdir))
+                local subdir_items = list_files_recursive(utils.join_path(path, subdir))
                 local subdir = {
                     title = subdir,
                     items = subdir_items
@@ -988,15 +987,15 @@ local function list_shader_files(path)
             end
         end
 
-        local files = mp.utils.readdir(mp.command_native({"expand-path", path}), "files")
+        local files = utils.readdir(mp.command_native({"expand-path", path}), "files")
         if files then
             local shader_file_paths = {}
             for i, shader_file in ipairs(files) do
-                table.insert(shader_file_paths, mp.utils.join_path(path, shader_file))
+                table.insert(shader_file_paths, utils.join_path(path, shader_file))
             end
 
             for i, shader_file_path in ipairs(shader_file_paths) do
-                local _, shader_name = mp.utils.split_path(shader_file_path)
+                local _, shader_name = utils.split_path(shader_file_path)
 
                 table.insert(dir_items, {
                     title = shader_name:match("(.+)%.[^.]+$") or shader_name,
@@ -1153,7 +1152,7 @@ local function create_shader_menu()
     }
 
     for i, active_shader in ipairs(active_shaders) do
-        local _, shader_name = mp.utils.split_path(active_shader)
+        local _, shader_name = utils.split_path(active_shader)
         table.insert(active_shader_group.items, {
             title = shader_name:match("(.+)%.[^.]+$") or shader_name,
             hint = tostring(i),
@@ -1255,7 +1254,7 @@ local function update_menu()
         debounce_timer:kill()
     end
     debounce_timer = mp.add_timeout(0.001, function()
-        menu_data = mp.utils.format_json(create_menu_data())
+        menu_data = utils.format_json(create_menu_data())
         mp.commandv("script-message-to", "uosc", "update-menu", menu_data)
         debounce_timer = nil
     end)
@@ -1271,7 +1270,7 @@ loop_through_properties(properties, function(name, use_native)
 end)
 
 mp.register_script_message("menu-event", function(json)
-    local event = mp.utils.parse_json(json)
+    local event = utils.parse_json(json)
 
     if event.type == "activate" then
         if event.action then
