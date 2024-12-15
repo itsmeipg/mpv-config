@@ -179,11 +179,11 @@ local function create_property_number_adjustment(name, property, increment, min,
             name = command("adjust-property-number", property, increment, min, max),
             icon = "add",
             label = "Increase (ctrl+right)"
-        }, cached_property[property] and {
+        }, {
             name = command("set-property", property, cached_property[property]),
             icon = "cached",
             label = "Reset (del)"
-        } or nil}
+        }}
     end
 
     local function create_hint()
@@ -219,15 +219,12 @@ end
 
 -- Aspect override
 local function create_aspect_menu()
-    local current_aspect_value = tonumber(current_property["video-aspect-override"])
-    local is_original = current_aspect_value == -1
-
     local aspect_items = {}
     local aspect_profiles = {}
 
     local profile_match = false
     local function create_aspect_profile_item(name, profile_aspect_value)
-        local is_active = math.abs(current_aspect_value - profile_aspect_value) < 0.001
+        local is_active = math.abs(tonumber(current_property["video-aspect-override"]) - profile_aspect_value) < 0.001
 
         if is_active then
             profile_match = true
@@ -265,6 +262,7 @@ local function create_aspect_menu()
     end
 
     if not default_profile_override and options.include_custom_aspect_profile then
+        local is_original = tonumber(current_property["video-aspect-override"]) == -1
         table.insert(aspect_profiles, {
             title = "Custom",
             active = not is_original and not profile_match,
@@ -301,20 +299,15 @@ mp.register_script_message("apply-deband-profile",
     end)
 
 local function create_deband_menu()
-    local deband_enabled = current_property["deband"] == "yes" and true or false
-    local iterations = current_property["deband-iterations"]
-    local threshold = current_property["deband-threshold"]
-    local range = current_property["deband-range"]
-    local grain = current_property["deband-grain"]
-
     local deband_items = {}
     local deband_profile_items = {}
 
     local profile_match = false
     local function create_deband_profile_item(name, profile_iterations, profile_threshold, profile_range, profile_grain)
-        local is_active = (tonumber(profile_iterations) == tonumber(iterations) and tonumber(profile_threshold) ==
-                              tonumber(threshold) and tonumber(profile_range) == tonumber(range) and
-                              tonumber(profile_grain) == tonumber(grain))
+        local is_active = (tonumber(profile_iterations) == tonumber(current_property["deband-iterations"]) and
+                              tonumber(profile_threshold) == tonumber(current_property["deband-threshold"]) and
+                              tonumber(profile_range) == tonumber(current_property["deband-range"]) and
+                              tonumber(profile_grain) == tonumber(current_property["deband-grain"]))
 
         if is_active then
             profile_match = true
@@ -326,7 +319,7 @@ local function create_deband_menu()
 
         return {
             title = name,
-            active = deband_enabled and is_active,
+            active = (current_property["deband"] == "yes" and true or false) and is_active,
             value = is_active and command("toggle-property", "deband") or
                 command("apply-deband-profile", profile_iterations, profile_threshold, profile_range, profile_grain)
 
@@ -366,7 +359,7 @@ local function create_deband_menu()
     if options.include_custom_deband_profile then
         table.insert(deband_profile_items, {
             title = "Custom",
-            active = deband_enabled and not profile_match,
+            active = (current_property["deband"] == "yes" and true or false) and not profile_match,
             selectable = not profile_match,
             muted = profile_match,
             value = command("toggle-property", "deband")
@@ -414,23 +407,17 @@ mp.register_script_message("apply-color-profile",
     end)
 
 local function create_color_menu()
-    local brightness = current_property["brightness"]
-    local contrast = current_property["contrast"]
-    local saturation = current_property["saturation"]
-    local gamma = current_property["gamma"]
-    local hue = current_property["hue"]
-    local is_original = tonumber(brightness) == 0 and tonumber(contrast) == 0 and tonumber(saturation) == 0 and
-                            tonumber(gamma) == 0 and tonumber(hue) == 0
-
     local color_items = {}
     local color_profile_items = {}
 
     local profile_match = false
     local function create_color_profile_item(name, profile_brightness, profile_contrast, profile_saturation,
         profile_gamma, profile_hue)
-        local is_active = (tonumber(profile_brightness) == tonumber(brightness) and tonumber(profile_contrast) ==
-                              tonumber(contrast) and tonumber(profile_saturation) == tonumber(saturation) and
-                              tonumber(profile_gamma) == tonumber(gamma) and tonumber(profile_hue) == tonumber(hue))
+        local is_active = (tonumber(profile_brightness) == tonumber(current_property["brightness"]) and
+                              tonumber(profile_contrast) == tonumber(current_property["contrast"]) and
+                              tonumber(profile_saturation) == tonumber(current_property["saturation"]) and
+                              tonumber(profile_gamma) == tonumber(current_property["gamma"]) and tonumber(profile_hue) ==
+                              tonumber(current_property["hue"]))
 
         if is_active then
             profile_match = true
@@ -482,6 +469,9 @@ local function create_color_menu()
     end
 
     if options.include_custom_color_profile then
+        local is_original = tonumber(current_property["brightness"]) == 0 and tonumber(current_property["contrast"]) ==
+                                0 and tonumber(current_property["saturation"]) == 0 and
+                                tonumber(current_property["gamma"]) == 0 and tonumber(current_property["hue"]) == 0
         table.insert(color_profile_items, {
             title = "Custom",
             active = not is_original and not profile_match,
@@ -918,10 +908,10 @@ local function file_exists(path)
     return utils.file_info(mp.command_native({"expand-path", path}))
 end
 
-local function get_active_shaders(current_shaders)
+local function get_active_shaders(shader_list)
     local active_shaders = {}
 
-    for i, path in ipairs(current_shaders) do
+    for i, path in ipairs(shader_list) do
         if file_exists(path) then
             table.insert(active_shaders, path)
         end
@@ -969,8 +959,7 @@ local function create_shader_adjustment_actions(shader_path, active_shader_group
 end
 
 local function list_shader_files(path)
-    local current_shaders = current_property["glsl-shaders"]
-    local active_shaders = get_active_shaders(current_shaders)
+    local active_shaders = get_active_shaders(current_property["glsl-shaders"])
 
     local function list_files_recursive(path)
         local dir_items = {}
@@ -1030,11 +1019,10 @@ end
 mp.register_script_message("toggle-shader", toggle_shader)
 
 local function move_shader(shader, direction_or_index)
-    local current_shaders = current_property["glsl-shaders"]
-    local active_shaders = get_active_shaders(current_shaders)
+    local active_shaders = get_active_shaders(current_property["glsl-shaders"])
 
     if type(shader) == "number" then
-        for i, current_shader in ipairs(current_shaders) do
+        for i, current_shader in ipairs(current_property["glsl-shaders"]) do
             if active_shaders[shader] == current_shader then
                 shader = current_shader
                 break
@@ -1061,7 +1049,7 @@ local function move_shader(shader, direction_or_index)
 
     local new_shaders = {}
     local active_idx = 1
-    for i, current_shader in ipairs(current_shaders) do
+    for i, current_shader in ipairs(current_property["glsl-shaders"]) do
         if active_shaders[current_shader] then
             new_shaders[i] = active_shaders[active_idx]
             active_idx = active_idx + 1
@@ -1075,8 +1063,7 @@ end
 mp.register_script_message("move-shader", move_shader)
 
 local function create_shader_menu()
-    local current_shaders = current_property["glsl-shaders"]
-    local active_shaders = get_active_shaders(current_shaders)
+    local active_shaders = get_active_shaders(current_property["glsl-shaders"])
 
     local shader_items = {}
     local shader_profile_items = {}
