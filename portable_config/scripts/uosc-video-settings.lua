@@ -887,6 +887,15 @@ local function create_scale_menu()
 end
 
 -- Shaders
+local expand_path_cache = {}
+local function expand_path(path)
+    if expand_path_cache[path] == nil then
+        expand_path_cache[path] = mp.command_native({"expand-path", path})
+    end
+
+    return expand_path_cache[path]
+end
+
 local function compare_shaders(shaders1, shaders2)
     if #shaders1 ~= #shaders2 then
         return false
@@ -902,7 +911,7 @@ local function compare_shaders(shaders1, shaders2)
 end
 
 local function file_exists(path)
-    return utils.file_info(mp.command_native({"expand-path", path}))
+    return utils.file_info(expand_path(path))
 end
 
 local function get_active_shaders(shaders)
@@ -955,15 +964,6 @@ local function create_shader_adjustment_actions(shader_path, active_shader_group
     end
 
     return action_items
-end
-
-local expand_path_cache = {}
-local function expand_path(path)
-    if expand_path_cache[path] == nil then
-        expand_path_cache[path] = mp.command_native({"expand-path", path})
-    end
-
-    return expand_path_cache[path]
 end
 
 local function read_directory(path)
