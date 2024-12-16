@@ -236,9 +236,7 @@ mp.register_script_message("menu-event", function(json)
         elseif type(event.value) == "string" then
             mp.command(event.value)
         end
-    end
-
-    if event.type == "key" then
+    elseif event.type == "key" then
         if event.selected_item.value[event.id] then
             mp.command(event.selected_item.value[event.id])
         end
