@@ -4,6 +4,7 @@ local options = {
     include_default_shader_profile = true,
     default_shader_profile_name = "Default",
     include_custom_shader_profile = true,
+    show_shader_extension = false,
 
     deband_profiles = "",
     include_default_deband_profile = true,
@@ -320,7 +321,7 @@ local function create_deband_menu()
 
         return {
             title = name,
-            active = (current_property["deband"] == "yes" and true or false) and is_active,
+            active = (current_property["deband"] == "yes" and true) and is_active,
             value = is_active and command("toggle-property", "deband") or
                 command("apply-deband-profile", profile_iterations, profile_threshold, profile_range, profile_grain)
 
@@ -360,7 +361,7 @@ local function create_deband_menu()
     if options.include_custom_deband_profile then
         table.insert(deband_profile_items, {
             title = "Custom",
-            active = (current_property["deband"] == "yes" and true or false) and not profile_match,
+            active = (current_property["deband"] == "yes" and true) and not profile_match,
             selectable = not profile_match,
             muted = profile_match,
             value = command("toggle-property", "deband")
@@ -935,14 +936,14 @@ local function create_shader_adjustment_actions(shader_path, active_shader_group
         name = command("move-shader", shader_path, "up"),
         icon = "arrow_upward",
         label = active_shader_group and "Move up (ctrl+up/pgup/home)" or "Move up (ctrl+left)",
-        filter_hidden = active_shader_group and true or false
+        filter_hidden = active_shader_group and true
     })
 
     table.insert(action_items, {
         name = command("move-shader", shader_path, "down"),
         icon = "arrow_downward",
         label = active_shader_group and "Move down (ctrl+down/pgdn/end)" or "Move down (ctrl+right)",
-        filter_hidden = active_shader_group and true or false
+        filter_hidden = active_shader_group and true
     })
 
     if active_shader_group then
@@ -956,37 +957,67 @@ local function create_shader_adjustment_actions(shader_path, active_shader_group
     return action_items
 end
 
+local expand_path_cache = {}
+local function expand_path(path)
+    if expand_path_cache[path] == nil then
+        expand_path_cache[path] = mp.command_native({"expand-path", path})
+    end
+
+    return expand_path_cache[path]
+end
+
+local function read_directory(path)
+    local directory_items = utils.readdir(path)
+    local files, directories = {}, {}
+
+    for _, item in ipairs(directory_items) do
+        if utils.file_info(utils.join_path(path, item)) and item:match("(.+)%.[^.]+$") then
+            files[#files + 1] = item
+        else
+            directories[#directories + 1] = item
+        end
+    end
+
+    return files, directories
+end
+
 local function list_shader_files(path)
     local active_shaders = get_active_shaders(current_property["glsl-shaders"])
 
-    local function list_files_recursive(path)
-        local subdirs = utils.readdir(mp.command_native({"expand-path", path}), "dirs")
-        local files = utils.readdir(mp.command_native({"expand-path", path}), "files")
+    local dir_items = {}
 
-        local dir_items = {}
+    local dirs_to_process = {{
+        path = path,
+        parent_item = dir_items
+    }}
+    while #dirs_to_process > 0 do
+        local current_dir = table.remove(dirs_to_process)
+        local files, subdirs = read_directory(expand_path(current_dir.path))
 
         if subdirs then
             for _, subdir in ipairs(subdirs) do
-                local subdir_items = list_files_recursive(utils.join_path(path, subdir))
-                local subdir = {
+                local subdir_item = {
                     title = subdir,
-                    items = subdir_items
+                    items = {}
                 }
-                table.insert(dir_items, subdir)
+                table.insert(current_dir.parent_item, subdir_item)
+                table.insert(dirs_to_process, {
+                    path = utils.join_path(current_dir.path, subdir),
+                    parent_item = subdir_item.items
+                })
             end
         end
 
         if files then
             local shader_file_paths = {}
-            for i, shader_file in ipairs(files) do
-                table.insert(shader_file_paths, utils.join_path(path, shader_file))
+            for _, shader_file in ipairs(files) do
+                table.insert(shader_file_paths, utils.join_path(current_dir.path, shader_file))
             end
 
-            for i, shader_file_path in ipairs(shader_file_paths) do
+            for _, shader_file_path in ipairs(shader_file_paths) do
                 local _, shader_name = utils.split_path(shader_file_path)
-
-                table.insert(dir_items, {
-                    title = shader_name:match("(.+)%.[^.]+$") or shader_name,
+                table.insert(current_dir.parent_item, {
+                    title = not options.show_shader_extension and shader_name:match("(.+)%.[^.]+$") or shader_name,
                     hint = active_shaders[shader_file_path] and tostring(active_shaders[shader_file_path]),
                     icon = active_shaders[shader_file_path] and "check_box" or "check_box_outline_blank",
                     value = {
@@ -999,11 +1030,9 @@ local function list_shader_files(path)
                 })
             end
         end
-
-        return dir_items
     end
 
-    return list_files_recursive(path)
+    return dir_items
 end
 
 mp.register_script_message("clear-shaders", function()
@@ -1132,7 +1161,7 @@ local function create_shader_menu()
     local active_shader_group = {
         title = "Active",
         items = {},
-        separator = #shader_files > 0 and true or false,
+        separator = #shader_files > 0 and true,
         footnote = "Paste path to toggle. ctrl+up/down/pgup/pgdn/home/end to reorder.",
         on_move = "callback",
         on_paste = "callback"
@@ -1141,7 +1170,7 @@ local function create_shader_menu()
     for i, active_shader in ipairs(active_shaders) do
         local _, shader_name = utils.split_path(active_shader)
         table.insert(active_shader_group.items, {
-            title = shader_name:match("(.+)%.[^.]+$") or shader_name,
+            title = not options.show_shader_extension and shader_name:match("(.+)%.[^.]+$") or shader_name,
             hint = tostring(i),
             value = {
                 ["del"] = command("toggle-shader", active_shader)
@@ -1261,15 +1290,11 @@ mp.register_script_message("menu-event", function(json)
         elseif type(event.value) == "string" then
             mp.command(event.value)
         end
-    end
-
-    if event.type == "key" then
+    elseif event.type == "key" then
         if event.selected_item.value[event.id] then
             mp.command(event.selected_item.value[event.id])
         end
-    end
-
-    if event.menu_id == "Shaders > Active" then
+    elseif event.menu_id == "Shaders > Active" then
         if event.type == "move" then
             move_shader(event.from_index, event.to_index)
         elseif event.type == "paste" then
