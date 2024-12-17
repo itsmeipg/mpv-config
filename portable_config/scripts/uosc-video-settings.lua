@@ -73,12 +73,11 @@ loop_through_properties(function(name, use_native)
 end)
 
 local function command(...)
-    local parts = {"script-message-to", string.format("%q", mp.get_script_name())}
     local args = {...}
-    for i = 1, #args do
-        parts[#parts + 1] = string.format("%q", args[i])
+    for i, arg in ipairs(args) do
+        args[i] = string.format("%q", tonumber(arg) or arg)
     end
-    return table.concat(parts, " ")
+    return table.concat(args, " ")
 end
 
 mp.register_script_message("toggle-property", function(property)
@@ -1249,7 +1248,7 @@ local function create_menu_data()
     }
 end
 
-local debounce_timer = nil
+local debounce_timer
 local function update_menu()
     if debounce_timer then
         debounce_timer:kill()
@@ -1273,17 +1272,21 @@ end)
 mp.register_script_message("menu-event", function(json)
     local event = utils.parse_json(json)
 
+    local function execute_command(command)
+        return mp.command(string.format("%q %q %s", "script-message-to", mp.get_script_name(), command))
+    end
+
     if event.type == "activate" then
         if event.action then
-            mp.command(event.action)
+            execute_command(event.action)
         elseif event.value["activate"] then
-            mp.command(event.value["activate"])
+            execute_command(event.value["activate"])
         elseif type(event.value) == "string" then
-            mp.command(event.value)
+            execute_command(event.value)
         end
     elseif event.type == "key" then
         if event.selected_item.value[event.id] then
-            mp.command(event.selected_item.value[event.id])
+            execute_command(event.selected_item.value[event.id])
         end
     elseif event.menu_id == "Shaders > Active" then
         if event.type == "move" then
