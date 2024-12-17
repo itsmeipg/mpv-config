@@ -901,7 +901,13 @@ local function compare_shaders(shaders1, shaders2)
 end
 
 local function file_exists(path)
-    return utils.file_info(mp.command_native({"expand-path", path}))
+    local file_info = utils.file_info(mp.command_native({"expand-path", path}))
+
+    if file_info and file_info.is_file then
+        return true
+    end
+
+    return false
 end
 
 local function get_active_shaders(shaders)
@@ -961,7 +967,7 @@ local function read_directory(path)
     local files, directories = {}, {}
 
     for _, item in ipairs(directory_items) do
-        if utils.file_info(utils.join_path(path, item)) and item:match("(.+)%.[^.]+$") then
+        if file_exists(utils.join_path(path, item)) then
             files[#files + 1] = item
         else
             directories[#directories + 1] = item
