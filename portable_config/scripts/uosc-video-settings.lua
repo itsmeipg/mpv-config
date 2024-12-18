@@ -22,7 +22,7 @@ local options = {
     include_custom_aspect_profile = true
 }
 
-require("mp.options").read_options(options, "uosc-video-settings")
+require("mp.options").read_options(options)
 local utils = require("mp.utils")
 
 local properties = {
@@ -1276,22 +1276,23 @@ loop_through_properties(function(name, use_native)
 end)
 
 mp.register_script_message("menu-event", function(json)
-    local event = utils.parse_json(json)
-
     local function execute_command(command)
         return mp.command(string.format("%q %q %s", "script-message-to", mp.get_script_name(), command))
     end
-
+    
+    local event = utils.parse_json(json)
     if event.type == "activate" then
         if event.action then
             execute_command(event.action)
-        elseif event.value["activate"] then
-            execute_command(event.value["activate"])
-        elseif type(event.value) == "string" then
-            execute_command(event.value)
+        elseif event.value then
+            if event.value["activate"] then
+                execute_command(event.value["activate"])
+            elseif type(event.value) == "string" then
+                execute_command(event.value)
+            end
         end
     elseif event.type == "key" then
-        if event.selected_item.value[event.id] then
+        if event.selected_item.value and event.selected_item.value[event.id] then
             execute_command(event.selected_item.value[event.id])
         end
     elseif event.menu_id == "Shaders > Active" then
