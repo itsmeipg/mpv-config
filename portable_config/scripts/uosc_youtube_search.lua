@@ -69,6 +69,7 @@ local function render_loading()
         icon = 'spinner',
         selectable = false
     }}
+    menu_data.item_actions = {}
     update_menu()
 end
 
