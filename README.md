@@ -28,6 +28,7 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
+- Improve action handling, is_default vars, script and conf names
 - Clean up shaders and scale code.
 - Fix scale-radius.
 - Add crop/rotate.
