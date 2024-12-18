@@ -209,11 +209,12 @@ local function submit_query(query)
 
     local results = search_request(get_search_queries(query), options.api_path)
     if not results and options.fallback_api_path ~= "/" then
-        results = search_request(get_search_queries(query), options.fallback_api_path)
-        if not results then
-            reset_menu()
-            return
-        end
+        results = search_request(get_search_queries(query), options.fallback_api_path)   
+    end
+    if not results then
+        reset_menu()
+        update_menu()
+        return
     end
 
     render_menu(results)
@@ -222,7 +223,7 @@ end
 mp.register_script_message("menu-event", function(json)
     local event = utils.parse_json(json)
     if event.type == "activate" and event.value then
-        if event.action == "playlist_add" or event.modifier == "shift" then
+        if event.action == "playlist_add" or event.shift then
             mp.commandv("loadfile", event.value, "append")
         else
             mp.commandv("loadfile", event.value, "replace")
