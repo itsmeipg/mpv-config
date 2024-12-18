@@ -74,12 +74,6 @@ local function render_loading()
 end
 
 local function render_menu(results)
-    menu_data.item_actions = {{
-        name = "playlist_add",
-        icon = "playlist_add",
-        label = "Add to playlist (shift+enter/click)"
-    }}
-
     menu_data.items = {}
     for _, item in ipairs(results) do
         if item.type == "video" then
@@ -102,6 +96,12 @@ local function render_menu(results)
             })
         end
     end
+
+    menu_data.item_actions = {{
+        name = "playlist_add",
+        icon = "playlist_add",
+        label = "Add to playlist (shift+enter/click)"
+    }}
 
     update_menu()
 end
@@ -210,9 +210,9 @@ local function submit_query(query)
 
     local results = search_request(get_search_queries(query), options.api_path)
     if not results and options.fallback_api_path ~= "/" then
-        results = search_request(get_search_queries(query), options.fallback_api_path)   
+        results = search_request(get_search_queries(query), options.fallback_api_path)
     end
-    
+
     if not results then
         reset_menu()
         update_menu()
