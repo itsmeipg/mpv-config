@@ -1,11 +1,16 @@
-local options = {}
+local options = {
+    style_profiles = "yo:sub-pos=99"
+}
 
 require("mp.options").read_options(options)
 local utils = require("mp.utils")
 
 local properties = {
-    position = {"sub-pos", "secondary-sub-pos"},
-    extra = {"sub-scale", "sub-delay", "sub-ass-override", "blend-subtitles", "sub-fix-timing"}
+    extra = {"sub-delay", "sub-ass-override", "blend-subtitles", "sub-fix-timing"},
+    style = {"sub-color", "sub-back-color", "sub-font", "sub-font-size", "sub-blur", "sub-bold", "sub-italic",
+             "sub-outline-color", "sub-outline-size", "sub-border-style", "sub-scale", "sub-pos", "secondary-sub-pos",
+             "sub-margin-x", "sub-margin-y", "sub-align-x", "sub-align-y", "sub-use-margins", "sub-spacing",
+             "sub-shadow-offset"}
 }
 
 local current_property = {}
@@ -48,14 +53,15 @@ mp.register_script_message("toggle-property", function(property)
     mp.set_property(property, current_property[property] == "yes" and "no" or "yes")
 end)
 
-mp.register_script_message("set-property", function(property, ...)
+local function set_property(property, ...)
     local args = {...}
     if #args == 1 then
         mp.set_property(property, args[1])
     else
         mp.set_property_native(property, args)
     end
-end)
+end
+mp.register_script_message("set-property", set_property)
 
 mp.register_script_message("adjust-property-number", function(property, increment, min, max)
     min = tonumber(min) or -math.huge
@@ -153,6 +159,79 @@ local function create_property_number_adjustment(name, property, increment, min,
     }
 end
 
+local function turn_into_number_if_number(string)
+    return tonumber(string) and tonumber(string) or string
+end
+
+mp.register_script_message("clear-style", function(profile_options)
+    for _, prop in ipairs(properties.style) do
+        local name = get_property_info(prop)
+        set_property(name, default_property[name])
+    end
+end)
+
+mp.register_script_message("apply-style-profile", function(profile_options)
+    for option in profile_options:gmatch("([^,]+)") do
+        local option, value = option:match("([^=]+)=(.+)")
+        if option and value then
+            loop_through_properties(function(name)
+                if option == name then
+                    set_property(name, turn_into_number_if_number(value))
+                end
+            end)
+        end
+    end
+end)
+
+local function create_style_menu()
+    local style_items = {}
+
+    local profile_match = false
+    local function create_style_profile_item(name, profile_options)
+        local is_active = true
+        for option in profile_options:gmatch("([^,]+)") do
+            local option, value = option:match("([^=]+)=(.+)")
+            if option and value then
+                for _, prop in ipairs(properties.style) do
+                    local name = get_property_info(prop)
+                    if option == name then
+                        if turn_into_number_if_number(value) == turn_into_number_if_number(current_property[name]) then
+                            cached_property[name] = turn_into_number_if_number(value)
+                        else
+                            is_active = false
+                        end
+                    end
+                end
+            end
+        end
+
+        if is_active then
+            profile_match = true
+        end
+
+        return {
+            title = name,
+            active = is_active,
+            value = is_active and command("clear-style", profile_options) or
+                command("apply-style-profile", profile_options)
+        }
+    end
+
+    for style_profile in options.style_profiles:gmatch("([^;]+)") do
+        local profile_name, profile_options = style_profile:match("([^:]+):?(.*)")
+
+        if profile_options and profile_options ~= "" then
+            table.insert(style_items, create_style_profile_item(profile_name, profile_options))
+        end
+    end
+
+    return {
+        title = "Style",
+        items = style_items
+    }
+end
+create_style_menu()
+
 -- ASS override
 local ass_override_options = {{
     name = "Off",
@@ -185,7 +264,8 @@ local blend_options = {{
 
 local menu_data
 local function create_menu_data()
-    local menu_items = {create_property_selection("ASS override", "sub-ass-override", ass_override_options),
+    local menu_items = {create_style_menu(),
+                        create_property_selection("ASS override", "sub-ass-override", ass_override_options),
                         create_property_selection("Blend", "blend-subtitles", blend_options),
                         create_property_toggle("Fix timing", "sub-fix-timing"),
                         create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
@@ -228,7 +308,7 @@ mp.register_script_message("menu-event", function(json)
     local function execute_command(command)
         return mp.command(string.format("%q %q %s", "script-message-to", mp.get_script_name(), command))
     end
-    
+
     local event = utils.parse_json(json)
     if event.type == "activate" then
         if event.action then
