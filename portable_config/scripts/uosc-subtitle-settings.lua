@@ -208,7 +208,6 @@ local function create_style_menu()
                     is_active = false
                 end
             end
-
         end
 
         if is_active then
