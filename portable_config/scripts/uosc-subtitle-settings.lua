@@ -159,7 +159,7 @@ local function create_property_number_adjustment(name, property, increment, min,
     }
 end
 
-local function turn_into_number_if_number(string)
+local function num(string)
     return tonumber(string) and tonumber(string) or string
 end
 
@@ -173,13 +173,16 @@ end)
 mp.register_script_message("apply-style-profile", function(profile_options)
     for option in profile_options:gmatch("([^,]+)") do
         local option, value = option:match("([^=]+)=(.+)")
-        if option and value then
-            loop_through_properties(function(name)
-                if option == name then
-                    set_property(name, turn_into_number_if_number(value))
-                end
-            end)
+
+        if not option and value then
+            return
         end
+
+        loop_through_properties(function(name)
+            if option == name then
+                set_property(name, num(value))
+            end
+        end)
     end
 end)
 
@@ -189,20 +192,23 @@ local function create_style_menu()
     local profile_match = false
     local function create_style_profile_item(name, profile_options)
         local is_active = true
+
         for option in profile_options:gmatch("([^,]+)") do
             local option, value = option:match("([^=]+)=(.+)")
-            if option and value then
-                for _, prop in ipairs(properties.style) do
-                    local name = get_property_info(prop)
-                    if option == name then
-                        if turn_into_number_if_number(value) == turn_into_number_if_number(current_property[name]) then
-                            cached_property[name] = turn_into_number_if_number(value)
-                        else
-                            is_active = false
-                        end
-                    end
+
+            if not option and value then
+                return
+            end
+
+            for _, prop in ipairs(properties.style) do
+                local name = get_property_info(prop)
+                if option == name and num(value) == num(current_property[name]) then
+                    cached_property[name] = num(value)
+                else
+                    is_active = false
                 end
             end
+
         end
 
         if is_active then
