@@ -1,5 +1,6 @@
 local options = {
-    style_profiles = "yo:sub-pos=99"
+    style_profiles = "yo:sub-pos=99",
+    include_default_style_profile = true
 }
 
 require("mp.options").read_options(options)
@@ -173,16 +174,13 @@ end)
 mp.register_script_message("apply-style-profile", function(profile_options)
     for option in profile_options:gmatch("([^,]+)") do
         local option, value = option:match("([^=]+)=(.+)")
-
-        if not option and value then
-            return
+        if option and value then
+            loop_through_properties(function(name)
+                if option == name then
+                    set_property(name, num(value))
+                end
+            end)
         end
-
-        loop_through_properties(function(name)
-            if option == name then
-                set_property(name, num(value))
-            end
-        end)
     end
 end)
 
@@ -196,16 +194,16 @@ local function create_style_menu()
         for option in profile_options:gmatch("([^,]+)") do
             local option, value = option:match("([^=]+)=(.+)")
 
-            if not option and value then
-                return
-            end
-
-            for _, prop in ipairs(properties.style) do
-                local name = get_property_info(prop)
-                if option == name and num(value) == num(current_property[name]) then
-                    cached_property[name] = num(value)
-                else
-                    is_active = false
+            if option and value then
+                for _, prop in ipairs(properties.style) do
+                    local name = get_property_info(prop)
+                    if option == name then
+                        if num(value) == num(current_property[name]) then
+                            cached_property[name] = num(value)
+                        else
+                            is_active = false
+                        end
+                    end
                 end
             end
         end
@@ -222,12 +220,46 @@ local function create_style_menu()
         }
     end
 
+    local default_profile_override = false
     for style_profile in options.style_profiles:gmatch("([^;]+)") do
         local profile_name, profile_options = style_profile:match("([^:]+):?(.*)")
 
+        local is_default = false
         if profile_options and profile_options ~= "" then
+            for option in profile_options:gmatch("([^,]+)") do
+                local option, value = option:match("([^=]+)=(.+)")
+
+                if option and value then
+                    for _, prop in ipairs(properties.style) do
+                        local name = get_property_info(prop)
+                        if option == name then
+                            if num(value) ~= num(current_property[name]) then
+                                is_default = false
+                            end
+                        end
+                    end
+                end
+            end
+
+            if is_default then
+                default_profile_override = true
+            end
+
             table.insert(style_items, create_style_profile_item(profile_name, profile_options))
         end
+    end
+
+    if not default_profile_override and options.include_default_style_profile then
+        local default_options = ""
+
+        loop_through_properties(function(name)
+            for _, prop in ipairs(properties.style) do
+                if name == prop then
+                    default_options = default_options .. name .. "=" .. default_property[name] .. ","
+                end
+            end
+        end)
+        table.insert(style_items, 1, create_style_profile_item("Default", default_options))
     end
 
     return {
@@ -235,7 +267,6 @@ local function create_style_menu()
         items = style_items
     }
 end
-create_style_menu()
 
 -- ASS override
 local ass_override_options = {{
