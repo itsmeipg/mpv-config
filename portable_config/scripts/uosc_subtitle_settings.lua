@@ -47,7 +47,7 @@ end)
 local function command(...)
     local args = {...}
     for i, arg in ipairs(args) do
-        args[i] = string.format("%q", tonumber(arg) or arg)
+        args[i] = string.format("%q", arg)
     end
     return table.concat(args, " ")
 end
@@ -163,6 +163,100 @@ local function create_property_number_adjustment(name, property, increment, min,
 end
 
 -- Style
+local positions = {
+    R = {1, 2},
+    G = {3, 4},
+    B = {5, 6},
+    A = {7, 8}
+}
+
+mp.register_script_message("adjust-color-property-number", function(property, component, increment, new_value)
+    local hex = current_property[property]:gsub("#", "")
+    local pos = positions[component:upper()]
+
+    if increment ~= "nil" then
+        new_value = tonumber(hex:sub(pos[1], pos[2]), 16) + increment
+        if new_value > 255 then
+            new_value = 255
+        elseif new_value < 0 then
+            new_value = 0
+        end
+        new_value = string.format("%02X", new_value)
+    end
+
+    local new_hex = hex:sub(1, pos[1] - 1) .. new_value .. hex:sub(pos[2] + 1)
+    mp.set_property(property, "#" .. new_hex)
+end)
+
+local function create_color_property_number_adjustment(name, property, increment)
+    local function get_hex_component(hex, component)
+        hex = hex:gsub("#", "")
+        local pos = positions[component:upper()]
+        return hex:sub(pos[1], pos[2])
+    end
+
+    local function create_adjustment_actions(component)
+        return {{
+            name = command("adjust-color-property-number", property, component, -increment),
+            icon = "remove",
+            label = "Decrease (ctrl+left)"
+        }, {
+            name = command("adjust-color-property-number", property, component, increment),
+            icon = "add",
+            label = "Increase (ctrl+right)"
+        }, {
+            name = command("adjust-color-property-number", property, component, "nil",
+                get_hex_component(cached_property[property], component)),
+            icon = "cached",
+            label = "Reset (del)"
+        }}
+    end
+
+    local function create_bind_values(component)
+        return {
+            ["ctrl+left"] = command("adjust-color-property-number", property, component, -increment),
+            ["ctrl+right"] = command("adjust-color-property-number", property, component, increment),
+            ["del"] = command("adjust-color-property-number", property, component, "nil",
+                get_hex_component(cached_property[property], component))
+        }
+    end
+
+    local red = {
+        title = "Red",
+        hint = tostring(tonumber(get_hex_component(current_property[property], "R"), 16)),
+        value = create_bind_values("R"),
+        actions = create_adjustment_actions("R")
+    }
+
+    local green = {
+        title = "Green",
+        hint = tostring(tonumber(get_hex_component(current_property[property], "G"), 16)),
+        value = create_bind_values("G"),
+        actions = create_adjustment_actions("G")
+    }
+
+    local blue = {
+        title = "Blue",
+        hint = tostring(tonumber(get_hex_component(current_property[property], "B"), 16)),
+        value = create_bind_values("B"),
+        actions = create_adjustment_actions("B")
+    }
+
+    local alpha = {
+        title = "Alpha",
+        hint = tostring(tonumber(get_hex_component(current_property[property], "A"), 16)),
+        value = create_bind_values("A"),
+        actions = create_adjustment_actions("A")
+    }
+
+    return {
+        title = name,
+        hint = current_property[property],
+        items = {red, green, blue, alpha},
+        item_actions_place = "outside"
+    }
+end
+
 local function check_profile_options(profile_options, callback)
     for option in profile_options:gmatch("([^,]+)") do
         local option, value = option:match("([^=]+)=(.+)")
@@ -268,6 +362,8 @@ local function create_style_menu()
             value = command("clear-style")
         })
     end
+
+    table.insert(style_items, create_color_property_number_adjustment("Color", "sub-color", "1"))
 
     return {
         title = "Style",
