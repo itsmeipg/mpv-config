@@ -11,7 +11,7 @@ local utils = require("mp.utils")
 local properties = {
     extra = {"sub-delay", "sub-ass-override", "blend-subtitles", "sub-fix-timing"},
     style = {"sub-color", "sub-back-color", "sub-font", "sub-font-size", "sub-blur", "sub-bold", "sub-italic",
-             "sub-outline-color", "sub-outline-size", "sub-border-style", "sub-scale", "sub-pos", "secondary-sub-pos",
+             "sub-border-color", "sub-border-size", "sub-border-style", "sub-scale", "sub-pos", "secondary-sub-pos",
              "sub-margin-x", "sub-margin-y", "sub-align-x", "sub-align-y", "sub-use-margins", "sub-spacing",
              "sub-shadow-offset"}
 }
@@ -258,11 +258,11 @@ local function create_color_property_number_adjustment(name, property, increment
 end
 
 local function check_profile_options(profile_options, callback)
-    for option in profile_options:gmatch("([^,]+)") do
-        local option, value = option:match("([^=]+)=(.+)")
-        if option and value then
-            for _, prop in ipairs(properties.style) do
-                local name = get_property_info(prop)
+    for _, prop in ipairs(properties.style) do
+        local name = get_property_info(prop)
+        for option in profile_options:gmatch("([^,]+)") do
+            local option, value = option:match("([^=]+)=(.+)")
+            if option and value then
                 callback(option, value, name)
             end
         end
@@ -284,6 +284,8 @@ mp.register_script_message("apply-style-profile", function(profile_options)
     check_profile_options(profile_options, function(option, value, name)
         if option == name then
             set_property(name, num(value))
+        else
+            set_property(name, default_property[name])
         end
     end)
 end)
@@ -297,11 +299,11 @@ local function create_style_menu()
 
         check_profile_options(profile_options, function(option, value, name)
             if option == name then
-                if num(value) == num(current_property[name]) then
-                    cached_property[name] = num(value)
-                else
+                if num(value) ~= num(current_property[name]) then
                     is_active = false
                 end
+            elseif num(default_property[name]) ~= num(current_property[name]) then
+                is_active = false
             end
         end)
 
@@ -326,13 +328,15 @@ local function create_style_menu()
     for style_profile in options.style_profiles:gmatch("([^;]+)") do
         local profile_name, profile_options = style_profile:match("([^:]+):?(.*)")
 
-        local is_default = false
+        local is_default = true
         if profile_options and profile_options ~= "" then
             check_profile_options(profile_options, function(option, value, name)
                 if option == name then
-                    if num(value) ~= num(current_property[name]) then
+                    if num(value) ~= num(default_property[name]) then
                         is_default = false
                     end
+                elseif num(default_property[name]) ~= num(current_property[name]) then
+                    is_default = false
                 end
             end)
 
@@ -364,6 +368,8 @@ local function create_style_menu()
     end
 
     table.insert(style_items, create_color_property_number_adjustment("Color", "sub-color", "1"))
+    table.insert(style_items, create_color_property_number_adjustment("Sub back color", "sub-back-color", "1"))
+    table.insert(style_items, create_color_property_number_adjustment("Sub border color", "sub-border-color", "1"))
 
     return {
         title = "Style",
