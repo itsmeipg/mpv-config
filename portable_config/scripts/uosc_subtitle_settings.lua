@@ -95,12 +95,14 @@ local function create_property_selection(name, property, options, off_or_default
     include_custom_item)
     local property_items = {}
 
+    local option_hint
     local option_match = false
     local default_profile_override = false
     for _, item in ipairs(options) do
         local is_active = current_property[property] == item.value
 
         if is_active then
+            option_hint = item.name
             option_match = true
         end
 
@@ -143,6 +145,7 @@ local function create_property_selection(name, property, options, off_or_default
 
     return {
         title = name,
+        hint = option_hint or current_property[property],
         items = property_items
     }
 end
