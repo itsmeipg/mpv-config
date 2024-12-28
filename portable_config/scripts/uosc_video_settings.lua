@@ -1013,7 +1013,7 @@ local function list_shader_files(path)
             for _, shader_file_path in ipairs(shader_file_paths) do
                 local _, shader_name = utils.split_path(shader_file_path)
                 table.insert(current_dir.parent_item, {
-                    title = not options.show_shader_extension and shader_name:match("(.+)%.[^.]+$") or shader_name,
+                    title = not options.show_shader_extensions and shader_name:match("(.+)%.[^.]+$") or shader_name,
                     hint = active_shaders[shader_file_path] and tostring(active_shaders[shader_file_path]),
                     icon = active_shaders[shader_file_path] and "check_box" or "check_box_outline_blank",
                     value = {
@@ -1166,7 +1166,7 @@ local function create_shader_menu()
     for i, active_shader in ipairs(active_shaders) do
         local _, shader_name = utils.split_path(active_shader)
         table.insert(active_shader_group.items, {
-            title = not options.show_shader_extension and shader_name:match("(.+)%.[^.]+$") or shader_name,
+            title = not options.show_shader_extensions and shader_name:match("(.+)%.[^.]+$") or shader_name,
             hint = tostring(i),
             value = {
                 ["del"] = command("toggle-shader", active_shader)
