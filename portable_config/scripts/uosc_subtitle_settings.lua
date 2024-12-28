@@ -118,6 +118,11 @@ local function create_property_selection(name, property, options, off_or_default
 
     if not default_profile_override and include_default_item then
         local is_active = current_property[property] == default_property[property]
+
+        if is_active then
+            option_match = true
+        end
+
         table.insert(property_items, 1, {
             title = "Default",
             active = is_active,
@@ -129,10 +134,10 @@ local function create_property_selection(name, property, options, off_or_default
     if include_custom_item then
         table.insert(property_items, {
             title = "Custom",
-            active = not off_or_default_option and not option_match,
-            selectable = not off_or_default_option and not option_match,
-            muted = off_or_default_option or option_match,
-            value = off_or_default_option and command("set-property", property, off_or_default_option)
+            active = off_or_default_option ~= current_property[property] and not option_match,
+            selectable = off_or_default_option ~= current_property[property] and not option_match,
+            muted = off_or_default_option == current_property[property] or option_match,
+            value = command("set-property", property, off_or_default_option)
         })
     end
 
