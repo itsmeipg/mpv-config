@@ -4,7 +4,7 @@ local options = {
     include_default_shader_profile = true,
     default_shader_profile_name = "Default",
     include_custom_shader_profile = true,
-    show_shader_extension = false,
+    show_shader_extensions = false,
 
     deband_profiles = "",
     include_default_deband_profile = true,
@@ -1279,7 +1279,7 @@ mp.register_script_message("menu-event", function(json)
     local function execute_command(command)
         return mp.command(string.format("%q %q %s", "script-message-to", mp.get_script_name(), command))
     end
-    
+
     local event = utils.parse_json(json)
     if event.type == "activate" then
         if event.action then
