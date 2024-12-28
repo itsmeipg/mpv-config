@@ -283,18 +283,6 @@ local function create_color_property_number_adjustment(name, property, increment
     }
 end
 
-local function check_profile_options(profile_options, callback)
-    for _, prop in ipairs(properties.style) do
-        local name = get_property_info(prop)
-        for option in profile_options:gmatch("([^,]+)") do
-            local option, value = option:match("([^=]+)=(.+)")
-            if option and value then
-                callback(option, value, name)
-            end
-        end
-    end
-end
-
 local function num(string)
     return tonumber(string) and tonumber(string) or string
 end
@@ -307,13 +295,22 @@ mp.register_script_message("clear-style", function(profile_options)
 end)
 
 mp.register_script_message("apply-style-profile", function(profile_options)
-    check_profile_options(profile_options, function(option, value, name)
-        if option == name then
-            set_property(name, num(value))
-        else
-            set_property(name, default_property[name])
+    for _, prop in ipairs(properties.style) do
+        local name = get_property_info(prop)
+
+        local option_checked = false
+        for option in profile_options:gmatch("([^,]+)") do
+            local option, value = option:match("([^=]+)=(.+)")
+            if option and value and option == name then
+                option_checked = true
+                mp.set_property(name, num(value))
+            end
         end
-    end)
+
+        if not option_checked then
+            mp.set_property(name, default_property[name])
+        end
+    end
 end)
 
 local sub_border_style_options = {{
@@ -356,23 +353,36 @@ local function create_style_menu()
     local function create_style_profile_item(name, profile_options)
         local is_active = true
 
-        check_profile_options(profile_options, function(option, value, name)
-            if option == name then
-                if num(value) ~= num(current_property[name]) then
-                    is_active = false
+        for _, prop in ipairs(properties.style) do
+            local name = get_property_info(prop)
+
+            local option_checked = false
+            for option in profile_options:gmatch("([^,]+)") do
+                local option, value = option:match("([^=]+)=(.+)")
+                if option and value and option == name then
+                    option_checked = true
+                    if num(value) ~= num(current_property[name]) then
+                        is_active = false
+                    end
                 end
-            elseif num(default_property[name]) ~= num(current_property[name]) then
+            end
+
+            if not option_checked and num(default_property[name]) ~= num(current_property[name]) then
                 is_active = false
             end
-        end)
+        end
 
         if is_active then
             profile_match = true
-            check_profile_options(profile_options, function(option, value, name)
-                if option == name then
-                    cached_property[name] = current_property[name]
+            for _, prop in ipairs(properties.style) do
+                local name = get_property_info(prop)
+                for option in profile_options:gmatch("([^,]+)") do
+                    local option, value = option:match("([^=]+)=(.+)")
+                    if option and value and option == name then
+                        cached_property[name] = current_property[name]
+                    end
                 end
-            end)
+            end
         end
 
         return {
@@ -389,15 +399,24 @@ local function create_style_menu()
 
         local is_default = true
         if profile_options and profile_options ~= "" then
-            check_profile_options(profile_options, function(option, value, name)
-                if option == name then
-                    if num(value) ~= num(default_property[name]) then
-                        is_default = false
+            for _, prop in ipairs(properties.style) do
+                local name = get_property_info(prop)
+
+                local option_checked = false
+                for option in profile_options:gmatch("([^,]+)") do
+                    local option, value = option:match("([^=]+)=(.+)")
+                    if option and value and option == name then
+                        option_checked = true
+                        if num(value) ~= num(default_property[name]) then
+                            is_default = false
+                        end
                     end
-                elseif num(default_property[name]) ~= num(current_property[name]) then
+                end
+
+                if not option_checked and num(default_property[name]) ~= num(current_property[name]) then
                     is_default = false
                 end
-            end)
+            end
 
             if is_default then
                 default_profile_override = true
