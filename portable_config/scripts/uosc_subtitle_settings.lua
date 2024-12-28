@@ -1,5 +1,6 @@
 local options = {
     style_profiles = "",
+    style_fonts = "",
     include_default_style_profile = true,
     default_style_profile_name = "Default",
     include_custom_style_profile = true
@@ -90,10 +91,12 @@ local function create_property_toggle(name, property)
     }
 end
 
-local function create_property_selection(name, property, options, off_or_default_option, include_custom_item)
+local function create_property_selection(name, property, options, off_or_default_option, include_default_item,
+    include_custom_item)
     local property_items = {}
 
     local option_match = false
+    local default_profile_override = false
     for _, item in ipairs(options) do
         local is_active = current_property[property] == item.value
 
@@ -101,12 +104,25 @@ local function create_property_selection(name, property, options, off_or_default
             option_match = true
         end
 
+        if default_property[property] == item.value then
+            default_profile_override = true
+        end
+
         table.insert(property_items, {
             title = item.name,
             active = is_active,
-            separator = item.separator,
             value = is_active and off_or_default_option and command("set-property", property, off_or_default_option) or
                 command("set-property", property, item.value)
+        })
+    end
+
+    if not default_profile_override and include_default_item then
+        local is_active = current_property[property] == default_property[property]
+        table.insert(property_items, 1, {
+            title = "Default",
+            active = is_active,
+            value = is_active and off_or_default_option and command("set-property", property, off_or_default_option) or
+                command("set-property", property, default_property[property])
         })
     end
 
@@ -414,7 +430,20 @@ local function create_style_menu()
         style_items[#style_items].separator = true
     end
 
-    for _, item in ipairs({create_color_property_number_adjustment("Color", "sub-color", "1"),
+    local sub_font_options = {}
+
+    for style_font in options.style_fonts:gmatch("([^,]+)") do
+        local font_name, font = style_font:match("([^:]+):([^:]+)")
+        if font_name and font then
+            table.insert(sub_font_options, {
+                name = font_name,
+                value = font
+            })
+        end
+    end
+
+    for _, item in ipairs({create_property_selection("Font", "sub-font", sub_font_options, "sans-serif", true, true),
+                           create_color_property_number_adjustment("Color", "sub-color", "1"),
                            create_color_property_number_adjustment("Sub shadow color", "sub-back-color", "1"),
                            create_color_property_number_adjustment("Sub border color", "sub-outline-color", "1"),
                            create_property_selection("Border style", "sub-border-style", sub_border_style_options),
