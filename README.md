@@ -28,15 +28,11 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Enable interpolation for anime it always looks better with it imo.
 
 # In progress
-- Currently working on subtitle style + profiles
-- Improve action handling, is_default vars, script and conf names
-- Clean up shaders and scale code.
 - Fix scale-radius.
 - Add crop/rotate.
-- Make profile selection menu.
-- Update uosc-subtitle-settings to match updates in uosc-video-settings and add subtitle profiles.
 - Update readme shaders list, scripts list, screenshots + general cleanup.
 - -- Low priority --
+- Make profile selection menu.
 - Update uosc-screenshot and add more more property options + option to reset options when menu closed.
 - Add profile folders.
 - Add gpu-api/context.
