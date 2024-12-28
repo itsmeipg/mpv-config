@@ -1,5 +1,5 @@
 local options = {
-    style_profiles = "yo:sub-pos=99",
+    style_profiles = "",
     include_default_style_profile = true,
     default_style_profile_name = "Default",
     include_custom_style_profile = true
@@ -11,7 +11,7 @@ local utils = require("mp.utils")
 local properties = {
     extra = {"sub-delay", "sub-ass-override", "blend-subtitles", "sub-fix-timing"},
     style = {"sub-color", "sub-back-color", "sub-font", "sub-font-size", "sub-blur", "sub-bold", "sub-italic",
-             "sub-border-color", "sub-border-size", "sub-border-style", "sub-scale", "sub-pos", "secondary-sub-pos",
+             "sub-outline-color", "sub-outline-size", "sub-border-style", "sub-scale", "sub-pos", "secondary-sub-pos",
              "sub-margin-x", "sub-margin-y", "sub-align-x", "sub-align-y", "sub-use-margins", "sub-spacing",
              "sub-shadow-offset"}
 }
@@ -144,6 +144,16 @@ local function create_property_number_adjustment(name, property, increment, min,
     end
 
     local function create_hint()
+        if property == "sub-spacing" and tonumber(current_property[property]) == 0 then
+            return "Original"
+        elseif property == "sub-outline-size" and tonumber(current_property[property]) == 0 then
+            return "Disabled"
+        elseif property == "sub-shadow-offset" and tonumber(current_property[property]) == 0 then
+            return "Disabled"
+        elseif property == "sub-blur" and tonumber(current_property[property]) == 0 then
+            return "Disabled"
+        end
+
         return tonumber(current_property[property]) and
                    string.format("%.3f", tonumber(current_property[property])):gsub("%.?0*$", "") or
                    current_property[property]
@@ -290,6 +300,39 @@ mp.register_script_message("apply-style-profile", function(profile_options)
     end)
 end)
 
+local sub_border_style_options = {{
+    name = "Outline & shadow",
+    value = "outline-and-shadow"
+}, {
+    name = "Opaque box",
+    value = "opaque-box"
+}, {
+    name = "Background box",
+    value = "background-box"
+}}
+
+local sub_align_x_options = {{
+    name = "Left",
+    value = "left"
+}, {
+    name = "Center",
+    value = "center"
+}, {
+    name = "Right",
+    value = "right"
+}}
+
+local sub_align_y_options = {{
+    name = "Top",
+    value = "top"
+}, {
+    name = "Center",
+    value = "center"
+}, {
+    name = "Bottom",
+    value = "bottom"
+}}
+
 local function create_style_menu()
     local style_items = {}
 
@@ -367,9 +410,30 @@ local function create_style_menu()
         })
     end
 
-    table.insert(style_items, create_color_property_number_adjustment("Color", "sub-color", "1"))
-    table.insert(style_items, create_color_property_number_adjustment("Sub back color", "sub-back-color", "1"))
-    table.insert(style_items, create_color_property_number_adjustment("Sub border color", "sub-border-color", "1"))
+    if #style_items > 0 then
+        style_items[#style_items].separator = true
+    end
+
+    for _, item in ipairs({create_color_property_number_adjustment("Color", "sub-color", "1"),
+                           create_color_property_number_adjustment("Sub back color", "sub-back-color", "1"),
+                           create_color_property_number_adjustment("Sub border color", "sub-outline-color", "1"),
+                           create_property_selection("Border style", "sub-border-style", sub_border_style_options),
+                           create_property_selection("Align (x)", "sub-align-x", sub_align_x_options),
+                           create_property_selection("Align (y)", "sub-align-y", sub_align_y_options),
+                           create_property_toggle("Use margins", "sub-use-margins"),
+                           create_property_toggle("Bold", "sub-bold"), create_property_toggle("Italic", "sub-italic"),
+                           create_property_number_adjustment("Scale", "sub-scale", 0.05, 0, 100),
+                           create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
+                           create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
+                           create_property_number_adjustment("Margin (x)", "sub-margin-x", 1),
+                           create_property_number_adjustment("Margin (y)", "sub-margin-y", 1),
+                           create_property_number_adjustment("Sub spacing", "sub-spacing", 0.05),
+                           create_property_number_adjustment("Font size", "sub-font-size", 1),
+                           create_property_number_adjustment("Outline size", "sub-outline-size", 0.05, 0),
+                           create_property_number_adjustment("Shadow offset", "sub-shadow-offset", 0.05, 0),
+                           create_property_number_adjustment("Blur", "sub-blur", 0.05, 0, 20)}) do
+        table.insert(style_items, item)
+    end
 
     return {
         title = "Style",
@@ -413,9 +477,6 @@ local function create_menu_data()
                         create_property_selection("ASS override", "sub-ass-override", ass_override_options),
                         create_property_selection("Blend", "blend-subtitles", blend_options),
                         create_property_toggle("Fix timing", "sub-fix-timing"),
-                        create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
-                        create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
-                        create_property_number_adjustment("Scale", "sub-scale", 0.05, 0, 100),
                         create_property_number_adjustment("Delay", "sub-delay", 0.05)}
 
     return {
