@@ -171,7 +171,7 @@ local function create_property_number_adjustment(name, property, increment, min,
         if property == "sub-delay" and tonumber(current_property[property]) == 0 then
             return "Disabled"
         elseif property == "sub-spacing" and tonumber(current_property[property]) == 0 then
-            return "Original"
+            return "Disabled"
         elseif property == "sub-outline-size" and tonumber(current_property[property]) == 0 then
             return "Disabled"
         elseif property == "sub-shadow-offset" and tonumber(current_property[property]) == 0 then
