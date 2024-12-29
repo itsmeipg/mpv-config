@@ -359,6 +359,7 @@ local sub_align_y_options = {{
 local function create_style_menu()
     local style_items = {}
 
+    local style_hint
     local profile_match = false
     local function create_style_profile_item(name, profile_options)
         local is_active = true
@@ -384,6 +385,7 @@ local function create_style_menu()
 
         if is_active then
             profile_match = true
+            style_hint = name
             for _, prop in ipairs(properties.style) do
                 local name = get_property_info(prop)
                 for option in profile_options:gmatch("([^,]+)") do
@@ -446,6 +448,10 @@ local function create_style_menu()
     end
 
     if options.include_custom_style_profile then
+        if not profile_match then
+            style_hint = "Custom"
+        end
+
         table.insert(style_items, {
             title = "Custom",
             active = not profile_match,
@@ -495,6 +501,7 @@ local function create_style_menu()
 
     return {
         title = "Style",
+        hint = style_hint or nil,
         items = style_items
     }
 end
