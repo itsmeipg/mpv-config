@@ -3,7 +3,7 @@ local options = {
     api_path = "https://www.googleapis.com/youtube/v3/",
     fallback_api_path = "",
     frontend = "https://www.youtube.com",
-    max_results = 50,
+    max_results = 25,
     reset_on_close = false
 }
 
@@ -97,7 +97,6 @@ local function render_menu(results)
                 value = ("%s/channel/%s"):format(options.frontend, item.id)
             })
         end
-        print(item.channel_title)
     end
 
     menu_data.item_actions = {{
