@@ -4,7 +4,7 @@ local options = {
     fallback_api_path = "",
     frontend = "https://www.youtube.com",
     max_results = 50,
-    reset_on_close = true
+    reset_on_close = false
 }
 
 local function format_options(unformatted_options)
@@ -79,22 +79,25 @@ local function render_menu(results)
         if item.type == "video" then
             table.insert(menu_data.items, {
                 title = item.title,
-                value = ("%s/watch?v=%s"):format(options.frontend, item.id),
-                hint = item.channelTitle
+                hint = (item.channel_title ~= "" and item.channel_title .. " | " or "") .. "Video",
+                value = ("%s/watch?v=%s"):format(options.frontend, item.id)
             })
         elseif item.type == "playlist" then
             table.insert(menu_data.items, {
                 title = item.title,
-                value = ("%s/playlist?list=%s"):format(options.frontend, item.id),
-                hint = item.channelTitle
+                hint = (item.channel_title ~= "" and item.channel_title .. " | " or "") .. "Playlist",
+                italic = true,
+                value = ("%s/playlist?list=%s"):format(options.frontend, item.id)
             })
         elseif item.type == "channel" then
             table.insert(menu_data.items, {
                 title = item.title,
+                hint = "Channel",
                 bold = true,
                 value = ("%s/channel/%s"):format(options.frontend, item.id)
             })
         end
+        print(item.channel_title)
     end
 
     menu_data.item_actions = {{
@@ -143,7 +146,7 @@ local function format_youtube_results(response)
         local t = {}
         table.insert(results, t)
         t.title = html_decode(item.snippet.title)
-        t.channelTitle = html_decode(item.snippet.channelTitle)
+        t.channel_title = html_decode(item.snippet.channelTitle)
         if item.id.kind == "youtube#video" then
             t.type = "video"
             t.id = item.id.videoId
@@ -241,4 +244,3 @@ end)
 mp.add_key_binding(nil, "open-menu", function()
     mp.commandv("script-message-to", "uosc", "open-menu", utils.format_json(menu_data))
 end)
-
