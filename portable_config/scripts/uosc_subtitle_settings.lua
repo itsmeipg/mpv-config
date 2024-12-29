@@ -168,7 +168,9 @@ local function create_property_number_adjustment(name, property, increment, min,
     end
 
     local function create_hint()
-        if property == "sub-spacing" and tonumber(current_property[property]) == 0 then
+        if property == "sub-delay" and tonumber(current_property[property]) == 0 then
+            return "Disabled"
+        elseif property == "sub-spacing" and tonumber(current_property[property]) == 0 then
             return "Original"
         elseif property == "sub-outline-size" and tonumber(current_property[property]) == 0 then
             return "Disabled"
