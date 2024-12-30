@@ -206,6 +206,12 @@ local positions = {
     B = {7, 8}
 }
 
+local function get_hex_component(hex, component)
+    hex = hex:gsub("#", "")
+    local pos = positions[component:upper()]
+    return hex:sub(pos[1], pos[2])
+end
+
 mp.register_script_message("adjust-color-property-number", function(property, component, increment, new_value)
     local hex = current_property[property]:gsub("#", "")
     local pos = positions[component:upper()]
@@ -225,12 +231,6 @@ mp.register_script_message("adjust-color-property-number", function(property, co
 end)
 
 local function create_color_property_number_adjustment(name, property, increment)
-    local function get_hex_component(hex, component)
-        hex = hex:gsub("#", "")
-        local pos = positions[component:upper()]
-        return hex:sub(pos[1], pos[2])
-    end
-
     local function create_adjustment_actions(component)
         return {{
             name = command("adjust-color-property-number", property, component, -increment),
@@ -257,38 +257,21 @@ local function create_color_property_number_adjustment(name, property, increment
         }
     end
 
-    local red = {
-        title = "Red",
-        hint = tostring(tonumber(get_hex_component(current_property[property], "R"), 16)),
-        value = create_bind_values("R"),
-        actions = create_adjustment_actions("R")
-    }
-
-    local green = {
-        title = "Green",
-        hint = tostring(tonumber(get_hex_component(current_property[property], "G"), 16)),
-        value = create_bind_values("G"),
-        actions = create_adjustment_actions("G")
-    }
-
-    local blue = {
-        title = "Blue",
-        hint = tostring(tonumber(get_hex_component(current_property[property], "B"), 16)),
-        value = create_bind_values("B"),
-        actions = create_adjustment_actions("B")
-    }
-
-    local alpha = {
-        title = "Alpha",
-        hint = tostring(tonumber(get_hex_component(current_property[property], "A"), 16)),
-        value = create_bind_values("A"),
-        actions = create_adjustment_actions("A")
-    }
+    local component_items = {}
+    for _, component in ipairs({"Red", "Green", "Blue", "Alpha"}) do
+        local component_letter = component:sub(1, 1)
+        table.insert(component_items, {
+            title = component,
+            hint = tostring(tonumber(get_hex_component(current_property[property], component_letter), 16)),
+            value = create_bind_values(component_letter),
+            actions = create_adjustment_actions(component_letter)
+        })
+    end
 
     return {
         title = name,
         hint = current_property[property],
-        items = {red, green, blue, alpha},
+        items = component_items,
         item_actions_place = "outside"
     }
 end
@@ -584,12 +567,10 @@ mp.register_script_message("menu-event", function(json)
     if event.type == "activate" then
         if event.action then
             execute_command(event.action)
-        elseif event.value then
-            if event.value["activate"] then
-                execute_command(event.value["activate"])
-            elseif type(event.value) == "string" then
-                execute_command(event.value)
-            end
+        elseif event.value and event.value["activate"] then
+            execute_command(event.value["activate"])
+        elseif type(event.value) == "string" then
+            execute_command(event.value)
         end
     elseif event.type == "key" then
         if event.selected_item.value and event.selected_item.value[event.id] then
@@ -601,4 +582,3 @@ end)
 mp.add_key_binding(nil, "open-menu", function()
     mp.commandv("script-message-to", "uosc", "open-menu", menu_data)
 end)
-
