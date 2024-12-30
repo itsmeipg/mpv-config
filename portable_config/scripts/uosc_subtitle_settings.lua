@@ -489,10 +489,10 @@ local function create_style_menu()
                            create_property_number_adjustment("Scale", "sub-scale", 0.005, 0, 100),
                            create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
                            create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
-                           create_property_number_adjustment("Margin (x)", "sub-margin-x", 1),
-                           create_property_number_adjustment("Margin (y)", "sub-margin-y", 1),
+                           create_property_number_adjustment("Margin (x)", "sub-margin-x", 1, 0),
+                           create_property_number_adjustment("Margin (y)", "sub-margin-y", 1, 0),
                            create_property_number_adjustment("Spacing", "sub-spacing", 0.005),
-                           create_property_number_adjustment("Font size", "sub-font-size", 1),
+                           create_property_number_adjustment("Font size", "sub-font-size", 1, 1),
                            create_property_number_adjustment("Outline size", "sub-outline-size", 0.05, 0),
                            create_property_number_adjustment("Shadow offset", "sub-shadow-offset", 0.05, 0),
                            create_property_number_adjustment("Blur", "sub-blur", 0.005, 0, 20)}) do
