@@ -72,10 +72,14 @@ loop_through_properties(function(name, use_native)
     cached_property[name] = value
 end)
 
+local function tonum_ifnum(string)
+    return tonumber(string) or string
+end
+
 local function command(...)
     local args = {...}
     for i, arg in ipairs(args) do
-        args[i] = string.format("%q", tonumber(arg) or arg)
+        args[i] = string.format("%q", arg)
     end
     return table.concat(args, " ")
 end
@@ -133,38 +137,57 @@ local function create_property_toggle(name, property)
     }
 end
 
-local function create_property_selection(name, property, options, off_or_default_option, include_custom_item)
+local function create_property_selection(name, property, options, off_or_default_option, include_default_item,
+    include_custom_item)
     local property_items = {}
 
+    local option_hint
     local option_match = false
-    for _, item in ipairs(options) do
-        local is_active = current_property[property] == item.value
+    local function create_option_item(name, value)
+        local is_active = current_property[property] == value
 
         if is_active then
+            option_hint = name
             option_match = true
         end
 
-        table.insert(property_items, {
-            title = item.name,
+        return {
+            title = name,
             active = is_active,
-            separator = item.separator,
             value = is_active and off_or_default_option and command("set-property", property, off_or_default_option) or
-                command("set-property", property, item.value)
-        })
+                command("set-property", property, value)
+        }
+    end
+
+    local default_profile_override = false
+    for _, option in ipairs(options) do
+        if default_property[property] == option.value then
+            default_profile_override = true
+        end
+
+        table.insert(property_items, create_option_item(option.name, option.value))
+    end
+
+    if not default_profile_override and include_default_item then
+        table.insert(property_items, 1, create_option_item("Default", default_property[property]))
     end
 
     if include_custom_item then
+        if off_or_default_option ~= current_property[property] and not option_match then
+            option_hint = "Custom"
+        end
         table.insert(property_items, {
             title = "Custom",
-            active = not off_or_default_option and not option_match,
-            selectable = not off_or_default_option and not option_match,
-            muted = off_or_default_option or option_match,
-            value = off_or_default_option and command("set-property", property, off_or_default_option)
+            active = off_or_default_option ~= current_property[property] and not option_match,
+            selectable = off_or_default_option ~= current_property[property] and not option_match,
+            muted = off_or_default_option == current_property[property] or option_match,
+            value = command("set-property", property, off_or_default_option)
         })
     end
 
     return {
         title = name,
+        hint = option_hint or current_property[property],
         items = property_items
     }
 end
@@ -189,7 +212,7 @@ local function create_property_number_adjustment(name, property, increment, min,
     local function create_hint()
         if property == "video-aspect-override" then
             if tonumber(current_property[property]) <= 0 then
-                return "Original"
+                return "Disabled"
             end
         elseif property == "dither-depth" then
             if current_property[property] == "no" then
@@ -222,11 +245,13 @@ local function create_aspect_menu()
     local aspect_items = {}
     local aspect_profiles = {}
 
+    local profile_hint
     local profile_match = false
     local function create_aspect_profile_item(name, profile_aspect_value)
         local is_active = math.abs(tonumber(current_property["video-aspect-override"]) - profile_aspect_value) < 0.001
 
         if is_active then
+            profile_hint = name
             profile_match = true
             cached_property["video-aspect-override"] = profile_aspect_value
         end
@@ -263,6 +288,9 @@ local function create_aspect_menu()
 
     if not default_profile_override and options.include_custom_aspect_profile then
         local is_original = tonumber(current_property["video-aspect-override"]) == -1
+        if not is_original and not profile_match then
+            profile_hint = "Custom"
+        end
         table.insert(aspect_profiles, {
             title = "Custom",
             active = not is_original and not profile_match,
@@ -285,6 +313,7 @@ local function create_aspect_menu()
 
     return {
         title = "Aspect override",
+        hint = profile_hint,
         items = aspect_items
     }
 end
@@ -303,6 +332,7 @@ local function create_deband_menu()
     local deband_items = {}
     local deband_profile_items = {}
 
+    local profile_hint
     local profile_match = false
     local function create_deband_profile_item(name, profile_iterations, profile_threshold, profile_range, profile_grain)
         local is_active = (tonumber(profile_iterations) == tonumber(current_property["deband-iterations"]) and
@@ -318,9 +348,13 @@ local function create_deband_menu()
             cached_property["deband-grain"] = profile_grain
         end
 
+        if current_property["deband"] == "yes" and is_active then
+            profile_hint = name
+        end
+
         return {
             title = name,
-            active = (current_property["deband"] == "yes" and true) and is_active,
+            active = current_property["deband"] == "yes" and is_active,
             value = is_active and command("toggle-property", "deband") or
                 command("apply-deband-profile", profile_iterations, profile_threshold, profile_range, profile_grain)
 
@@ -358,9 +392,12 @@ local function create_deband_menu()
     end
 
     if options.include_custom_deband_profile then
+        if current_property["deband"] == "yes" and not profile_match then
+            profile_hint = "Custom"
+        end
         table.insert(deband_profile_items, {
             title = "Custom",
-            active = (current_property["deband"] == "yes" and true) and not profile_match,
+            active = current_property["deband"] == "yes" and not profile_match,
             selectable = not profile_match,
             muted = profile_match,
             value = command("toggle-property", "deband")
@@ -383,8 +420,17 @@ local function create_deband_menu()
         table.insert(deband_items, item)
     end
 
+    if not profile_hint then
+        if current_property["deband"] == "yes" then
+            profile_hint = "On"
+        elseif current_property["deband"] == "no" then
+            profile_hint = "Off"
+        end
+    end
+
     return {
         title = "Deband",
+        hint = profile_hint,
         items = deband_items
     }
 end
@@ -411,6 +457,7 @@ local function create_color_menu()
     local color_items = {}
     local color_profile_items = {}
 
+    local profile_hint
     local profile_match = false
     local function create_color_profile_item(name, profile_brightness, profile_contrast, profile_saturation,
         profile_gamma, profile_hue)
@@ -421,6 +468,7 @@ local function create_color_menu()
                               tonumber(current_property["hue"]))
 
         if is_active then
+            profile_hint = name
             profile_match = true
             cached_property["brightness"] = profile_brightness
             cached_property["contrast"] = profile_contrast
@@ -473,7 +521,9 @@ local function create_color_menu()
         local is_original = tonumber(current_property["brightness"]) == 0 and tonumber(current_property["contrast"]) ==
                                 0 and tonumber(current_property["saturation"]) == 0 and
                                 tonumber(current_property["gamma"]) == 0 and tonumber(current_property["hue"]) == 0
-
+        if not is_original and not profile_match then
+            profile_hint = "Custom"
+        end
         table.insert(color_profile_items, {
             title = "Custom",
             active = not is_original and not profile_match,
@@ -498,6 +548,7 @@ local function create_color_menu()
 
     return {
         title = "Color",
+        hint = profile_hint,
         items = color_items
     }
 end
@@ -562,14 +613,28 @@ local error_diffusion_options = {{
 }}
 
 local function create_dither_menu()
+    local dither_items = {}
+    local dither_selection = create_property_selection("Dither", "dither", dither_options)
+
+    for _, item in ipairs(dither_selection.items) do
+        table.insert(dither_items, item)
+    end
+
+    dither_items[#dither_items].separator = true
+
+    for _, item in ipairs({create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options),
+                           create_property_toggle("Temporal dither", "temporal-dither"),
+                           create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16),
+                           create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8),
+                           create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1,
+        128)}) do
+        table.insert(dither_items, item)
+    end
+
     return {
         title = "Dither",
-        items = {create_property_selection("Dither", "dither", dither_options),
-                 create_property_selection("Error diffusion", "error-diffusion", error_diffusion_options),
-                 create_property_toggle("Temporal dither", "temporal-dither"),
-                 create_property_number_adjustment("Dither depth", "dither-depth", 2, -1, 16),
-                 create_property_number_adjustment("Dither size (fruit)", "dither-size-fruit", 1, 2, 8),
-                 create_property_number_adjustment("Temporal dither period", "temporal-dither-period", 1, 1, 128)}
+        hint = dither_selection.hint,
+        items = dither_items
     }
 end
 
@@ -1093,11 +1158,13 @@ local function create_shader_menu()
     local shader_items = {}
     local shader_profile_items = {}
 
+    local profile_hint
     local profile_match = false
     local function create_shader_profile_item(name, profile_shader_list)
         local is_active = compare_shaders(active_shaders, get_active_shaders(profile_shader_list))
 
         if is_active then
+            profile_hint = name
             profile_match = true
         end
 
@@ -1135,6 +1202,9 @@ local function create_shader_menu()
     end
 
     if options.include_custom_shader_profile then
+        if #active_shaders > 0 and not profile_match then
+            profile_hint = "Custom"
+        end
         table.insert(shader_profile_items, {
             title = "Custom",
             active = #active_shaders > 0 and not profile_match,
@@ -1181,8 +1251,13 @@ local function create_shader_menu()
         table.insert(shader_items, item)
     end
 
+    if not profile_hint and #active_shaders == 0 then
+        profile_hint = "None"
+    end
+
     return {
         title = "Shaders",
+        hint = profile_hint,
         items = shader_items
     }
 end
@@ -1249,7 +1324,6 @@ local function create_menu_data()
         title = "Video settings",
         items = menu_items,
         search_submenus = true,
-        keep_open = true,
         callback = {mp.get_script_name(), 'menu-event'}
     }
 end
@@ -1284,12 +1358,10 @@ mp.register_script_message("menu-event", function(json)
     if event.type == "activate" then
         if event.action then
             execute_command(event.action)
-        elseif event.value then
-            if event.value["activate"] then
-                execute_command(event.value["activate"])
-            elseif type(event.value) == "string" then
-                execute_command(event.value)
-            end
+        elseif event.value and event.value["activate"] then
+            execute_command(event.value["activate"])
+        elseif type(event.value) == "string" then
+            execute_command(event.value)
         end
     elseif event.type == "key" then
         if event.selected_item.value and event.selected_item.value[event.id] then
