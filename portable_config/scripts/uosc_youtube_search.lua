@@ -3,7 +3,7 @@ local options = {
     api_path = "https://www.googleapis.com/youtube/v3/",
     fallback_api_path = "",
     frontend = "https://www.youtube.com",
-    max_results = 25,
+    max_results = 50,
     reset_on_close = false
 }
 
