@@ -1,13 +1,14 @@
 # mpv-config
-![Screenshot 2024-11-22 165355](https://github.com/user-attachments/assets/d47ad2fb-5c17-41be-9730-c7f616cbcc49)
-![Screenshot 2024-11-22 173819](https://github.com/user-attachments/assets/aebc3fcb-afd8-4cf9-ae93-caf8c8648e52)
+![image](https://github.com/user-attachments/assets/98bbf0b5-d7c1-46df-b14a-1320cd28cbd8)
+![image](https://github.com/user-attachments/assets/1421914b-c581-4a4a-9c71-88376901e5de)
+![image](https://github.com/user-attachments/assets/a95b9b8b-48bc-4f7d-9cd9-4a5f43fac56a)
+![image](https://github.com/user-attachments/assets/9d4545b5-0bb4-48a6-9597-700fd53c228e)
 
 # Theme
 
-This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
-OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc. It's fine imo.
+For those who don't want to memorize a ton of keybinds.
+OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc (it's fine imo).
 If you want OSD completely removed, put video-osd=no in mpv.conf, but console and stats won't work.
-Minimal but fancy is the goal.
 
 # How to use this config and mpv for new people + tips
 
@@ -19,7 +20,7 @@ Go to the top of this page and click the green button "Code." Download ZIP and e
 ![image](https://github.com/user-attachments/assets/2713cccc-64c2-4d36-a429-925f187dc129)
 
 Basic binds are: RIGHT CLICK-play/pause, F-fullscreen, SPACE-pause, DOUBLE LEFT CLICK-toggle fullscreen, MOUSE WHEEL UP/DOWN-adjust volume, and a few more... (Edit keybinds in portable_config/input.conf).
-Using demanding shaders/upscalers for the first time (Anime4K/FSRCNNX) can delay/drop frames at first and even mess with audio (because of video-sync=display-resample). It gets much better when shader cache is made.
+Using demanding shaders/upscalers for the first time (Anime4K/FSRCNNX) can delay/drop frames at first and even mess with audio (because of video-sync=display-resample). It gets much better when shader cache is made + when you restart your PC.
 
 In windows, clicking or focusing on another window can cause mpv to delay/mistime frames. For example, if you're streaming mpv on Discord and have mpv on one monitor, and Discord on the other, and typing in Discord. If switching between applications like this, turn on "Ontop" button. ![image](https://github.com/user-attachments/assets/84c9b6f4-ee98-409f-bad0-8322999ca8b1)
 
@@ -27,61 +28,63 @@ If you see ringing/flickering (I don't know the correct term) like in anime (the
 
 If media resolution matches screen resolution and you want it "sharper" you can use the adaptive-sharpen shaders. If screen resolution is bigger than media resolution, try FSRCNNX/RAVU/Anime4K, and if it's still not sharp enough, add adaptive-sharpen.
 
-Enable interpolation for anime it always looks better with it imo.
+Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
 # In progress
-- Add footnote for action modifiers/keybinds. Normalize keybinds to match normal uosc action keybinds like ctrl+down/pgdown/end etc.
-- Optimize action handling. Don't rely on index. Use string keys that match var key/key combo to get corresponding action command.
-- Add profile folders.
-- Add adjustable d/c/scale-blur, antiring + vo, hwdec, video-sync, gpu-api/context + dither, add deinterlace submenu. Add crop/rotate.
-- Work on uosc-subtitle-settings.lua. Clean up code logic.
-- Only show shader adjustment actions when #shaders > 1.
+- Fix scale-radius.
+- Add crop/rotate.
+- -- Low priority (if you make an issue for it, it will become high priority) --
+- Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
+- Maybe remove default_profile_name options (can just use override default profile).
+- Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
+- Maybe add sub color profiles (not sure how many properties to implement for this, make an issue if you want this). Won't affect the already existing style profiles, just profiles for colors specifically.
 - Make profile selection menu.
-- -- Low priority --
+- Update uosc-screenshot and add more more property options + option to reset options when menu closed.
+- Add profile folders.
+- Add gpu-api/context.
 - Add support to apply shader twice/thrice/etc.
-- Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Edit video-quality script's menu items.
 - Make audio filter selection menu.
+- Add adaptive-sharpen (LUMA).
 - Add film grain strengths.
 - Replace context menu with a custom main menu, combining all my custom uosc scripts.
 - Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
+- Experiment with auto-save-state script stuff and maybe add more options.
+- Experiment with making a yt-dlp.conf.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
 - [uosc](https://github.com/tomasklaen/uosc) The on-screen-controller that creates the entire UI. Modified to remove show-text commands.
-- [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
 - [evafast](https://github.com/po5/evafast) Hold/click left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (the options were buggy).
 - [memo](https://github.com/po5/memo) Saves history (search feature slow at first). Modified title and page button text and added separator between items and next/prev buttons.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified titles. Removed code that opened uosc video menu if url is nil.
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
-- [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
-
+- [auto-save-state] Saves video position in multiple scenarios.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
 - [uosc-video-settings] Menu for video settings.
 
-# uosc-video-settings.lua
-Profiles can be added for aspect ratio, deband, color, and shader profiles by using uosc-video-settings.conf.
-
-The "Custom" profile button is both an indicator of custom settings and a way to reset/disable custom settings. For instance, if turned off for shaders in .conf, there is no way to disable all shaders in one click, you'd have to toggle them all off or turn on a profile and click it again to disable all shaders, but I still made it an option because why not. It also doesn't just pop up if settings are custom, this is so that the number of items in the menu does not dynamically change to prevent the menu from moving when adjusting shaders/other properties.
-
-If using a keybind to toggle a shader, use the same shader path defined in uosc-video-settings.conf (default: ~~/shaders) to prevent activating shaders twice.
-
 # Shaders
-- [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable.
-- [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Reverses blur (sharpener ig) + perceptual quality enhancements.
-- [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) It's cool.
-- [FSRCNNX_x2(8-0-4-1/16-0-4-1)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1) 2x upscaler.
-- [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b) Makes upscaling look a little better.
-- [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10) Makes downscaling look a little better.
-- [adaptive-sharpen(Low-Medium-High)](https://gist.github.com/igv/8a77e4eb8276753b54bb94c1c50c317e) Three identical shaders but with different curve_height values (0.3/0.5/0.7).
-- [ravu-lite-ar-r4](https://github.com/bjin/mpv-prescalers/blob/master/ravu-lite-ar-r4.hook) Upscaler? Haven't really used it.
-- [ravu-zoom-ar-r3](https://github.com/bjin/mpv-prescalers/blob/master/ravu-zoom-ar-r3.hook) Upscaler (but for variable resolutions)? Haven't really used it.
-- [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction) Chroma upscaler.
-- [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637) Chroma upscaler.
+- [Anime4k](https://github.com/bloc97/Anime4K)
+- [ArtCNN](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL)
+- [FSRCNNX_x2_(16-0-4-1/8-0-4-1/8-0-4-1_LineArt)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1)
+- [FSRCNNX_x2_16-0-4-1_(enhance/anime_enhance)](https://github.com/HelpSeeker/FSRCNN-TensorFlow/releases/tag/1.1_distort)
+- [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b)
+- [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10)
+- [adaptive-sharpen](https://gist.github.com/igv/8a77e4eb8276753b54bb94c1c50c317e)
+- [film-grain/film-grain-smooth](https://github.com/haasn/gentoo-conf/tree/xor/home/nand/.mpv/shaders)
+- [RAVU & NNEDI3](https://github.com/bjin/mpv-prescalers/tree/master)
+- [CfL_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction)
+- [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637)
+- [JointBilateral/FastBilateral](https://github.com/Artoriuz/glsl-joint-bilateral)
+- [CuNNy](https://github.com/funnyplanter/CuNNy)
+- [FSR](https://gist.github.com/agyild/82219c545228d70c5604f865ce0b0ce5)
+- [CAS/CAS-scaled](https://gist.github.com/agyild/bbb4e58298b2f86aa24da3032a0d2ee6)
+- [NVScaler/NVSharpen](https://gist.github.com/agyild/7e8951915b2bf24526a9343d951db214)
+- [nlmeans/hdeband](https://github.com/AN3223/dotfiles/tree/master/.config/mpv/shaders)
 
 and a few more... I'll update it later.
 
@@ -128,7 +131,5 @@ Here are a few audio filters I kind of tested but didn't settle on.
 
 # Things that bother me
 
-- "autocreate-playlist" option resets existing watch-later-config for some reason, so config still uses autoload.lua script.
-- MBTN_FORWARD and MBTN_BACK do not work with evafast.
-- sub-margin-y can't be set to 49.5.
+- MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
