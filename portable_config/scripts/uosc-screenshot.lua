@@ -2,15 +2,12 @@ local options = {
     include_subs = false
 }
 
-local script_name = mp.get_script_name()
-
 mp.utils = require "mp.utils"
 mp.options = require "mp.options"
-mp.options.read_options(options, "uosc-screenshot", function()
-end)
+mp.options.read_options(options)
 
 function command(str)
-    return string.format("script-message-to %s %s", script_name, str)
+    return string.format("script-message-to %s %s", mp.get_script_name(), str)
 end
 
 function create_menu_data()
