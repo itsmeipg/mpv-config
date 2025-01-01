@@ -44,8 +44,8 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 - Add film grain strengths.
 - Replace context menu with a custom main menu, combining all my custom uosc scripts.
 - Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
-- Experiment with auto-save-state script stuff and maybe add more options
-- Experiment with making a yt-dlp.conf
+- Experiment with auto-save-state script stuff and maybe add more options.
+- Experiment with making a yt-dlp.conf.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
