@@ -1,4 +1,8 @@
 # mpv-config
+![image](https://github.com/user-attachments/assets/98bbf0b5-d7c1-46df-b14a-1320cd28cbd8)
+![image](https://github.com/user-attachments/assets/1421914b-c581-4a4a-9c71-88376901e5de)
+![image](https://github.com/user-attachments/assets/a95b9b8b-48bc-4f7d-9cd9-4a5f43fac56a)
+![image](https://github.com/user-attachments/assets/9d4545b5-0bb4-48a6-9597-700fd53c228e)
 
 # Theme
 
