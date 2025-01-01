@@ -31,7 +31,8 @@ Enable interpolation for anime it always looks better with it imo.
 - Fix scale-radius.
 - Add crop/rotate.
 - Update readme shaders list, scripts list, screenshots + general cleanup.
-- -- Low priority --
+- -- Low priority (if you make an issue for it, it will become high priority) --
+- Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
 - Maybe remove default_profile_name options (can just use override default profile).
 - Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
 - Maybe add sub color profiles (not sure how many properties to implement for this, make an issue if you want this). Won't affect the already existing style profiles, just profiles for colors specifically.
