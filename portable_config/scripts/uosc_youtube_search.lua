@@ -1,9 +1,11 @@
+-- uosc version of https://github.com/CogentRedTester/mpv-scripts/blob/master/youtube-search.lua
+
 local options = {
     api_key = "",
     api_path = "https://www.googleapis.com/youtube/v3/",
     fallback_api_path = "",
     frontend = "https://www.youtube.com",
-    max_results = 50,
+    max_results = 25,
     reset_on_close = false
 }
 
