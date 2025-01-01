@@ -30,10 +30,11 @@ Enable interpolation for anime it always looks better with it imo.
 # In progress
 - Fix scale-radius.
 - Add crop/rotate.
-- Maybe remove default_profile_name options (can just use override default profile).
-- Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
 - Update readme shaders list, scripts list, screenshots + general cleanup.
 - -- Low priority --
+- Maybe remove default_profile_name options (can just use override default profile).
+- Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
+- Maybe add sub color profiles (not sure how many properties to implement for this, make an issue if you want this). Won't affect the already existing style profiles, just profiles for colors specifically.
 - Make profile selection menu.
 - Update uosc-screenshot and add more more property options + option to reset options when menu closed.
 - Add profile folders.
