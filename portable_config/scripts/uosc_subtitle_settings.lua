@@ -45,6 +45,10 @@ loop_through_properties(function(name, use_native)
     cached_property[name] = value
 end)
 
+local function tonum_ifnum(string)
+    return tonumber(string) or string
+end
+
 local function command(...)
     local args = {...}
     for i, arg in ipairs(args) do
@@ -57,15 +61,14 @@ mp.register_script_message("toggle-property", function(property)
     mp.set_property(property, current_property[property] == "yes" and "no" or "yes")
 end)
 
-local function set_property(property, ...)
+mp.register_script_message("set-property", function(property, ...)
     local args = {...}
     if #args == 1 then
         mp.set_property(property, args[1])
     else
         mp.set_property_native(property, args)
     end
-end
-mp.register_script_message("set-property", set_property)
+end)
 
 mp.register_script_message("adjust-property-number", function(property, increment, min, max)
     min = tonumber(min) or -math.huge
@@ -97,43 +100,39 @@ local function create_property_selection(name, property, options, off_or_default
 
     local option_hint
     local option_match = false
-    local default_profile_override = false
-    for _, item in ipairs(options) do
-        local is_active = current_property[property] == item.value
+    local function create_option_item(name, value)
+        local is_active = current_property[property] == value
 
         if is_active then
-            option_hint = item.name
+            option_hint = name
             option_match = true
         end
 
-        if default_property[property] == item.value then
+        return {
+            title = name,
+            active = is_active,
+            value = is_active and off_or_default_option and command("set-property", property, off_or_default_option) or
+                command("set-property", property, value)
+        }
+    end
+
+    local default_profile_override = false
+    for _, option in ipairs(options) do
+        if default_property[property] == option.value then
             default_profile_override = true
         end
 
-        table.insert(property_items, {
-            title = item.name,
-            active = is_active,
-            value = is_active and off_or_default_option and command("set-property", property, off_or_default_option) or
-                command("set-property", property, item.value)
-        })
+        table.insert(property_items, create_option_item(option.name, option.value))
     end
 
     if not default_profile_override and include_default_item then
-        local is_active = current_property[property] == default_property[property]
-
-        if is_active then
-            option_match = true
-        end
-
-        table.insert(property_items, 1, {
-            title = "Default",
-            active = is_active,
-            value = is_active and off_or_default_option and command("set-property", property, off_or_default_option) or
-                command("set-property", property, default_property[property])
-        })
+        table.insert(property_items, 1, create_option_item("Default", default_property[property]))
     end
 
     if include_custom_item then
+        if off_or_default_option ~= current_property[property] and not option_match then
+            option_hint = "Custom"
+        end
         table.insert(property_items, {
             title = "Custom",
             active = off_or_default_option ~= current_property[property] and not option_match,
@@ -169,15 +168,15 @@ local function create_property_number_adjustment(name, property, increment, min,
 
     local function create_hint()
         if property == "sub-delay" and tonumber(current_property[property]) == 0 then
-            return "Disabled"
+            return "Off"
         elseif property == "sub-spacing" and tonumber(current_property[property]) == 0 then
-            return "Disabled"
+            return "Off"
         elseif property == "sub-outline-size" and tonumber(current_property[property]) == 0 then
-            return "Disabled"
+            return "Off"
         elseif property == "sub-shadow-offset" and tonumber(current_property[property]) == 0 then
-            return "Disabled"
+            return "Off"
         elseif property == "sub-blur" and tonumber(current_property[property]) == 0 then
-            return "Disabled"
+            return "Off"
         end
 
         return tonumber(current_property[property]) and
@@ -276,14 +275,10 @@ local function create_color_property_number_adjustment(name, property, increment
     }
 end
 
-local function num(string)
-    return tonumber(string) and tonumber(string) or string
-end
-
 mp.register_script_message("clear-style", function(profile_options)
     for _, prop in ipairs(properties.style) do
         local name = get_property_info(prop)
-        set_property(name, default_property[name])
+        mp.set_property(name, default_property[name])
     end
 end)
 
@@ -296,7 +291,7 @@ mp.register_script_message("apply-style-profile", function(profile_options)
             local option, value = option:match("([^=]+)=(.+)")
             if option and value and option == name then
                 option_checked = true
-                mp.set_property(name, num(value))
+                mp.set_property(name, tonum_ifnum(value))
             end
         end
 
@@ -355,13 +350,13 @@ local function create_style_menu()
                 local option, value = option:match("([^=]+)=(.+)")
                 if option and value and option == name then
                     option_checked = true
-                    if num(value) ~= num(current_property[name]) then
+                    if tonum_ifnum(value) ~= tonum_ifnum(current_property[name]) then
                         is_active = false
                     end
                 end
             end
 
-            if not option_checked and num(default_property[name]) ~= num(current_property[name]) then
+            if not option_checked and tonum_ifnum(default_property[name]) ~= tonum_ifnum(current_property[name]) then
                 is_active = false
             end
         end
@@ -402,13 +397,13 @@ local function create_style_menu()
                     local option, value = option:match("([^=]+)=(.+)")
                     if option and value and option == name then
                         option_checked = true
-                        if num(value) ~= num(default_property[name]) then
+                        if tonum_ifnum(value) ~= tonum_ifnum(default_property[name]) then
                             is_default = false
                         end
                     end
                 end
 
-                if not option_checked and num(default_property[name]) ~= num(current_property[name]) then
+                if not option_checked and tonum_ifnum(default_property[name]) ~= tonum_ifnum(current_property[name]) then
                     is_default = false
                 end
             end
@@ -449,7 +444,6 @@ local function create_style_menu()
     end
 
     local sub_font_options = {}
-
     for style_font in options.style_fonts:gmatch("([^,]+)") do
         local font_name, font = style_font:match("([^:]+):([^:]+)")
         if font_name and font then
@@ -532,7 +526,6 @@ local function create_menu_data()
         title = "Subtitle settings",
         items = menu_items,
         search_submenus = true,
-        keep_open = true,
         callback = {mp.get_script_name(), 'menu-event'}
     }
 end
