@@ -27,7 +27,6 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 # In progress
 - Fix scale-radius.
 - Add crop/rotate.
-- Update readme shaders list, scripts list, screenshots + general cleanup.
 - -- Low priority (if you make an issue for it, it will become high priority) --
 - Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
 - Maybe remove default_profile_name options (can just use override default profile).
@@ -38,10 +37,10 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 - Add profile folders.
 - Add gpu-api/context.
 - Add support to apply shader twice/thrice/etc.
-- Filter shader items in active shader group to prevent duplicate item toggles when searching.
 - Test if audio-normalize-downmix has an effect on sofalizer.
 - Edit video-quality script's menu items.
 - Make audio filter selection menu.
+- Add adaptive-sharpen (LUMA).
 - Add film grain strengths.
 - Replace context menu with a custom main menu, combining all my custom uosc scripts.
 - Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
@@ -57,7 +56,6 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
-
 - [auto-save-state] Saves video position in multiple scenarios.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
@@ -65,15 +63,18 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 
 # Shaders
 - [Anime4k](https://github.com/bloc97/Anime4K)
-- [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL)
+- [ArtCNN](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL)
 - [FSRCNNX_x2_(16-0-4-1/8-0-4-1/8-0-4-1_LineArt)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1)
 - [FSRCNNX_x2_16-0-4-1_(enhance/anime_enhance)](https://github.com/HelpSeeker/FSRCNN-TensorFlow/releases/tag/1.1_distort)
 - [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b)
 - [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10)
 - [adaptive-sharpen](https://gist.github.com/igv/8a77e4eb8276753b54bb94c1c50c317e)
-- [RAVU & NNEDI](https://github.com/bjin/mpv-prescalers/tree/master)
-- [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction)
+- [film-grain/film-grain-smooth](https://github.com/haasn/gentoo-conf/tree/xor/home/nand/.mpv/shaders)
+- [RAVU & NNEDI3](https://github.com/bjin/mpv-prescalers/tree/master)
+- [CfL_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction)
 - [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637)
+- [JointBilateral/FastBilateral](https://github.com/Artoriuz/glsl-joint-bilateral)
+- [CuNNy](https://github.com/funnyplanter/CuNNy)
 - [FSR](https://gist.github.com/agyild/82219c545228d70c5604f865ce0b0ce5)
 - [CAS/CAS-scaled](https://gist.github.com/agyild/bbb4e58298b2f86aa24da3032a0d2ee6)
 - [NVScaler/NVSharpen](https://gist.github.com/agyild/7e8951915b2bf24526a9343d951db214)
@@ -124,7 +125,5 @@ Here are a few audio filters I kind of tested but didn't settle on.
 
 # Things that bother me
 
-- "autocreate-playlist" option resets existing watch-later-config for some reason, so config still uses autoload.lua script.
-- MBTN_FORWARD and MBTN_BACK do not work with evafast.
-- sub-margin-y can't be set to 49.5.
+- MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
