@@ -2,10 +2,9 @@
 
 # Theme
 
-This mpv config is meant to be as minimal as possible, while providing clean and consistent looking features.
-OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc. It's fine imo.
+For those who don't want to memorize a ton of keybinds.
+OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc (it's fine imo).
 If you want OSD completely removed, put video-osd=no in mpv.conf, but console and stats won't work.
-Minimal but fancy is the goal.
 
 # How to use this config and mpv for new people + tips
 
@@ -24,8 +23,6 @@ In windows, clicking or focusing on another window can cause mpv to delay/mistim
 If you see ringing/flickering (I don't know the correct term) like in anime (the only thing I watch), make sure your monitor settings (internal settings/not driver settings) has "Response Time" on normal. It might be labeled "Low latency" or something else.
 
 If media resolution matches screen resolution and you want it "sharper" you can use the adaptive-sharpen shaders. If screen resolution is bigger than media resolution, try FSRCNNX/RAVU/Anime4K, and if it's still not sharp enough, add adaptive-sharpen.
-
-Enable interpolation for anime it always looks better with it imo.
 
 # In progress
 - Fix scale-radius.
@@ -54,38 +51,33 @@ Enable interpolation for anime it always looks better with it imo.
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
 - [uosc](https://github.com/tomasklaen/uosc) The on-screen-controller that creates the entire UI. Modified to remove show-text commands.
-- [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) Adds files in current directory to playlist.
 - [evafast](https://github.com/po5/evafast) Hold/click left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (the options were buggy).
 - [memo](https://github.com/po5/memo) Saves history (search feature slow at first). Modified title and page button text and added separator between items and next/prev buttons.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified titles. Removed code that opened uosc video menu if url is nil.
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
-- [webtorrent-mpv-hook](https://github.com/mrxdst/webtorrent-mpv-hook) Streams torrents (have to add this one yourself).
 
+- [auto-save-state] Saves video position in multiple scenarios.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
 - [uosc-video-settings] Menu for video settings.
 
-# uosc-video-settings.lua
-Profiles can be added for aspect ratio, deband, color, and shader profiles by using uosc-video-settings.conf.
-
-The "Custom" profile button is both an indicator of custom settings and a way to reset/disable custom settings. For instance, if turned off for shaders in .conf, there is no way to disable all shaders in one click, you'd have to toggle them all off or turn on a profile and click it again to disable all shaders, but I still made it an option because why not. It also doesn't just pop up if settings are custom, this is so that the number of items in the menu does not dynamically change to prevent the menu from moving when adjusting shaders/other properties.
-
-If using a keybind to toggle a shader, use the same shader path defined in uosc-video-settings.conf (default: ~~/shaders) to prevent activating shaders twice.
-
 # Shaders
-- [Anime4k(A/A+A/B/B+B/C/C+A)](https://github.com/bloc97/Anime4K) Usually makes the anime look better, but in some anime, artifacts are noticeable.
-- [Anime4k(Darken-Thin-Deblur)](https://github.com/bloc97/Anime4K/wiki/DTD-Shader) Reverses blur (sharpener ig) + perceptual quality enhancements.
-- [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL) It's cool.
-- [FSRCNNX_x2(8-0-4-1/16-0-4-1)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1) 2x upscaler.
-- [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b) Makes upscaling look a little better.
-- [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10) Makes downscaling look a little better.
-- [adaptive-sharpen(Low-Medium-High)](https://gist.github.com/igv/8a77e4eb8276753b54bb94c1c50c317e) Three identical shaders but with different curve_height values (0.3/0.5/0.7).
-- [ravu-lite-ar-r4](https://github.com/bjin/mpv-prescalers/blob/master/ravu-lite-ar-r4.hook) Upscaler? Haven't really used it.
-- [ravu-zoom-ar-r3](https://github.com/bjin/mpv-prescalers/blob/master/ravu-zoom-ar-r3.hook) Upscaler (but for variable resolutions)? Haven't really used it.
-- [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction) Chroma upscaler.
-- [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637) Chroma upscaler.
+- [Anime4k](https://github.com/bloc97/Anime4K)
+- [ArtCNN(C4F16/C4F32)](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL)
+- [FSRCNNX_x2_(16-0-4-1/8-0-4-1/8-0-4-1_LineArt)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1)
+- [FSRCNNX_x2_16-0-4-1_(enhance/anime_enhance)](https://github.com/HelpSeeker/FSRCNN-TensorFlow/releases/tag/1.1_distort)
+- [SSimSuperRes](https://gist.github.com/igv/2364ffa6e81540f29cb7ab4c9bc05b6b)
+- [SSimDownscaler](https://gist.github.com/igv/36508af3ffc84410fe39761d6969be10)
+- [adaptive-sharpen](https://gist.github.com/igv/8a77e4eb8276753b54bb94c1c50c317e)
+- [RAVU & NNEDI](https://github.com/bjin/mpv-prescalers/tree/master)
+- [Cfl_Prediction](https://github.com/Artoriuz/glsl-chroma-from-luma-prediction)
+- [KrigBilateral](https://gist.github.com/igv/a015fc885d5c22e6891820ad89555637)
+- [FSR](https://gist.github.com/agyild/82219c545228d70c5604f865ce0b0ce5)
+- [CAS/CAS-scaled](https://gist.github.com/agyild/bbb4e58298b2f86aa24da3032a0d2ee6)
+- [NVScaler/NVSharpen](https://gist.github.com/agyild/7e8951915b2bf24526a9343d951db214)
+- [nlmeans/hdeband](https://github.com/AN3223/dotfiles/tree/master/.config/mpv/shaders)
 
 and a few more... I'll update it later.
 
