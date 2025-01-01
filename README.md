@@ -30,6 +30,8 @@ Enable interpolation for anime it always looks better with it imo.
 # In progress
 - Fix scale-radius.
 - Add crop/rotate.
+- Maybe remove default_profile_name options (can just use override default profile).
+- Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
 - Update readme shaders list, scripts list, screenshots + general cleanup.
 - -- Low priority --
 - Make profile selection menu.
