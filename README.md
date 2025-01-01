@@ -28,6 +28,8 @@ If you see ringing/flickering (I don't know the correct term) like in anime (the
 
 If media resolution matches screen resolution and you want it "sharper" you can use the adaptive-sharpen shaders. If screen resolution is bigger than media resolution, try FSRCNNX/RAVU/Anime4K, and if it's still not sharp enough, add adaptive-sharpen.
 
+Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
+
 # In progress
 - Fix scale-radius.
 - Add crop/rotate.
