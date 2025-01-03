@@ -31,6 +31,7 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
 # In progress
+- Remove webtorrent bind, add autoload button, add playlist badge count. Remove create_selection_property hint if not match name option thing. Update uosc.
 - Code readability, fix hints, fix micro code logic.
 - Fix scale-radius.
 - Add crop/rotate.
