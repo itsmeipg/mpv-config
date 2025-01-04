@@ -31,7 +31,9 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
 # In progress
-- Remove webtorrent bind, add autoload button, add playlist badge count. Remove create_selection_property hint if not match name option thing. Update uosc.
+- Remove webtorrent bind, add autoload button. Remove create_selection_property hint if not match name option thing. Update uosc.
+- Maybe add playlist badge count.
+- Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
 - Code readability, fix hints, fix micro code logic.
 - Fix scale-radius.
 - Add crop/rotate.
