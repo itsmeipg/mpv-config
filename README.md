@@ -31,13 +31,11 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
 # In progress
-- Remove webtorrent bind, add autoload button. Remove create_selection_property hint if not match name option thing. Update uosc.
-- Maybe add playlist badge count.
-- Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
-- Code readability, fix hints, fix micro code logic.
 - Fix scale-radius.
 - Add crop/rotate.
 - -- Low priority (if you make an issue for it, it will become high priority) --
+- Code readability, fix hints, fix micro code logic.
+- Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
 - Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
 - Maybe remove default_profile_name options (can just use override default profile).
 - Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
