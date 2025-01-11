@@ -187,7 +187,7 @@ local function create_property_selection(name, property, options, off_or_default
 
     return {
         title = name,
-        hint = option_hint or current_property[property],
+        hint = option_hint,
         items = property_items
     }
 end
