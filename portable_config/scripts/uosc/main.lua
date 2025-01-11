@@ -100,6 +100,7 @@ defaults = {
 	chapter_ranges = 'openings:30abf964,endings:30abf964,ads:c54e4e80',
 	chapter_range_patterns = 'openings:オープニング;endings:エンディング',
 	languages = 'slang,en',
+	subtitles_directory = '~~/subtitles',
 	disable_elements = '',
 }
 options = table_copy(defaults)
@@ -1125,7 +1126,13 @@ bind_command('paste-to-playlist', function()
 		end
 	end
 end)
-bind_command('copy-to-clipboard', function() set_clipboard(state.path) end)
+bind_command('copy-to-clipboard', function()
+	if state.path then
+		set_clipboard(state.path)
+	else
+		mp.commandv('show-text', t('Nothing to copy'), 3000)
+	end
+end)
 bind_command('open-config-directory', function()
 	local config_path = mp.command_native({'expand-path', '~~/mpv.conf'})
 	local config = serialize_path(normalize_path(config_path))

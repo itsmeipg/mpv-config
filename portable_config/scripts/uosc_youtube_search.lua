@@ -201,7 +201,7 @@ local function search_request(queries, api_path)
 end
 
 local function submit_query(query)
-    local function get_search_queries(query)
+    local function get_search_queries()
         return {
             key = options.api_key,
             q = query,
@@ -212,9 +212,9 @@ local function submit_query(query)
 
     render_loading()
 
-    local results = search_request(get_search_queries(query), options.api_path)
+    local results = search_request(get_search_queries(), options.api_path)
     if not results and options.fallback_api_path ~= "/" then
-        results = search_request(get_search_queries(query), options.fallback_api_path)
+        results = search_request(get_search_queries(), options.fallback_api_path)
     end
 
     if not results then

@@ -31,12 +31,15 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
 # In progress
+- Create script for A-B loop button so its icon changes along with its state.
 - Fix scale-radius.
 - Add crop/rotate.
 - -- Low priority (if you make an issue for it, it will become high priority) --
+- Code readability, fix hints, fix micro code logic.
+- Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
 - Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
 - Maybe remove default_profile_name options (can just use override default profile).
-- Maybe add custom hint for off_or_default_option (for sub-font/scale-window).
+- Consider folder hints when Default and Custom options are turned off. Maybe just remove option to disable Default and Custom.
 - Maybe add sub color profiles (not sure how many properties to implement for this, make an issue if you want this). Won't affect the already existing style profiles, just profiles for colors specifically.
 - Make profile selection menu.
 - Update uosc-screenshot and add more more property options + option to reset options when menu closed.
@@ -133,3 +136,4 @@ Here are a few audio filters I kind of tested but didn't settle on.
 
 - MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
+- uosc autoload feature does not work when file is already finished playing.

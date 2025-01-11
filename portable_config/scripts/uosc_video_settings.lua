@@ -187,7 +187,7 @@ local function create_property_selection(name, property, options, off_or_default
 
     return {
         title = name,
-        hint = option_hint or current_property[property],
+        hint = option_hint,
         items = property_items
     }
 end
@@ -212,7 +212,7 @@ local function create_property_number_adjustment(name, property, increment, min,
     local function create_hint()
         if property == "video-aspect-override" then
             if tonumber(current_property[property]) <= 0 then
-                return "Disabled"
+                return "Off"
             end
         elseif property == "dither-depth" then
             if current_property[property] == "no" then
@@ -310,6 +310,10 @@ local function create_aspect_menu()
 
     table.insert(aspect_items,
         create_property_number_adjustment("Video aspect override", "video-aspect-override", 0.05, -1, 10))
+
+    if not profile_hint and tonumber(current_property["video-aspect-override"]) == -1 then
+        profile_hint = "Off"
+    end
 
     return {
         title = "Aspect override",
@@ -1133,8 +1137,7 @@ local function move_shader(shader, direction_or_index)
 
     table.remove(active_shaders, target_index)
     local new_position = (direction_or_index == "up" and target_index - 1) or
-                             (direction_or_index == "down" and target_index + 1) or
-                             (tonumber(direction_or_index) and tonumber(direction_or_index))
+                             (direction_or_index == "down" and target_index + 1) or tonumber(direction_or_index)
     table.insert(active_shaders, math.max(1, math.min(new_position, #active_shaders + 1)), shader)
 
     local new_shaders = {}
@@ -1249,10 +1252,6 @@ local function create_shader_menu()
 
     for _, item in ipairs(shader_files) do
         table.insert(shader_items, item)
-    end
-
-    if not profile_hint and #active_shaders == 0 then
-        profile_hint = "None"
     end
 
     return {
