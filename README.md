@@ -136,3 +136,4 @@ Here are a few audio filters I kind of tested but didn't settle on.
 
 - MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
+- uosc autoload feature does not work when file is already finished playing.
