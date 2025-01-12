@@ -89,8 +89,6 @@ Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-star
 - [NVScaler/NVSharpen](https://gist.github.com/agyild/7e8951915b2bf24526a9343d951db214)
 - [nlmeans/hdeband](https://github.com/AN3223/dotfiles/tree/master/.config/mpv/shaders)
 
-and a few more... I'll update it later.
-
 # Audio filters
 The config uses "[dynaudnorm=f=250:g=31:p=0.5:m=5:r=0.9:b=1]"
 I heard that the way dynaudorm works is that it compresses audio, so change it if you don't like that.
