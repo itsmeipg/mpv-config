@@ -1,5 +1,6 @@
 local options = {
     style_profiles = "",
+    style_color_profiles = "",
     style_fonts = "",
     include_default_style_profile = true,
     default_style_profile_name = "Default",
@@ -256,10 +257,34 @@ local function create_color_property_number_adjustment(name, property, increment
         }
     end
 
-    local component_items = {}
+    local color_items = {}
+
+    local style_color_options = {}
+    for style_color_profile in options.style_color_profiles:gmatch("([^,]+)") do
+        local color_name, color = style_color_profile:match("([^:]+):([^:]+)")
+        if color_name and color then
+            color = "#" .. color:gsub("#", "")
+            table.insert(style_color_options, {
+                name = color_name,
+                value = color
+            })
+        end
+    end
+
+    local color_selection = create_property_selection("", property, style_color_options, cached_property[property],
+        true, true)
+
+    for _, item in ipairs(color_selection.items) do
+        table.insert(color_items, item)
+    end
+
+    if #color_items > 0 then
+        color_items[#color_items].separator = true
+    end
+
     for _, component in ipairs({"Red", "Green", "Blue", "Alpha"}) do
         local component_letter = component:sub(1, 1)
-        table.insert(component_items, {
+        table.insert(color_items, {
             title = component,
             hint = tostring(tonumber(get_hex_component(current_property[property], component_letter), 16)),
             value = create_bind_values(component_letter),
@@ -270,7 +295,7 @@ local function create_color_property_number_adjustment(name, property, increment
     return {
         title = name,
         hint = current_property[property],
-        items = component_items,
+        items = color_items,
         item_actions_place = "outside"
     }
 end
@@ -456,23 +481,24 @@ local function create_style_menu()
 
     for _, item in ipairs({create_property_selection("Font", "sub-font", sub_font_options, "sans-serif", true, true),
                            create_color_property_number_adjustment("Color", "sub-color", "1"),
-                           create_color_property_number_adjustment("Shadow color", "sub-back-color", "1"),
                            create_color_property_number_adjustment("Border color", "sub-outline-color", "1"),
-                           create_property_selection("Border style", "sub-border-style", sub_border_style_options),
-                           create_property_selection("Align (x)", "sub-align-x", sub_align_x_options),
-                           create_property_selection("Align (y)", "sub-align-y", sub_align_y_options),
-                           create_property_toggle("Use margins", "sub-use-margins"),
-                           create_property_toggle("Bold", "sub-bold"), create_property_toggle("Italic", "sub-italic"),
+                           create_color_property_number_adjustment("Shadow color", "sub-back-color", "1"),
+                           create_property_selection("Border style", "sub-border-style", sub_border_style_options), {
+        title = "Placement",
+        items = {create_property_selection("Align (x)", "sub-align-x", sub_align_x_options),
+                 create_property_selection("Align (y)", "sub-align-y", sub_align_y_options),
+                 create_property_toggle("Use margins", "sub-use-margins"),
+                 create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
+                 create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
+                 create_property_number_adjustment("Margin (x)", "sub-margin-x", 1, 0),
+                 create_property_number_adjustment("Margin (y)", "sub-margin-y", 1, 0)}
+    }, create_property_toggle("Bold", "sub-bold"), create_property_toggle("Italic", "sub-italic"),
                            create_property_number_adjustment("Scale", "sub-scale", 0.005, 0, 100),
-                           create_property_number_adjustment("Position (primary)", "sub-pos", 0.05, 0, 100),
-                           create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
-                           create_property_number_adjustment("Margin (x)", "sub-margin-x", 1, 0),
-                           create_property_number_adjustment("Margin (y)", "sub-margin-y", 1, 0),
-                           create_property_number_adjustment("Spacing", "sub-spacing", 0.005),
                            create_property_number_adjustment("Font size", "sub-font-size", 1, 1),
                            create_property_number_adjustment("Outline size", "sub-outline-size", 0.05, 0),
                            create_property_number_adjustment("Shadow offset", "sub-shadow-offset", 0.05, 0),
-                           create_property_number_adjustment("Blur", "sub-blur", 0.005, 0, 20)}) do
+                           create_property_number_adjustment("Blur", "sub-blur", 0.005, 0, 20),
+                           create_property_number_adjustment("Spacing", "sub-spacing", 0.005)}) do
         table.insert(style_items, item)
     end
 
