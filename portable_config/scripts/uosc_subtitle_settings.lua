@@ -282,7 +282,7 @@ local function create_color_property_number_adjustment(name, property, increment
         color_items[#color_items].separator = true
     end
 
-    for _, component in ipairs({"Red", "Green", "Blue", "Alpha"}) do
+    for _, component in ipairs({"Alpha", "Red", "Green", "Blue"}) do
         local component_letter = component:sub(1, 1)
         table.insert(color_items, {
             title = component,
