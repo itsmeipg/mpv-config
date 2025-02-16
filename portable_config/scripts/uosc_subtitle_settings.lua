@@ -479,11 +479,7 @@ local function create_style_menu()
         end
     end
 
-    for _, item in ipairs({create_property_selection("Font", "sub-font", sub_font_options, "sans-serif", true, true),
-                           create_color_property_number_adjustment("Color", "sub-color", "1"),
-                           create_color_property_number_adjustment("Border color", "sub-outline-color", "1"),
-                           create_color_property_number_adjustment("Shadow color", "sub-back-color", "1"),
-                           create_property_selection("Border style", "sub-border-style", sub_border_style_options), {
+    for _, item in ipairs({{
         title = "Placement",
         items = {create_property_selection("Align (x)", "sub-align-x", sub_align_x_options),
                  create_property_selection("Align (y)", "sub-align-y", sub_align_y_options),
@@ -492,7 +488,12 @@ local function create_style_menu()
                  create_property_number_adjustment("Position (secondary)", "secondary-sub-pos", 0.05, 0, 100),
                  create_property_number_adjustment("Margin (x)", "sub-margin-x", 1, 0),
                  create_property_number_adjustment("Margin (y)", "sub-margin-y", 1, 0)}
-    }, create_property_toggle("Bold", "sub-bold"), create_property_toggle("Italic", "sub-italic"),
+    }, create_property_selection("Font", "sub-font", sub_font_options, "sans-serif", true, true),
+                           create_color_property_number_adjustment("Color", "sub-color", "1"),
+                           create_color_property_number_adjustment("Border color", "sub-outline-color", "1"),
+                           create_color_property_number_adjustment("Shadow color", "sub-back-color", "1"),
+                           create_property_selection("Border style", "sub-border-style", sub_border_style_options),
+                           create_property_toggle("Bold", "sub-bold"), create_property_toggle("Italic", "sub-italic"),
                            create_property_number_adjustment("Scale", "sub-scale", 0.005, 0, 100),
                            create_property_number_adjustment("Font size", "sub-font-size", 1, 1),
                            create_property_number_adjustment("Outline size", "sub-outline-size", 0.05, 0),
