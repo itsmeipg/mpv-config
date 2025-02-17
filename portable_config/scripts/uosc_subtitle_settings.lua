@@ -496,10 +496,10 @@ local function create_style_menu()
                            create_property_toggle("Bold", "sub-bold"), create_property_toggle("Italic", "sub-italic"),
                            create_property_number_adjustment("Scale", "sub-scale", 0.005, 0, 100),
                            create_property_number_adjustment("Font size", "sub-font-size", 1, 1),
-                           create_property_number_adjustment("Outline size", "sub-outline-size", 0.05, 0),
+                           create_property_number_adjustment("Border size", "sub-outline-size", 0.05, 0),
                            create_property_number_adjustment("Shadow offset", "sub-shadow-offset", 0.05, 0),
-                           create_property_number_adjustment("Blur", "sub-blur", 0.005, 0, 20),
-                           create_property_number_adjustment("Spacing", "sub-spacing", 0.005)}) do
+                           create_property_number_adjustment("Spacing", "sub-spacing", 0.005),
+                           create_property_number_adjustment("Blur", "sub-blur", 0.005, 0, 20)}) do
         table.insert(style_items, item)
     end
 
