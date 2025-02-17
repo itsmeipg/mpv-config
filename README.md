@@ -133,7 +133,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - https://github.com/yt-dlp/yt-dlp/issues/7846
 
 # Bugs/Things that bother me
-
+- trackselect - "Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine."
 - MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
 - uosc autoload feature does not work when file is already finished playing.
