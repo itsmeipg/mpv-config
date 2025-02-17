@@ -30,9 +30,10 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 
 Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
+Binds from scripts will not work because of input-default-bindings=no. Either put the binds manually in input.conf or change any instance of "mp.add_keybinding" into "mp.add_forced_keybinding."
+
 # In progress
 - Create script for A-B loop button so its icon changes along with its state.
-- Fix scale-radius.
 - Add crop/rotate.
 - -- Low priority (if you make an issue for it, it will become high priority) --
 - Code readability, fix hints, fix micro code logic.
@@ -65,6 +66,7 @@ Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-star
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
+- [mpv-discord](https://github.com/CosmicPredator/mpv-discord) "Discord Rich Presence Integration for MPV Media Player."
 - [auto-save-state] Saves video position in multiple scenarios.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
@@ -130,8 +132,9 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - https://www.reddit.com/r/mpv/comments/1au7ty2/dynaudnorm_or_loudnorm_audio_filters_for_everyday/
 - https://github.com/yt-dlp/yt-dlp/issues/7846
 
-# Things that bother me
+# Bugs/Things that bother me
 
 - MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
 - uosc autoload feature does not work when file is already finished playing.
+- If scale-radius is not specified as a value between 0.5-16, it's value is managed by mpv and the property returns 0. It can't go back to "0/whatever value mpv gives it" if changed.
