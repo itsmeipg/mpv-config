@@ -68,6 +68,7 @@ Binds from scripts will not work because of input-default-bindings=no. Either pu
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
 - [mpv-discord](https://github.com/CosmicPredator/mpv-discord) "Discord Rich Presence Integration for MPV Media Player."
 - [auto-save-state] Saves video position in multiple scenarios.
+- [file-name-sub-paths] Extend sub-file-paths to include matching file name folder.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
 - [uosc-subtitles] Menu for subtitle settings.
 - [uosc-video-settings] Menu for video settings.
