@@ -30,7 +30,9 @@ If media resolution matches screen resolution and you want it "sharper" you can 
 
 Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
 
-Binds from scripts will not work because of input-default-bindings=no. Either put the binds manually in input.conf or change any instance of "mp.add_keybinding" into "mp.add_forced_keybinding."
+If you'd like Discord rich presence to show mpv as your Discord status, I recommend this [script](https://github.com/cniw/mpv-discordRPC).
+
+Binds from scripts will not work by default because of input-default-bindings=no. Either put the binds manually in input.conf or change any instance of "mp.add_keybinding" into "mp.add_forced_keybinding."
 
 # In progress
 - Create script for A-B loop button so its icon changes along with its state.
