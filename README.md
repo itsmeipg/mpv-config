@@ -35,8 +35,11 @@ If you'd like Discord rich presence to show mpv as your Discord status, I recomm
 Binds from scripts will not work by default because of input-default-bindings=no. Either put the binds manually in input.conf or change any instance of "mp.add_keybinding" into "mp.add_forced_keybinding."
 
 # In progress
+- -- High priority (priority order from top to bottom) --
+- Create YouTube danmaku type script.
 - Create script for A-B loop button so its icon changes along with its state.
-- Add crop/rotate.
+- Think about debounce_timer = nil location at top or bottom of timer function.
+- Change ASS override to off instead of on (on is misleading since force is what actually overrides ASS subtitles)
 - -- Low priority (if you make an issue for it, it will become high priority) --
 - Code readability, fix hints, fix micro code logic.
 - Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
