@@ -272,7 +272,7 @@ local function create_color_property_number_adjustment(name, property, increment
     end
 
     local color_selection = create_property_selection("", property, style_color_options, cached_property[property],
-        true, true)
+        false, true)
 
     for _, item in ipairs(color_selection.items) do
         table.insert(color_items, item)
