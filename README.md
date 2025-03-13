@@ -37,10 +37,7 @@ Binds from scripts will not work by default because of input-default-bindings=no
 # In progress
 - -- High priority (priority order from top to bottom) --
 - Create YouTube danmaku type script.
-- Remove color profile Default button as the default is designated as a changing variable which changes the state of Default override depending on chosen style profile.
 - Create script for A-B loop button so its icon changes along with its state.
-- Think about debounce_timer = nil location at top or bottom of timer function.
-- Change ASS override to off instead of on (on is misleading since force is what actually overrides ASS subtitles)
 - -- Low priority (if you make an issue for it, it will become high priority) --
 - Code readability, fix hints, fix micro code logic.
 - Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
