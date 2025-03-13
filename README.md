@@ -36,7 +36,6 @@ Binds from scripts will not work by default because of input-default-bindings=no
 
 # In progress
 - -- High priority (priority order from top to bottom) --
-- Create YouTube danmaku type script.
 - Create script for A-B loop button so its icon changes along with its state.
 - -- Low priority (if you make an issue for it, it will become high priority) --
 - Code readability, fix hints, fix micro code logic.
