@@ -390,6 +390,9 @@ end)
 mp.observe_property('display-fps', 'number', function(_, value)
     if value then
         local interval = 1 / value
+        if render_timer then
+            render_timer:kill()
+        end
         render_timer = mp.add_periodic_timer(interval, render)
     end
 end)
