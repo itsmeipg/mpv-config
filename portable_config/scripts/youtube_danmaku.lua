@@ -5,14 +5,14 @@ local options = {
     danmaku_visibility = true,
 
     fontname = "sans-serif",
-    fontsize = 55,
-    bold = true,
-    transparency = 0, -- 0-255 (0 = opaque, 255 = transparent)
+    fontsize = 40,
+    bold = false,
+    transparency = 25, -- 0-255 (0 = opaque, 255 = transparent)
     outline = 1,
     shadow = 0,
     duration = 10, -- May be innacurate (about third/half of a second) and more so for longer messages
-    time_gap = 1,
-    displayarea = 0.7 -- Percentage of screen height for display area
+    lane_spacing = 1, -- Multiplied by fontsize
+    displayarea = 0.5
 }
 
 local function format_options(unformatted_options)
@@ -32,12 +32,14 @@ local update_messages_timer
 local last_position
 local download_finished = false
 local messages = {}
+local active_messages = {}
+local messages_pos
 local overlay = mp.create_osd_overlay('ass-events')
 local width, height = 1920, 1080
 local osd_width, osd_height = 0, 0
 local render_timer
 
-local function render()
+local function render_loop()
     if not options.danmaku_visibility or #messages == 0 then
         overlay:remove()
         return
@@ -45,87 +47,25 @@ local function render()
 
     local pos = mp.get_property_number('time-pos')
     local ass_events = {}
-    local lane_spacing = options.fontsize
-    local num_lanes = math.floor((height * options.displayarea) / lane_spacing)
 
-    -- Binary search
-    local first_idx = 1
-    local last_idx = #messages
-    if pos > messages[1].time + options.duration then
-        local left, right = 1, #messages
-        while left <= right do
-            local mid = math.floor((left + right) / 2)
-            if messages[mid].time <= pos - options.duration - options.time_gap * (num_lanes - 1) then
-                first_idx = mid + 1
-                left = mid + 1
-            else
-                right = mid - 1
-            end
-        end
-    end
-    if pos < messages[#messages].time then
-        local left, right = first_idx, #messages
-        while left <= right do
-            local mid = math.floor((left + right) / 2)
-            if messages[mid].time <= pos then
-                left = mid + 1
-            else
-                last_idx = mid - 1
-                right = mid - 1
-            end
-        end
-    end
+    for i = #active_messages, 1, -1 do
+        local comment = active_messages[i]
+        local message_width = comment.text:len() * options.fontsize
+        local elapsed = pos - comment.time
+        local total_distance = width + message_width
+        local speed = total_distance / options.duration
+        local distance_traveled = elapsed * speed
 
-    local lane_last_used = {}
-    for i = 1, num_lanes do
-        lane_last_used[i] = -math.huge
-    end
-    for i = first_idx, last_idx do
-        local comment = messages[i]
-
-        local lane
-        for j = 1, num_lanes do
-            if comment.time - lane_last_used[j] >= options.time_gap then
-                lane = j
-                lane_last_used[j] = comment.time
-                break
-            end
-        end
-
-        -- If no lane available, use the lane with oldest message
-        if not lane then
-            local oldest_time = math.huge
-            local oldest_lane = 1
-            for j = 1, num_lanes do
-                if lane_last_used[j] < oldest_time then
-                    oldest_time = lane_last_used[j]
-                    oldest_lane = j
-                end
-            end
-            lane = oldest_lane
-            lane_last_used[lane] = comment.time
-        end
-
-        if comment.text and pos >= comment.time and pos <= comment.time + options.duration then
-            -- Starting position
-            local x1 = width
-            local y1 = (lane - 1) * lane_spacing
-            -- End position
-            local x2 = 0 - comment.text:len() * options.fontsize
-            local y2 = y1
-
-            local progress = (pos - comment.time) / options.duration
-            local current_x = tonumber(x1 + (x2 - x1) * progress)
-            local current_y = tonumber(y1 + (y2 - y1) * progress)
-
-            if current_y <= tonumber(height * options.displayarea) then
-                local ass_text = comment.text and
-                                     string.format(
-                        "{\\rDefault\\an7\\q2\\pos(%.1f,%.1f)\\fn%s\\fs%d\\c&HFFFFFF&\\alpha&H%x\\bord%s\\shad%s\\b%s}%s",
-                        current_x, current_y, options.fontname, options.fontsize, options.transparency, options.outline,
-                        options.shadow, options.bold and 1 or 0, comment.text)
-                table.insert(ass_events, ass_text)
-            end
+        if distance_traveled > total_distance then
+            table.remove(active_messages, i)
+        else
+            local current_x = width - distance_traveled
+            local ass_text = comment.text and
+                                 string.format(
+                    "{\\rDefault\\an7\\q2\\pos(%.1f,%.1f)\\fn%s\\fs%d\\c&HFFFFFF&\\alpha&H%x\\bord%s\\shad%s\\b%s}%s",
+                    current_x, comment.y, options.fontname, options.fontsize, options.transparency, options.outline,
+                    options.shadow, options.bold and 1 or 0, comment.text)
+            table.insert(ass_events, ass_text)
         end
     end
 
@@ -134,6 +74,96 @@ local function render()
     overlay.data = table.concat(ass_events, '\n')
     overlay:update()
 end
+
+local function add_message(new_message)
+    if not new_message.text or string.match(new_message.text, "^:.*:$") then
+        return
+    end
+    local pos = mp.get_property_number('time-pos')
+
+    local selected_y
+    local min_selected_y
+    local min_overlap = math.huge
+    for lane = 1, math.floor((height * options.displayarea) / (options.lane_spacing * options.fontsize)) do
+        local y = (lane - 1) * (options.lane_spacing * options.fontsize)
+
+        local latest_lane_message
+        for _, active_message in ipairs(active_messages) do
+            if active_message.y == y then
+                if not latest_lane_message or active_message.time > latest_lane_message.time then
+                    latest_lane_message = active_message
+                end
+            end
+        end
+
+        if latest_lane_message then
+            local time_elapsed = pos - latest_lane_message.time
+            local time_left = math.max(0, options.duration - time_elapsed)
+            local new_message_total_distance = width + (new_message.text:len() * options.fontsize)
+            local new_message_speed = new_message_total_distance / options.duration
+            if not selected_y and new_message_speed * time_left < width then
+                selected_y = y
+            end
+
+            local overlap = (new_message_speed * time_left) - width
+            if overlap < min_overlap then
+                min_overlap = overlap
+                min_selected_y = y
+            end
+        elseif not selected_y then
+            selected_y = y
+        end
+    end
+
+    if selected_y then
+        new_message.y = selected_y
+    else
+        new_message.y = min_selected_y
+    end
+
+    table.insert(active_messages, new_message)
+end
+
+mp.observe_property('time-pos', 'number', function(_, pos)
+    if pos and messages[messages_pos] then
+        while messages_pos <= #messages and messages[messages_pos].time <= pos do
+            add_message(messages[messages_pos])
+            messages_pos = messages_pos + 1
+        end
+    end
+end)
+
+mp.register_event("playback-restart", function()
+    local function update_messages_pos()
+        local pos = mp.get_property_number('time-pos')
+        if #messages == 0 or pos > messages[#messages].time then
+            return
+        elseif pos <= messages[1].time then
+            return 1
+        else
+            local left = 1
+            local right = #messages
+            local result
+            while left <= right do
+                local mid = math.floor((left + right) / 2)
+
+                if messages[mid].time == pos then
+                    return mid
+                elseif messages[mid].time < pos then
+                    left = mid + 1
+                else
+                    result = mid
+                    right = mid - 1
+                end
+            end
+
+            return result
+        end
+    end
+
+    messages_pos = update_messages_pos()
+    active_messages = {}
+end)
 
 local function parse_message_runs(runs)
     local message = ""
@@ -393,7 +423,7 @@ mp.observe_property('display-fps', 'number', function(_, value)
         if render_timer then
             render_timer:kill()
         end
-        render_timer = mp.add_periodic_timer(interval, render)
+        render_timer = mp.add_periodic_timer(interval, render_loop)
     end
 end)
 
