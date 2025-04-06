@@ -1,7 +1,12 @@
 # mpv-config
+
 | Elements | Video settings | Subtitle settings | YouTube search | YouTube danmaku |
 |-------|-------|-------|-------|-------|
 | ![Screenshot 2025-04-06 030444](https://github.com/user-attachments/assets/6c225d57-75cd-4e94-9b85-c9da8c193e0f) | ![Screenshot 2025-04-06 030601](https://github.com/user-attachments/assets/22397bf0-5b06-44b6-acde-953476d4b693) | ![Screenshot 2025-04-06 030755](https://github.com/user-attachments/assets/d0ff2154-6187-490f-88a0-86eb5b8ef5d0) | ![Screenshot 2025-04-06 030836](https://github.com/user-attachments/assets/9d8f7b57-61ec-43b2-8035-e5bf6e81cdaf) | ![Screenshot 2025-04-06 035153](https://github.com/user-attachments/assets/c989b0c5-b1f6-4d39-8572-c59b63d46fa1)
+
+# How to install config/mpv? + more info
+
+Read the [wiki](https://github.com/itsmeipg/mpv-config/wiki).
 
 # Theme
 
@@ -9,31 +14,8 @@ For those who don't want to memorize a ton of keybinds.
 OSD text is removed as much as possible. OSD text appears when adding items to playlist, copying, or pasting in uosc (it's fine imo).
 If you want OSD completely removed, put video-osd=no in mpv.conf, but console and stats won't work.
 
-# How to use this config and mpv for new people + tips
-
-Everything I wrote below applies to Windows only (the config should still be usable in linux but I don't use/haven't tested it):
-
-Download [mpv](https://sourceforge.net/projects/mpv-player-windows/files/64bit-v3). If that crashes, use [non-V3 version](https://sourceforge.net/projects/mpv-player-windows/files/64bit). Extract the folder using [7zip](https://www.7-zip.org). Place the folder in Documents or somewhere else. Go into the extracted folder, and left click once on "updater.bat," then right click it and select "Run as administrator." Follow the instructions. Press in order: 2, (2 if downloaded mpv-V3/1 if downloaded non-V3), Y, Y, 1, Y (TLDR: Install yt-dlp & ffmpeg). If the terminal crashes from invalid key input, just run "updater.bat" again. Go into "installer" and run "mpv-install.bat" as administrator.
-
-Go to the top of this page and click the green button "Code." Download ZIP and extract the portable_config folder, then put it in your mpv folder.
-![image](https://github.com/user-attachments/assets/2713cccc-64c2-4d36-a429-925f187dc129)
-
-Basic binds are: RIGHT CLICK-play/pause, F-fullscreen, SPACE-pause, DOUBLE LEFT CLICK-toggle fullscreen, MOUSE WHEEL UP/DOWN-adjust volume, and a few more... (Edit keybinds in portable_config/input.conf).
-Using demanding shaders/upscalers for the first time (Anime4K/FSRCNNX) can delay/drop frames at first and even mess with audio (because of video-sync=display-resample). It gets much better when shader cache is made + when you restart your PC.
-
-In windows, clicking or focusing on another window can cause mpv to delay/mistime frames. For example, if you're streaming mpv on Discord and have mpv on one monitor, and Discord on the other, and typing in Discord. If switching between applications like this, turn on "Ontop" button. ![image](https://github.com/user-attachments/assets/84c9b6f4-ee98-409f-bad0-8322999ca8b1)
-
-If you see ringing/flickering (I don't know the correct term) like in anime (the only thing I watch), make sure your monitor settings (internal settings/not driver settings) has "Response Time" on normal. It might be labeled "Low latency" or something else.
-
-If media resolution matches screen resolution and you want it "sharper" you can use the adaptive-sharpen shaders. If screen resolution is bigger than media resolution, try FSRCNNX/RAVU/Anime4K, and if it's still not sharp enough, add adaptive-sharpen.
-
-Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-started) in uosc_youtube_search.lua script.
-
-If you'd like Discord rich presence to show mpv as your Discord status, I recommend this [script](https://github.com/cniw/mpv-discordRPC).
-
-Binds from scripts will not work by default because of input-default-bindings=no. Either put the binds manually in input.conf or change any instance of "mp.add_keybinding" into "mp.add_forced_keybinding."
-
 # Scripts
+
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
 - [uosc](https://github.com/tomasklaen/uosc) The on-screen-controller that creates the entire UI. Modified to remove show-text commands.
 - [evafast](https://github.com/po5/evafast) Hold/click left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (the options were buggy).
@@ -50,6 +32,7 @@ Binds from scripts will not work by default because of input-default-bindings=no
 - [uosc-video-settings] Menu for video settings.
 
 # Shaders
+
 - [Anime4k](https://github.com/bloc97/Anime4K)
 - [ArtCNN](https://github.com/Artoriuz/ArtCNN/tree/main/GLSL)
 - [FSRCNNX_x2_(16-0-4-1/8-0-4-1/8-0-4-1_LineArt)](https://github.com/igv/FSRCNN-TensorFlow/releases/tag/1.1)
@@ -69,6 +52,7 @@ Binds from scripts will not work by default because of input-default-bindings=no
 - [nlmeans/hdeband](https://github.com/AN3223/dotfiles/tree/master/.config/mpv/shaders)
 
 # Audio filters
+
 The config uses "[dynaudnorm=f=250:g=31:p=0.5:m=5:r=0.9:b=1]"
 I heard that the way dynaudorm works is that it compresses audio, so change it if you don't like that.
 
@@ -86,6 +70,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - Let me know if sofalizer should be added to audio filters first (before dynaudorm filter) or if it does not really matter.
 
 # Inspiration
+
 - https://mpv.io/manual/stable
 - https://github.com/he2a/mpv-config
 - https://github.com/Zabooby/mpv-config
@@ -107,12 +92,13 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - https://www.reddit.com/r/mpv/comments/1au7ty2/dynaudnorm_or_loudnorm_audio_filters_for_everyday/
 - https://github.com/yt-dlp/yt-dlp/issues/7846
 
-# In progress
-- -- High priority (priority order from top to bottom) --
+# High priority (priority order from top to bottom)
+
 - YouTube danmaku: Add uosc button to enable/disable. Test option modifications during runtime.
 - Create script for A-B loop button so its icon changes along with its state.
 
-- -- Low priority (if you make an issue for it, it will become high priority) --
+# Low priority (if you make an issue for it, it will become high priority)
+
 - Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
 - Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
 - Maybe remove default_profile_name options (can just use override default profile).
@@ -132,6 +118,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - Experiment with making a yt-dlp.conf.
 
 # Bugs/Things that bother me
+
 - trackselect - "Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine."
 - MBTN_FORWARD and MBTN_BACK do not work with evafast/uosc.
 - No option in uosc to: Disable OSD text, auto scale elements and proximity by resolution.
