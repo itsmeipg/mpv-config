@@ -1,8 +1,7 @@
 # mpv-config
-![image](https://github.com/user-attachments/assets/98bbf0b5-d7c1-46df-b14a-1320cd28cbd8)
-![image](https://github.com/user-attachments/assets/1421914b-c581-4a4a-9c71-88376901e5de)
-![image](https://github.com/user-attachments/assets/b055b16c-0d26-4353-9316-6a212c2eb4a4)
-![image](https://github.com/user-attachments/assets/9d4545b5-0bb4-48a6-9597-700fd53c228e)
+| Elements | Video settings | Subtitle settings | YouTube search | YouTube danmaku |
+|-------|-------|-------|-------|-------|
+| ![Screenshot 2025-04-06 030444](https://github.com/user-attachments/assets/6c225d57-75cd-4e94-9b85-c9da8c193e0f) | ![Screenshot 2025-04-06 030601](https://github.com/user-attachments/assets/22397bf0-5b06-44b6-acde-953476d4b693) | ![Screenshot 2025-04-06 030755](https://github.com/user-attachments/assets/d0ff2154-6187-490f-88a0-86eb5b8ef5d0) | ![Screenshot 2025-04-06 030836](https://github.com/user-attachments/assets/9d8f7b57-61ec-43b2-8035-e5bf6e81cdaf) | ![Screenshot 2025-04-06 035153](https://github.com/user-attachments/assets/c989b0c5-b1f6-4d39-8572-c59b63d46fa1)
 
 # Theme
 
@@ -33,30 +32,6 @@ Put your [YouTube API key](https://developers.google.com/youtube/v3/getting-star
 If you'd like Discord rich presence to show mpv as your Discord status, I recommend this [script](https://github.com/cniw/mpv-discordRPC).
 
 Binds from scripts will not work by default because of input-default-bindings=no. Either put the binds manually in input.conf or change any instance of "mp.add_keybinding" into "mp.add_forced_keybinding."
-
-# In progress
-- -- High priority (priority order from top to bottom) --
-- YouTube danmaku: Add uosc button to enable/disable. Test option modifications during runtime.
-- Create script for A-B loop button so its icon changes along with its state.
-
-- -- Low priority (if you make an issue for it, it will become high priority) --
-- Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
-- Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
-- Maybe remove default_profile_name options (can just use override default profile).
-- Make profile selection menu.
-- Update uosc-screenshot and add more more property options + option to reset options when menu closed.
-- Add profile folders.
-- Add gpu-api/context.
-- Add support to apply shader twice/thrice/etc.
-- Test if audio-normalize-downmix has an effect on sofalizer.
-- Edit video-quality script's menu items.
-- Make audio filter selection menu.
-- Add adaptive-sharpen (LUMA).
-- Add film grain strengths.
-- Replace context menu with a custom main menu, combining all my custom uosc scripts.
-- Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
-- Experiment with auto-save-state script stuff and maybe add more options.
-- Experiment with making a yt-dlp.conf.
 
 # Scripts
 - [sofalizer](https://gist.github.com/kevinlekiller/9fd21936411d8dc5998793470c6e3d16) Virtual surround sound.
@@ -108,9 +83,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 # Feedback
 
 - If there is a way to disable OSD messages from uosc without modifying the script, let me know.
-- If you would like toggles for audio filters like the shader toggles, let me know.
 - Let me know if sofalizer should be added to audio filters first (before dynaudorm filter) or if it does not really matter.
-- Let me know about shader profiles you use and other cool shaders.
 
 # Inspiration
 - https://mpv.io/manual/stable
@@ -133,6 +106,30 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - https://www.reddit.com/r/mpv/comments/1d4he0k/auto_volume_leveller/
 - https://www.reddit.com/r/mpv/comments/1au7ty2/dynaudnorm_or_loudnorm_audio_filters_for_everyday/
 - https://github.com/yt-dlp/yt-dlp/issues/7846
+
+# In progress
+- -- High priority (priority order from top to bottom) --
+- YouTube danmaku: Add uosc button to enable/disable. Test option modifications during runtime.
+- Create script for A-B loop button so its icon changes along with its state.
+
+- -- Low priority (if you make an issue for it, it will become high priority) --
+- Fix delete_unload so it only deletes if for instance unloading from a playlist instead of deleting when exiting mpv (considered an unload event).
+- Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
+- Maybe remove default_profile_name options (can just use override default profile).
+- Make profile selection menu.
+- Update uosc-screenshot and add more more property options + option to reset options when menu closed.
+- Add profile folders.
+- Add gpu-api/context.
+- Add support to apply shader twice/thrice/etc.
+- Test if audio-normalize-downmix has an effect on sofalizer.
+- Edit video-quality script's menu items.
+- Make audio filter selection menu.
+- Add adaptive-sharpen (LUMA).
+- Add film grain strengths.
+- Replace context menu with a custom main menu, combining all my custom uosc scripts.
+- Since unload acts as saving position on quit, do something about how auto-save-state manages save-position-on-quit.
+- Experiment with auto-save-state script stuff and maybe add more options.
+- Experiment with making a yt-dlp.conf.
 
 # Bugs/Things that bother me
 - trackselect - "Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine."
