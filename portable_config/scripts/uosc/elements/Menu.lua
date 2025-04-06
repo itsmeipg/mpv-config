@@ -3,13 +3,13 @@ local Element = require('elements/Element')
 ---@alias MenuAction {name: string; icon: string; label?: string; filter_hidden?: boolean;}
 
 -- Menu data structure accepted by `Menu:open(menu)`.
----@alias MenuData {id?: string; type?: string; title?: string; hint?: string; footnote: string; search_style?: 'on_demand' | 'palette' | 'disabled';  item_actions?: MenuAction[]; item_actions_place?: 'inside' | 'outside'; callback?: string[]; keep_open?: boolean; bold?: boolean; italic?: boolean; muted?: boolean; separator?: boolean; align?: 'left'|'center'|'right'; items?: MenuDataChild[]; selected_index?: integer; on_search?: string|string[]; on_paste?: string|string[]; on_move?: string|string[]; on_close?: string|string[]; search_debounce?: number|string; search_submenus?: boolean; search_suggestion?: string}
+---@alias MenuData {id?: string; type?: string; title?: string; hint?: string; footnote: string; search_style?: 'on_demand' | 'palette' | 'disabled';  item_actions?: MenuAction[]; item_actions_place?: 'inside' | 'outside'; callback?: string[]; keep_open?: boolean; bold?: boolean; italic?: boolean; muted?: boolean; separator?: boolean; align?: 'left'|'center'|'right'; items?: MenuDataChild[]; selected_index?: integer; on_search?: string|string[]; on_paste?: string|string[]; on_move?: string|string[]; on_close?: string|string[]; search_debounce?: number|string; search_submenus?: boolean; search_suggestion?: string; search_submit?: boolean}
 ---@alias MenuDataChild MenuDataItem|MenuData
 ---@alias MenuDataItem {title?: string; hint?: string; icon?: string; value: any; actions?: MenuAction[]; actions_place?: 'inside' | 'outside'; active?: boolean; keep_open?: boolean; selectable?: boolean; bold?: boolean; italic?: boolean; muted?: boolean; separator?: boolean; align?: 'left'|'center'|'right'}
 ---@alias MenuOptions {mouse_nav?: boolean;}
 
 -- Internal data structure created from `MenuData`.
----@alias MenuStack {id?: string; type?: string; title?: string; hint?: string; footnote: string; search_style?: 'on_demand' | 'palette' | 'disabled';  item_actions?: MenuAction[]; item_actions_place?: 'inside' | 'outside'; callback?: string[]; selected_index?: number; action_index?: number; keep_open?: boolean; bold?: boolean; italic?: boolean; muted?: boolean; separator?: boolean; align?: 'left'|'center'|'right'; items: MenuStackChild[]; on_search?: string|string[]; on_paste?: string|string[]; on_move?: string|string[]; on_close?: string|string[]; search_debounce?: number|string; search_submenus?: boolean; search_suggestion?: string; parent_menu?: MenuStack; submenu_path: integer[]; active?: boolean; width: number; height: number; top: number; scroll_y: number; scroll_height: number; title_width: number; hint_width: number; max_width: number; is_root?: boolean; fling?: Fling, search?: Search, ass_safe_title?: string}
+---@alias MenuStack {id?: string; type?: string; title?: string; hint?: string; footnote: string; search_style?: 'on_demand' | 'palette' | 'disabled';  item_actions?: MenuAction[]; item_actions_place?: 'inside' | 'outside'; callback?: string[]; selected_index?: number; action_index?: number; keep_open?: boolean; bold?: boolean; italic?: boolean; muted?: boolean; separator?: boolean; align?: 'left'|'center'|'right'; items: MenuStackChild[]; on_search?: string|string[]; on_paste?: string|string[]; on_move?: string|string[]; on_close?: string|string[]; search_debounce?: number|string; search_submenus?: boolean; search_suggestion?: string; search_submit?: boolean; parent_menu?: MenuStack; submenu_path: integer[]; active?: boolean; width: number; height: number; top: number; scroll_y: number; scroll_height: number; title_width: number; hint_width: number; max_width: number; is_root?: boolean; fling?: Fling, search?: Search, ass_safe_title?: string}
 ---@alias MenuStackChild MenuStackItem|MenuStack
 ---@alias MenuStackItem {title?: string; hint?: string; icon?: string; value: any; actions?: MenuAction[]; actions_place?: 'inside' | 'outside'; active?: boolean; keep_open?: boolean; selectable?: boolean; bold?: boolean; italic?: boolean; muted?: boolean; separator?: boolean; align?: 'left'|'center'|'right'; title_width: number; hint_width: number; ass_safe_hint?: string}
 ---@alias Fling {y: number, distance: number, time: number, easing: fun(x: number), duration: number, update_cursor?: boolean}
@@ -53,6 +53,10 @@ function Menu:close(immediate, callback)
 	if type(immediate) ~= 'boolean' then callback = immediate end
 
 	local menu = self == Menu and Elements.menu or self
+
+	if state.ime_active == false and mp.get_property_bool('input-ime') then
+		mp.set_property_bool('input-ime', false)
+	end
 
 	if menu and not menu.destroyed then
 		if menu.is_closing then
@@ -143,6 +147,14 @@ function Menu:init(data, callback, opts)
 	self:tween_property('opacity', 0, 1)
 	self:enable_key_bindings()
 	Elements:maybe('curtain', 'register', self.id)
+
+	if data.search_submit then
+		-- We have to defer this so that menu callbacks don't fire before the menu
+		-- instance we're constructing here is returned, as they might depend on it.
+		mp.add_timeout(0.01, function()
+			self:search_submit()
+		end)
+	end
 end
 
 function Menu:destroy()
@@ -528,14 +540,6 @@ function Menu:activate_index(index, menu_id)
 	request_render()
 end
 
----@param index? integer
----@param menu_id? string
-function Menu:activate_one_index(index, menu_id)
-	local menu = self:get_menu(menu_id)
-	if not menu then return end
-	self:activate_index(index, menu_id)
-end
-
 ---@param value? any
 ---@param menu_id? string
 function Menu:activate_value(value, menu_id)
@@ -551,7 +555,7 @@ function Menu:activate_one_value(value, menu_id)
 	local menu = self:get_menu(menu_id)
 	if not menu then return end
 	local index = itable_find(menu.items, function(item) return item.value == value end)
-	self:activate_one_index(index, menu_id)
+	self:activate_index(index, menu_id)
 end
 
 ---@param id string One of menus in `self.all`.
@@ -937,10 +941,13 @@ end
 ---@param menu_id? string
 function Menu:search_cancel(menu_id)
 	local menu = self:get_menu(menu_id)
-	if not menu or not menu.search or menu.search_style == 'palette' then return end
+	if not menu or not menu.search or menu.search_style == 'palette' then
+		self:search_query_update('', menu_id)
+		return
+	end
 	if state.ime_active == false then
-		mp.set_property_bool("input-ime", false)
-    end
+		mp.set_property_bool('input-ime', false)
+	end
 	self:search_query_update('', menu_id, true)
 	menu.search = nil
 	self:search_ensure_key_bindings()
@@ -953,6 +960,9 @@ function Menu:search_init(menu_id)
 	local menu = self:get_menu(menu_id)
 	if not menu then return end
 	if menu.search then return end
+	if state.ime_active == false then
+		mp.set_property_bool('input-ime', true)
+	end
 	local timeout
 	if menu.search_debounce ~= 'submit' and menu.search_debounce > 0 then
 		timeout = mp.add_timeout(menu.search_debounce / 1000, self:create_action(function()
@@ -979,9 +989,6 @@ end
 function Menu:search_start(menu_id)
 	local menu = self:get_menu(menu_id)
 	if not menu or menu.search_style == 'disabled' then return end
-	if state.ime_active == false then
-		mp.set_property_bool("input-ime", true)
-    end
 	self:search_init(menu_id)
 	self:search_ensure_key_bindings()
 	self:update_dimensions()
@@ -1502,9 +1509,11 @@ function Menu:render()
 			-- Bottom border
 			ass:rect(ax, rect.by - self.separator_size, bx, rect.by, {color = fg, opacity = menu_opacity * 0.2})
 
-			-- Do nothing when user clicks title
+			-- Blur selection (also activates search input) when user clicks title
 			if is_current then
-				cursor:zone('primary_down', rect, function() end)
+				cursor:zone('primary_down', rect, function()
+					self:select_index(nil)
+				end)
 			end
 
 			-- Title
