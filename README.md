@@ -21,7 +21,7 @@ If you want OSD completely removed, put video-osd=no in mpv.conf, but console an
 - [evafast](https://github.com/po5/evafast) Hold/click left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (the options were buggy).
 - [memo](https://github.com/po5/memo) Saves history (search feature slow at first). Modified title and page button text and added separator between items and next/prev buttons.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified titles. Removed code that opened uosc video menu if url is nil.
-- [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
+- [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails. Not updated to 9deb073 due to errors.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
 - [auto-save-state] Saves video position in multiple scenarios.
