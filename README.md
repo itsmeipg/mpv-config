@@ -24,7 +24,6 @@ If you want OSD completely removed, put video-osd=no in mpv.conf, but console an
 - [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
-- [mpv-discord](https://github.com/CosmicPredator/mpv-discord) "Discord Rich Presence Integration for MPV Media Player."
 - [auto-save-state] Saves video position in multiple scenarios.
 - [file-name-sub-paths] Extend sub-file-paths to include matching file name folder.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
