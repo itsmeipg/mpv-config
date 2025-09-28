@@ -2,7 +2,7 @@
 
 | Elements | Video settings | Subtitle settings | YouTube search | YouTube danmaku |
 |-------|-------|-------|-------|-------|
-| ![Screenshot 2025-04-06 030444](https://github.com/user-attachments/assets/6c225d57-75cd-4e94-9b85-c9da8c193e0f) | ![Screenshot 2025-04-06 030601](https://github.com/user-attachments/assets/22397bf0-5b06-44b6-acde-953476d4b693) | ![Screenshot 2025-04-06 030755](https://github.com/user-attachments/assets/d0ff2154-6187-490f-88a0-86eb5b8ef5d0) | ![Screenshot 2025-04-06 030836](https://github.com/user-attachments/assets/9d8f7b57-61ec-43b2-8035-e5bf6e81cdaf) | ![Screenshot 2025-04-06 035153](https://github.com/user-attachments/assets/c989b0c5-b1f6-4d39-8572-c59b63d46fa1)
+| <img width="1920" height="1080" alt="image1" src="https://github.com/user-attachments/assets/5bae93cb-a41d-4fe4-838d-e2f35953570d" /> | <img width="1920" height="1080" alt="image2" src="https://github.com/user-attachments/assets/a65bc04e-4da2-4756-85e7-97e51c43573b" /> | <img width="1920" height="1080" alt="image3" src="https://github.com/user-attachments/assets/d7484578-2701-4794-aa98-318659128e34" /> | <img width="1920" height="1080" alt="image4" src="https://github.com/user-attachments/assets/a35febf1-93c1-4e46-b6b7-70296ee60c1b" /> | <img width="1920" height="1080" alt="image5" src="https://github.com/user-attachments/assets/51a4565c-9f1c-4fb2-8ac2-f941462a36b9" />
 
 # How to install config/mpv? + more info
 
@@ -21,10 +21,9 @@ If you want OSD completely removed, put video-osd=no in mpv.conf, but console an
 - [evafast](https://github.com/po5/evafast) Hold/click left/right arrow for "hybrid fastforward and seeking." Config uses version that supports rewind. Modified to remove uosc flash-element options (the options were buggy).
 - [memo](https://github.com/po5/memo) Saves history (search feature slow at first). Modified title and page button text and added separator between items and next/prev buttons.
 - [quality-menu](https://github.com/christoph-heinrich/mpv-quality-menu) Shows web quality versions (video/audio). Modified titles. Removed code that opened uosc video menu if url is nil.
-- [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails.
+- [thumbfast](https://github.com/po5/thumbfast) Shows thumbnails. Not updated to 9deb073 due to errors.
 - [trackselect](https://github.com/po5/trackselect) Better automatic track selection than mpv's. Change force from false to true, since there is trouble with loading a next file and trackselect not working (tracks not auto selected or audio of the file not loaded) and watch-later option is only set to remember start position anyway so this is fine.
 - [celebi](https://github.com/po5/celebi/tree/master) Saves properties between mpv instances.
-- [mpv-discord](https://github.com/CosmicPredator/mpv-discord) "Discord Rich Presence Integration for MPV Media Player."
 - [auto-save-state] Saves video position in multiple scenarios.
 - [file-name-sub-paths] Extend sub-file-paths to include matching file name folder.
 - [uosc-screenshot] Menu to take screenshot with/without subs.
