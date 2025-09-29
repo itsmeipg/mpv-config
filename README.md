@@ -102,7 +102,7 @@ Here are a few audio filters I kind of tested but didn't settle on.
 - Option to store submitted search query so it will save after closing and opening menu (with reset_on_close = false) by using search_suggestion.
 - Maybe remove default_profile_name options (can just use override default profile).
 - Make profile selection menu.
-- Update uosc-screenshot and add more more property options + option to reset options when menu closed.
+- Update uosc-screenshot and add more property options + option to reset options when menu closed.
 - Add profile folders.
 - Add gpu-api/context.
 - Add support to apply shader twice/thrice/etc.
